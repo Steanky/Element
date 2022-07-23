@@ -21,4 +21,15 @@ public interface DependencyProvider {
      * @throws ElementException if the dependency could not be loaded
      */
     <TDependency> @NotNull TDependency provide(final @NotNull Key type, final @Nullable Key name);
+
+    /**
+     * Provides the given dependency, assuming a null name.
+     * @param type the dependency type
+     * @return the dependency object
+     * @param <TDependency> the type of object to depend upon
+     * @throws ElementException if the dependency could not be loaded
+     */
+    default <TDependency> @NotNull TDependency provide(final @NotNull Key type) {
+        return provide(type, null);
+    }
 }

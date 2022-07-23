@@ -23,6 +23,10 @@ import java.util.function.Function;
  * "named" dependencies by declaring a single {@link Key} object as a parameter.
  */
 public class ModuleDependencyProvider implements DependencyProvider {
+    private interface DependencyFunction extends Function<Key, Object> {
+        boolean requiresKey();
+    }
+
     private final DependencyModule module;
     private final KeyParser keyParser;
 
@@ -43,9 +47,14 @@ public class ModuleDependencyProvider implements DependencyProvider {
 
     private BiFunction<? super Key, ? super Key, ?> initializeFunction() {
         final Class<?> moduleClass = module.getClass();
+        final int moduleClassModifiers = moduleClass.getModifiers();
+        if(!Modifier.isPublic(moduleClassModifiers)) {
+            throw new ElementException("Module class must be public");
+        }
+
         final Method[] declaredMethods = moduleClass.getDeclaredMethods();
 
-        final Map<Key, Function<? super Key, ?>> dependencyMap = new HashMap<>(declaredMethods.length);
+        final Map<Key, DependencyFunction> dependencyMap = new HashMap<>(declaredMethods.length);
         for(final Method declaredMethod : declaredMethods) {
             final DependencySupplier supplierAnnotation = declaredMethod.getAnnotation(DependencySupplier.class);
             if(supplierAnnotation == null) {
@@ -57,7 +66,7 @@ public class ModuleDependencyProvider implements DependencyProvider {
             }
 
             final Class<?> returnType = declaredMethod.getReturnType();
-            if(returnType.equals(Void.class)) {
+            if(returnType.equals(void.class)) {
                 throw new ElementException("Void-returning DependencySupplier method");
             }
 
@@ -68,7 +77,17 @@ public class ModuleDependencyProvider implements DependencyProvider {
             }
 
             if(supplierParameters.length == 0) {
-                dependencyMap.put(dependencyName, ignored -> ReflectionUtils.invokeMethod(declaredMethod, module));
+                dependencyMap.put(dependencyName, new DependencyFunction() {
+                    @Override
+                    public boolean requiresKey() {
+                        return false;
+                    }
+
+                    @Override
+                    public Object apply(Key key) {
+                        return ReflectionUtils.invokeMethod(declaredMethod, module);
+                    }
+                });
                 continue;
             }
 
@@ -77,13 +96,28 @@ public class ModuleDependencyProvider implements DependencyProvider {
                 throw new ElementException("Expected subclass of Key, was " + parameterType);
             }
 
-            dependencyMap.put(dependencyName, name -> ReflectionUtils.invokeMethod(declaredMethod, module, name));
+            dependencyMap.put(dependencyName, new DependencyFunction() {
+                @Override
+                public boolean requiresKey() {
+                    return true;
+                }
+
+                @Override
+                public Object apply(Key key) {
+                    return ReflectionUtils.invokeMethod(declaredMethod, module, key);
+                }
+            });
         }
 
         return (type, name) -> {
-            final Function<? super Key, ?> function = dependencyMap.get(type);
+            final DependencyFunction function = dependencyMap.get(type);
             if (function == null) {
                 throw new ElementException("Unable to resolve dependency " + type);
+            }
+
+            if(function.requiresKey() == (name == null)) {
+                throw new ElementException(name == null ? "Dependency supplier needs a key, but none was provided" :
+                        "Dependency supplier takes no arguments, but a key was provided");
             }
 
             final Object dependency = function.apply(name);
