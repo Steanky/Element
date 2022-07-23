@@ -3,6 +3,7 @@ package com.github.steanky.element.key;
 import com.github.steanky.element.ElementException;
 import net.kyori.adventure.key.InvalidKeyException;
 import net.kyori.adventure.key.Key;
+import net.kyori.adventure.key.Keyed;
 import org.intellij.lang.annotations.Pattern;
 import org.intellij.lang.annotations.Subst;
 import org.jetbrains.annotations.NotNull;
@@ -33,6 +34,13 @@ public class BasicKeyParser implements KeyParser {
         }
 
         this.defaultNamespace = defaultNamespace;
+    }
+
+    /**
+     * Creates a new instance of this class that uses the default namespace {@link Key#MINECRAFT_NAMESPACE}.
+     */
+    public BasicKeyParser() {
+        this(Key.MINECRAFT_NAMESPACE);
     }
 
     @Override

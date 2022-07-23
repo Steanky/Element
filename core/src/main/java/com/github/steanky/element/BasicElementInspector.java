@@ -51,9 +51,9 @@ public class BasicElementInspector implements ElementInspector {
                 validateNoParameters(elementClass, declaredMethod, () -> "FactoryMethod must have no parameters");
                 validateReturnType(elementClass, ElementFactory.class, declaredMethod, () -> "FactoryMethod must " +
                         "return an ElementFactory");
-                ParameterizedType type = validateParameterizedReturnType(elementClass, declaredMethod,
-                        () -> "FactoryMethod cannot return a raw generic");
 
+                final ParameterizedType type = validateParameterizedReturnType(elementClass, declaredMethod,
+                        () -> "FactoryMethod cannot return a raw parameterized class");
                 if(!elementClass.isAssignableFrom(ReflectionUtils.getUnderlyingClass(type
                         .getActualTypeArguments()[1]))) {
                     formatException(elementClass, "FactoryMethod must return a factory whose return type is " +
@@ -65,7 +65,12 @@ public class BasicElementInspector implements ElementInspector {
         }
 
         if(factoryMethod != null) {
-            return ReflectionUtils.invokeMethod(factoryMethod, null);
+            final ElementFactory<?, ?> factory = ReflectionUtils.invokeMethod(factoryMethod, null);
+            if(factory == null) {
+                formatException(elementClass, "FactoryMethod returned null");
+            }
+
+            return factory;
         }
 
         final Constructor<?>[] declaredConstructors = elementClass.getDeclaredConstructors();
@@ -81,7 +86,7 @@ public class BasicElementInspector implements ElementInspector {
         }
 
         if(factoryConstructor == null) {
-            formatException(elementClass, "could not find a factory method or constructor");
+            formatException(elementClass, "could not find a suitable factory method or constructor");
         }
 
         final Constructor<?> finalFactoryConstructor = factoryConstructor;
@@ -174,9 +179,9 @@ public class BasicElementInspector implements ElementInspector {
                 validateNoParameters(elementClass, declaredMethod, () -> "ProcessorMethod must have no parameters");
                 validateReturnType(elementClass, ConfigProcessor.class, declaredMethod, () -> "ProcessorMethod must " +
                         "return a ConfigProcessor");
+
                 final ParameterizedType type = validateParameterizedReturnType(elementClass, declaredMethod,
                         () -> "ProcessorMethod cannot return a raw generic");
-
                 final Class<?> underlying = ReflectionUtils.getUnderlyingClass(type.getActualTypeArguments()[0]);
                 if(!Keyed.class.isAssignableFrom(underlying)) {
                     formatException(elementClass, "ConfigProcessor returned by the ProcessorMethod must process Keyed" +
@@ -187,11 +192,17 @@ public class BasicElementInspector implements ElementInspector {
             }
         }
 
-        if(processorMethod == null) {
-            return null;
+        if(processorMethod != null) {
+            final ConfigProcessor<? extends Keyed> processor = ReflectionUtils.invokeMethod(processorMethod,
+                    null);
+            if(processor == null) {
+                formatException(elementClass, "ProcessorMethod returned null");
+            }
+
+            return processor;
         }
 
-        return ReflectionUtils.invokeMethod(processorMethod, null);
+        return null;
     }
 
     private static void validateNoParameters(final Class<?> elementClass, final Method method,

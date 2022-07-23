@@ -47,7 +47,8 @@ public interface Registry<TRegistrant> {
 
     /**
      * Atomically checks for registration and registers the given key-registrant pair. If a registrant is already
-     * associated with the given key, returns the old registrant. Otherwise, returns null.
+     * associated with the given key, returns the old registrant (the backing map is unchanged). Otherwise, returns
+     * null.
      *
      * @param key the key to associate with the registrant
      * @param registrant the registrant associated with the key
