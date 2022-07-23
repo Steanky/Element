@@ -1,6 +1,7 @@
 package com.github.steanky.element;
 
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.lang.reflect.*;
 import java.util.Objects;
@@ -8,6 +9,26 @@ import java.util.Objects;
 public final class ReflectionUtils {
     private ReflectionUtils() {
         throw new UnsupportedOperationException();
+    }
+
+    public static Object invokeConstructor(final @NotNull Constructor<?> constructor, final Object... args) {
+        Objects.requireNonNull(constructor);
+
+        try {
+            return constructor.newInstance(args);
+        } catch (InstantiationException | IllegalAccessException | InvocationTargetException e) {
+            throw new ElementException(e);
+        }
+    }
+
+    public static <TReturn> TReturn invokeMethod(final @NotNull Method method, final @Nullable Object owner,
+            final @Nullable Object @Nullable... args) {
+        try {
+            //noinspection unchecked
+            return (TReturn) method.invoke(owner, args);
+        } catch (IllegalAccessException | InvocationTargetException e) {
+            throw new ElementException(e);
+        }
     }
 
     public static @NotNull Class<?> getUnderlyingClass(final @NotNull Type type) {

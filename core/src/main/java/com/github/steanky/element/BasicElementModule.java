@@ -1,6 +1,7 @@
 package com.github.steanky.element;
 
 import com.github.steanky.element.annotation.ElementModel;
+import com.github.steanky.element.dependency.DependencyProvider;
 import com.github.steanky.element.key.KeyParser;
 import com.github.steanky.ethylene.core.collection.ConfigNode;
 import com.github.steanky.ethylene.core.processor.ConfigProcessException;

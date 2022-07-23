@@ -1,4 +1,4 @@
-package com.github.steanky.element;
+package com.github.steanky.element.dependency;
 
 import net.kyori.adventure.key.Key;
 import org.jetbrains.annotations.NotNull;

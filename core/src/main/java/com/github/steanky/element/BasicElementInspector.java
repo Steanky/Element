@@ -1,9 +1,6 @@
 package com.github.steanky.element;
 
-import com.github.steanky.element.annotation.ElementData;
-import com.github.steanky.element.annotation.ElementDependency;
-import com.github.steanky.element.annotation.FactoryMethod;
-import com.github.steanky.element.annotation.ProcessorMethod;
+import com.github.steanky.element.annotation.*;
 import com.github.steanky.element.key.KeyParser;
 import com.github.steanky.ethylene.core.processor.ConfigProcessor;
 import net.kyori.adventure.key.Key;
@@ -53,11 +50,7 @@ public class BasicElementInspector implements ElementInspector {
         }
 
         if(factoryMethod != null) {
-            try {
-                return (ElementFactory<?, ?>) factoryMethod.invoke(null);
-            } catch (IllegalAccessException | InvocationTargetException e) {
-                throw new ElementException(e);
-            }
+            return ReflectionUtils.invokeMethod(factoryMethod, null);
         }
 
         final Constructor<?>[] declaredConstructors = elementClass.getDeclaredConstructors();
@@ -80,7 +73,7 @@ public class BasicElementInspector implements ElementInspector {
         final Parameter[] parameters = factoryConstructor.getParameters();
         if(parameters.length == 0) {
             return (ElementFactory<Keyed, Object>) (keyed, dependencyProvider) ->
-                    invokeConstructor(finalFactoryConstructor);
+                    ReflectionUtils.invokeConstructor(finalFactoryConstructor);
         }
 
         final List<Key> dependencyTypeKeys = new ArrayList<>(parameters.length);
@@ -133,7 +126,7 @@ public class BasicElementInspector implements ElementInspector {
                     args[i] = dependencyProvider.provide(dependencyTypeKeys.get(i), dependencyNameKeys.get(i));
                 }
 
-                return invokeConstructor(finalFactoryConstructor, args);
+                return ReflectionUtils.invokeConstructor(finalFactoryConstructor, args);
             }
 
             args = new Object[dependencyTypeKeys.size() + 1];
@@ -146,16 +139,8 @@ public class BasicElementInspector implements ElementInspector {
                 args[i] = dependencyProvider.provide(dependencyTypeKeys.get(i - 1), dependencyNameKeys.get(i));
             }
 
-            return invokeConstructor(finalFactoryConstructor, args);
+            return ReflectionUtils.invokeConstructor(finalFactoryConstructor, args);
         };
-    }
-
-    private static Object invokeConstructor(final Constructor<?> constructor, final Object... args) {
-        try {
-            return constructor.newInstance(args);
-        } catch (InstantiationException | IllegalAccessException | InvocationTargetException e) {
-            throw new ElementException(e);
-        }
     }
 
     private static ConfigProcessor<? extends Keyed> getProcessor(final Class<?> elementClass,
@@ -187,12 +172,7 @@ public class BasicElementInspector implements ElementInspector {
             return null;
         }
 
-        try {
-            //noinspection unchecked
-            return (ConfigProcessor<? extends Keyed>) processorMethod.invoke(null);
-        } catch (IllegalAccessException | InvocationTargetException e) {
-            throw new ElementException(e);
-        }
+        return ReflectionUtils.invokeMethod(processorMethod, null);
     }
 
     private static void validatePublicStatic(final Class<?> elementClass, final Member member,

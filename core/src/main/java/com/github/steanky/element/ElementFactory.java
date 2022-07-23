@@ -1,5 +1,6 @@
 package com.github.steanky.element;
 
+import com.github.steanky.element.dependency.DependencyProvider;
 import net.kyori.adventure.key.Keyed;
 import org.jetbrains.annotations.NotNull;
 
