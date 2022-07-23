@@ -10,7 +10,9 @@ import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
 @Retention(RetentionPolicy.RUNTIME)
-@Target(ElementType.TYPE)
-public @interface ElementModel {
+@Target({ElementType.FIELD, ElementType.TYPE})
+public @interface ElementDependency {
     @NotNull @Pattern(Constants.KEY_PATTERN) String value();
+
+    @NotNull @Pattern(Constants.KEY_PATTERN) String name() default "";
 }
