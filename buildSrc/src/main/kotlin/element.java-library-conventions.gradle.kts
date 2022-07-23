@@ -1,6 +1,6 @@
 plugins {
     `java-library`
-    id("template.java-conventions")
+    id("element.java-conventions")
 }
 
 java {

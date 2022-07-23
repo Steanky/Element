@@ -1,4 +1,4 @@
-rootProject.name = "template"
+rootProject.name = "element"
 
 val localSettings = file("local.settings.gradle.kts")
 if (localSettings.exists()) {
@@ -6,7 +6,7 @@ if (localSettings.exists()) {
 }
 
 
-sequenceOf("java").forEach {
+sequenceOf("core").forEach {
     val projectDirectory = file(it)
     include(":${rootProject.name}-$it")
     project(":${rootProject.name}-$it").projectDir = projectDirectory
