@@ -32,6 +32,23 @@ public final class ReflectionUtils {
         }
     }
 
+    /**
+     * <p>Attempts to resolve the given Type into a corresponding class object.</p>
+     *
+     * <p>This method essentially performs a form of type erasure; ex. the generic type {@code List<String>} becomes the
+     * class {@code List}, and so on. For more complex type declarations, such as bounded wildcards, the type of the
+     * upper bound is the type returned by this method. For example, the wildcard type declaration
+     * {@code ? extends String} resolves to String. Wildcards that do not supply an upper bound will resolve to Object,
+     * as in {@code ? super String} or simply ?. Generic array types are handled as follows: {@code List<?>[]} ->
+     * {@code List[]}. Furthermore, this method can correctly resolve "inheritance chains" of type variables, as well as
+     * multidimensional arrays.</p>
+     *
+     * <p>Subclasses of Type that are not themselves subclasses or instances of Class, ParameterizedType, WildcardType,
+     * GenericArrayType, or TypeVariable are not supported. Attempting to resolve these types will result in an
+     * IllegalArgumentException.</p>
+     * @param type the type to resolve into a class
+     * @return the corresponding class
+     */
     public static @NotNull Class<?> getUnderlyingClass(final @NotNull Type type) {
         Objects.requireNonNull(type);
 
