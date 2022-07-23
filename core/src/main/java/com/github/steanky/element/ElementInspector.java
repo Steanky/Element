@@ -13,12 +13,15 @@ import java.util.Objects;
  */
 public interface ElementInspector {
     /**
-     * Represents information extracted from an Element Model-compliant class.
-     * @param processor the processor used to process the data associated with the class, which may be null if there is
-     *                  no data required to construct the class
-     * @param factory the factory used to create instances of the class, which may never be null
+     * Represents information about an element class.
      */
     record Information(@Nullable ConfigProcessor<? extends Keyed> processor, @NotNull ElementFactory<?, ?> factory) {
+        /**
+         * Represents information extracted from an Element Model-compliant class.
+         * @param processor the processor used to process the data associated with the class, which may be null if there is
+         *                  no data required to construct the class
+         * @param factory the factory used to create instances of the class, which may never be null
+         */
         public Information {
             Objects.requireNonNull(factory);
         }

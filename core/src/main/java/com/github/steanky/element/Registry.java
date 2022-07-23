@@ -16,7 +16,7 @@ import java.util.NoSuchElementException;
  *     <li>Not support null keys or values</li>
  *     <li>Throw exceptions when looking up registrants that don't exist, rather than returning null</li>
  * </ul>
- * @param <TRegistrant>
+ * @param <TRegistrant> the type of object registered by this class
  */
 public interface Registry<TRegistrant> {
     /**

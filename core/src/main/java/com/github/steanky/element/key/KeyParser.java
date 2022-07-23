@@ -1,10 +1,19 @@
 package com.github.steanky.element.key;
 
+import com.github.steanky.element.ElementException;
 import net.kyori.adventure.key.Key;
 import org.jetbrains.annotations.NotNull;
 
+/**
+ * Converts strings into {@link Key} objects.
+ */
 @FunctionalInterface
 public interface KeyParser {
-
-    @NotNull Key parseKey(@NotNull String key);
+    /**
+     * Converts the given String into a {@link Key}.
+     * @param key the key string
+     * @return the key represented by the string
+     * @throws ElementException if the given string is invalid
+     */
+    @NotNull Key parseKey(final @NotNull String key);
 }

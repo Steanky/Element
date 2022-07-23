@@ -9,13 +9,21 @@ import org.jetbrains.annotations.NotNull;
 
 import java.lang.reflect.*;
 import java.util.ArrayList;
-import java.util.List;
 import java.util.Objects;
 import java.util.function.Supplier;
 
+/**
+ * Standard implementation of {@link ElementInspector}. Uses reflection to automatically infer factories and processors
+ * from methods/structures, in compliance with the general element model specification.
+ */
 public class BasicElementInspector implements ElementInspector {
     private final KeyParser keyParser;
 
+    /**
+     * Creates a new instance of this class using the provided {@link KeyParser}.
+     *
+     * @param keyParser the KeyParser used to parse keys from strings
+     */
     public BasicElementInspector(final @NotNull KeyParser keyParser) {
         this.keyParser = Objects.requireNonNull(keyParser);
     }
@@ -31,7 +39,7 @@ public class BasicElementInspector implements ElementInspector {
     }
 
     private static ElementFactory<?, ?> getFactory(final Class<?> elementClass, final Method[] declaredMethods,
-            boolean hasProcessor, KeyParser parser) {
+            final boolean hasProcessor, final KeyParser parser) {
         Method factoryMethod = null;
         for(final Method declaredMethod : declaredMethods) {
             if(declaredMethod.isAnnotationPresent(FactoryMethod.class)) {
@@ -40,6 +48,7 @@ public class BasicElementInspector implements ElementInspector {
                 }
 
                 validatePublicStatic(elementClass, declaredMethod, () -> "FactoryMethod must be public static");
+                validateNoParameters(elementClass, declaredMethod, () -> "FactoryMethod must have no parameters");
                 validateReturnType(elementClass, ElementFactory.class, declaredMethod, () -> "FactoryMethod must " +
                         "return an ElementFactory");
                 ParameterizedType type = validateParameterizedReturnType(elementClass, declaredMethod,
@@ -47,8 +56,8 @@ public class BasicElementInspector implements ElementInspector {
 
                 if(!elementClass.isAssignableFrom(ReflectionUtils.getUnderlyingClass(type
                         .getActualTypeArguments()[1]))) {
-                    formatException(elementClass, "FactoryMethod must return a type assignable to the class it " +
-                            "belongs");
+                    formatException(elementClass, "FactoryMethod must return a factory whose return type is " +
+                            "assignable to the class it belongs");
                 }
 
                 factoryMethod = declaredMethod;
@@ -82,8 +91,8 @@ public class BasicElementInspector implements ElementInspector {
                     ReflectionUtils.invokeConstructor(finalFactoryConstructor);
         }
 
-        final List<Key> dependencyTypeKeys = new ArrayList<>(parameters.length);
-        final List<Key> dependencyNameKeys = new ArrayList<>(parameters.length);
+        final ArrayList<Key> dependencyTypeKeys = new ArrayList<>(parameters.length);
+        final ArrayList<Key> dependencyNameKeys = new ArrayList<>(parameters.length);
         int dataParameterIndex = -1;
         for(int i = 0; i < parameters.length; i++) {
             Parameter parameter = parameters[i];
@@ -123,6 +132,9 @@ public class BasicElementInspector implements ElementInspector {
                     "processor");
         }
 
+        dependencyTypeKeys.trimToSize();
+        dependencyNameKeys.trimToSize();
+
         final int finalDataParameterIndex = dataParameterIndex;
         return (keyed, dependencyProvider) -> {
             final Object[] args;
@@ -142,7 +154,7 @@ public class BasicElementInspector implements ElementInspector {
             }
 
             for (int i = finalDataParameterIndex + 1; i < parameters.length; i++) {
-                args[i] = dependencyProvider.provide(dependencyTypeKeys.get(i - 1), dependencyNameKeys.get(i));
+                args[i] = dependencyProvider.provide(dependencyTypeKeys.get(i - 1), dependencyNameKeys.get(i - 1));
             }
 
             return ReflectionUtils.invokeConstructor(finalFactoryConstructor, args);
@@ -159,6 +171,7 @@ public class BasicElementInspector implements ElementInspector {
                 }
 
                 validatePublicStatic(elementClass, declaredMethod, () -> "ProcessorMethod must be public static");
+                validateNoParameters(elementClass, declaredMethod, () -> "ProcessorMethod must have no parameters");
                 validateReturnType(elementClass, ConfigProcessor.class, declaredMethod, () -> "ProcessorMethod must " +
                         "return a ConfigProcessor");
                 final ParameterizedType type = validateParameterizedReturnType(elementClass, declaredMethod,
@@ -179,6 +192,13 @@ public class BasicElementInspector implements ElementInspector {
         }
 
         return ReflectionUtils.invokeMethod(processorMethod, null);
+    }
+
+    private static void validateNoParameters(final Class<?> elementClass, final Method method,
+            final Supplier<String> exceptionMessage) {
+        if(method.getParameterCount() != 0) {
+            formatException(elementClass, exceptionMessage.get());
+        }
     }
 
     private static void validatePublicStatic(final Class<?> elementClass, final Member member,

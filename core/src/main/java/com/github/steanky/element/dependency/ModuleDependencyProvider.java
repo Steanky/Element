@@ -17,24 +17,35 @@ import java.util.Objects;
 import java.util.function.BiFunction;
 import java.util.function.Function;
 
+/**
+ * Implementation of DependencyProvider which has a concept of modules. Each module consists of a single object which
+ * provides any number of methods (static or instance) that act as suppliers of dependencies. Methods can provide
+ * "named" dependencies by declaring a single {@link Key} object as a parameter.
+ */
 public class ModuleDependencyProvider implements DependencyProvider {
     private final DependencyModule module;
     private final KeyParser keyParser;
 
     private final BiFunction<? super Key, ? super Key, ?> dependencyFunction;
 
+    /**
+     * Creates a new instance of this class.
+     *
+     * @param module the {@link DependencyModule} object to use
+     * @param keyParser the {@link KeyParser} object used to convert strings to keys
+     */
     public ModuleDependencyProvider(final @NotNull DependencyModule module, final @NotNull KeyParser keyParser) {
         this.module = Objects.requireNonNull(module);
         this.keyParser = Objects.requireNonNull(keyParser);
 
-        this.dependencyFunction = initialize();
+        this.dependencyFunction = initializeFunction();
     }
 
-    private BiFunction<? super Key, ? super Key, ?> initialize() {
+    private BiFunction<? super Key, ? super Key, ?> initializeFunction() {
         final Class<?> moduleClass = module.getClass();
         final Method[] declaredMethods = moduleClass.getDeclaredMethods();
 
-        final Map<Key, Function<Key, ?>> dependencyMap = new HashMap<>(declaredMethods.length);
+        final Map<Key, Function<? super Key, ?>> dependencyMap = new HashMap<>(declaredMethods.length);
         for(final Method declaredMethod : declaredMethods) {
             final DependencySupplier supplierAnnotation = declaredMethod.getAnnotation(DependencySupplier.class);
             if(supplierAnnotation == null) {
@@ -70,7 +81,7 @@ public class ModuleDependencyProvider implements DependencyProvider {
         }
 
         return (type, name) -> {
-            final Function<Key, ?> function = dependencyMap.get(type);
+            final Function<? super Key, ?> function = dependencyMap.get(type);
             if (function == null) {
                 throw new ElementException("Unable to resolve dependency " + type);
             }

@@ -7,10 +7,20 @@ import org.intellij.lang.annotations.Pattern;
 import org.intellij.lang.annotations.Subst;
 import org.jetbrains.annotations.NotNull;
 
+/**
+ * Basic implementation of {@link KeyParser}. Supports variable "default" namespaces for {@link Key} objects to have,
+ * which will be used as the namespace when it is unspecified by the input string.
+ */
 public class BasicKeyParser implements KeyParser {
     @Subst(Constants.NAMESPACE_OR_KEY)
     private final String defaultNamespace;
 
+    /**
+     * Creates a new instance of this class.
+     *
+     * @param defaultNamespace the default namespace, which cannot be null or nonconforming to its pattern
+     * @throws IllegalArgumentException if defaultNamespace is null, empty, or otherwise does not conform to its pattern
+     */
     public BasicKeyParser(final @NotNull @Pattern(Constants.NAMESPACE_PATTERN) String defaultNamespace) {
         if(defaultNamespace.isEmpty()) {
             throw new IllegalArgumentException("Empty namespace not allowed");
