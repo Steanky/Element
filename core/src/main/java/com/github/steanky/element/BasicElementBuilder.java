@@ -38,7 +38,7 @@ public class BasicElementBuilder implements ElementBuilder {
         }
 
         final Key elementKey = keyParser.parseKey(elementModel.value());
-        final ElementInspector.Information elementInformation = elementInspector.inspect(elementClass, elementKey);
+        final ElementInspector.Information elementInformation = elementInspector.inspect(elementClass);
         final ConfigProcessor<? extends Keyed> processor = elementInformation.processor();
         if(processor != null) {
             processorRegistry.register(elementKey, processor);

@@ -21,7 +21,7 @@ public class BasicElementInspector implements ElementInspector {
     }
 
     @Override
-    public @NotNull Information inspect(final @NotNull Class<?> elementClass, final @NotNull Key key) {
+    public @NotNull Information inspect(final @NotNull Class<?> elementClass) {
         final Method[] declaredMethods = elementClass.getDeclaredMethods();
         final ConfigProcessor<? extends Keyed> processor = getProcessor(elementClass, declaredMethods);
         final ElementFactory<?, ?> factory = getFactory(elementClass, declaredMethods, processor != null,
@@ -42,8 +42,14 @@ public class BasicElementInspector implements ElementInspector {
                 validatePublicStatic(elementClass, declaredMethod, () -> "FactoryMethod must be public static");
                 validateReturnType(elementClass, ElementFactory.class, declaredMethod, () -> "FactoryMethod must " +
                         "return an ElementFactory");
-                validateParameterizedReturnType(elementClass, declaredMethod, () -> "ProcessorMethod cannot return a " +
-                        "raw generic");
+                ParameterizedType type = validateParameterizedReturnType(elementClass, declaredMethod,
+                        () -> "FactoryMethod cannot return a raw generic");
+
+                if(!elementClass.isAssignableFrom(ReflectionUtils.getUnderlyingClass(type
+                        .getActualTypeArguments()[1]))) {
+                    formatException(elementClass, "FactoryMethod must return a type assignable to the class it " +
+                            "belongs");
+                }
 
                 factoryMethod = declaredMethod;
             }
