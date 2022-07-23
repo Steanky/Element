@@ -11,11 +11,12 @@ public final class ReflectionUtils {
         throw new UnsupportedOperationException();
     }
 
-    public static Object invokeConstructor(final @NotNull Constructor<?> constructor, final Object... args) {
+    public static <TReturn> TReturn invokeConstructor(final @NotNull Constructor<?> constructor, final Object... args) {
         Objects.requireNonNull(constructor);
 
         try {
-            return constructor.newInstance(args);
+            //noinspection unchecked
+            return (TReturn) constructor.newInstance(args);
         } catch (InstantiationException | IllegalAccessException | InvocationTargetException e) {
             throw new ElementException(e);
         }

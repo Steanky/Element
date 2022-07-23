@@ -5,7 +5,7 @@ import com.github.steanky.ethylene.core.collection.ConfigNode;
 import net.kyori.adventure.key.Keyed;
 import org.jetbrains.annotations.NotNull;
 
-public interface ElementModule {
+public interface ElementBuilder {
     void registerElementClass(final @NotNull Class<?> elementClass);
 
     @NotNull Keyed loadData(final @NotNull ConfigNode node);

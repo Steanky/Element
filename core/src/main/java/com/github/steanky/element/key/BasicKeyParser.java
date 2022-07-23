@@ -12,6 +12,10 @@ public class BasicKeyParser implements KeyParser {
     private final String defaultNamespace;
 
     public BasicKeyParser(final @NotNull @Pattern(Constants.NAMESPACE_PATTERN) String defaultNamespace) {
+        if(defaultNamespace.isEmpty()) {
+            throw new IllegalArgumentException("Empty namespace not allowed");
+        }
+
         for(final char character : defaultNamespace.toCharArray()) {
             if(!validNamespaceChar(character)) {
                 throw new IllegalArgumentException("Invalid default namespace: " + defaultNamespace);

@@ -17,20 +17,20 @@ import java.util.Objects;
 import java.util.function.BiFunction;
 import java.util.function.Function;
 
-class ModuleDependencyProvider implements DependencyProvider {
+public class ModuleDependencyProvider implements DependencyProvider {
     private final DependencyModule module;
     private final KeyParser keyParser;
 
     private final BiFunction<? super Key, ? super Key, ?> dependencyFunction;
 
-    ModuleDependencyProvider(final @NotNull DependencyModule module, final @NotNull KeyParser keyParser) {
+    public ModuleDependencyProvider(final @NotNull DependencyModule module, final @NotNull KeyParser keyParser) {
         this.module = Objects.requireNonNull(module);
         this.keyParser = Objects.requireNonNull(keyParser);
 
-        this.dependencyFunction = initialize(module);
+        this.dependencyFunction = initialize();
     }
 
-    private BiFunction<? super Key, ? super Key, ?> initialize(final Object module) {
+    private BiFunction<? super Key, ? super Key, ?> initialize() {
         final Class<?> moduleClass = module.getClass();
         final Method[] declaredMethods = moduleClass.getDeclaredMethods();
 

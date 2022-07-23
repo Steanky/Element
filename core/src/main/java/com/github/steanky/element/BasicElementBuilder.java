@@ -12,14 +12,14 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.Objects;
 
-public class BasicElementModule implements ElementModule {
+public class BasicElementBuilder implements ElementBuilder {
     private final KeyParser keyParser;
     private final KeyExtractor keyExtractor;
     private final ElementInspector elementInspector;
     private final Registry<ConfigProcessor<? extends Keyed>> processorRegistry;
     private final Registry<ElementFactory<?, ?>> factoryRegistry;
 
-    public BasicElementModule(final @NotNull KeyParser keyParser, final @NotNull KeyExtractor keyExtractor,
+    public BasicElementBuilder(final @NotNull KeyParser keyParser, final @NotNull KeyExtractor keyExtractor,
             final @NotNull ElementInspector elementInspector,
             final @NotNull Registry<ConfigProcessor<? extends Keyed>> processorRegistry,
             final @NotNull Registry<ElementFactory<?, ?>> factoryRegistry) {
