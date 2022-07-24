@@ -12,6 +12,7 @@ A DI-like framework for creating standardized "component" objects from configura
 - [Maintainers](#maintainers)
 - [Contributing](#contributing)
 - [License](#license)
+- [Hosting](#hosting)
 
 ## Background
 
@@ -19,7 +20,7 @@ Making data-driven, extensible frameworks is hard. Element was designed to help 
 
 ## Install
 
-Element is a library, 
+WIP.
 
 ## Usage
 
