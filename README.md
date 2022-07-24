@@ -20,7 +20,28 @@ Making data-driven, extensible frameworks is hard. Element was designed to help 
 
 ## Install
 
-WIP.
+<a href="https://cloudsmith.io/~steank-f1g/repos/element-QiJ/packages/detail/maven/element-core/latest/a=noarch;xg=com.github.steanky/"><img src="https://api-prd.cloudsmith.io/v1/badges/version/steank-f1g/element-QiJ/maven/element-core/latest/a=noarch;xg=com.github.steanky/?render=true&show_latest=true" alt="Latest version of 'element-core' @ Cloudsmith" /></a>
+
+Element binaries are hosted over on [Cloudsmith](https://cloudsmith.io/~steank-f1g/repos/element-QiJ). You can use Element by adding it as a dependency to your build management system of choice.
+
+For Gradle, add the repository URL like this:
+
+```groovy
+repositories {
+    maven {
+        url 'https://dl.cloudsmith.io/public/steank-f1g/element-QiJ/maven/'
+    }
+}
+```
+
+And in your dependencies section:
+
+```groovy
+dependencies {
+    implementation 'com.github.steanky:element-core:1.0.0'
+}
+```
+(this assumes version 1.0.0, check the latest version above)
 
 ## Usage
 
