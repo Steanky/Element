@@ -11,7 +11,9 @@ import org.jetbrains.annotations.NotNull;
 public interface KeyParser {
     /**
      * Converts the given String into a {@link Key}.
+     *
      * @param key the key string
+     *
      * @return the key represented by the string
      * @throws ElementException if the given string is invalid
      */

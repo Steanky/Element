@@ -14,6 +14,7 @@ import java.util.function.Supplier;
 
 /**
  * A {@link HashMap}-based Registry implementation.
+ *
  * @param <TRegistrant> the kind of object stored as a registrant
  */
 public class HashRegistry<TRegistrant> implements Registry<TRegistrant> {
@@ -24,7 +25,7 @@ public class HashRegistry<TRegistrant> implements Registry<TRegistrant> {
      * Creates a new HashRegistry implementation given initial size and load factor.
      *
      * @param initialSize the initial size of the underlying hashmap
-     * @param loadFactor the load factor of the underlying hashmap
+     * @param loadFactor  the load factor of the underlying hashmap
      */
     public HashRegistry(final int initialSize, final float loadFactor) {
         this.map = new HashMap<>(initialSize, loadFactor);
@@ -38,12 +39,21 @@ public class HashRegistry<TRegistrant> implements Registry<TRegistrant> {
         this(16, 0.75F);
     }
 
+    private static <T> T lock(Lock lock, Supplier<? extends T> function) {
+        try {
+            lock.lock();
+            return function.get();
+        } finally {
+            lock.unlock();
+        }
+    }
+
     @Override
     public void register(final @NotNull Key key, final @NotNull TRegistrant registrant) {
         Objects.requireNonNull(key);
         Objects.requireNonNull(registrant);
         lock(readWriteLock.writeLock(), () -> {
-            if(map.putIfAbsent(key, registrant) != null) {
+            if (map.putIfAbsent(key, registrant) != null) {
                 throw new IllegalArgumentException("A registrant already exists under key " + key);
             }
 
@@ -56,7 +66,7 @@ public class HashRegistry<TRegistrant> implements Registry<TRegistrant> {
         Objects.requireNonNull(key);
         return lock(readWriteLock.readLock(), () -> {
             TRegistrant registrant = map.get(key);
-            if(registrant == null) {
+            if (registrant == null) {
                 throw new NoSuchElementException("No registrant under key " + key);
             }
 
@@ -75,15 +85,5 @@ public class HashRegistry<TRegistrant> implements Registry<TRegistrant> {
         Objects.requireNonNull(key);
         Objects.requireNonNull(registrant);
         return lock(readWriteLock.writeLock(), () -> map.putIfAbsent(key, registrant));
-    }
-
-    private static <T> T lock(Lock lock, Supplier<? extends T> function) {
-        try {
-            lock.lock();
-            return function.get();
-        }
-        finally {
-            lock.unlock();
-        }
     }
 }

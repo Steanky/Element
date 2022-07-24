@@ -1,8 +1,5 @@
 package com.github.steanky.element.core;
 
-import com.github.steanky.element.core.BasicKeyExtractor;
-import com.github.steanky.element.core.ElementException;
-import com.github.steanky.element.core.KeyExtractor;
 import com.github.steanky.element.core.key.KeyParser;
 import com.github.steanky.ethylene.core.collection.ConfigNode;
 import com.github.steanky.ethylene.core.collection.LinkedConfigNode;
@@ -10,7 +7,8 @@ import net.kyori.adventure.key.Key;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
 class BasicKeyExtractorTest {
     @Test

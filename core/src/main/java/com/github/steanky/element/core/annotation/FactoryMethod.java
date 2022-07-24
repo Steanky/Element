@@ -10,8 +10,8 @@ import java.lang.annotation.Target;
 
 /**
  * May denote a public static parameterless accessor method which must return a {@link ElementFactory} implementation
- * capable of returning the class to which it belongs. Alternatively, can denote a constructor which takes at most
- * one "data" object (which must subclass {@link Keyed}) and any number of "dependencies".
+ * capable of returning the class to which it belongs. Alternatively, can denote a constructor which takes at most one
+ * "data" object (which must subclass {@link Keyed}) and any number of "dependencies".
  */
 @Retention(RetentionPolicy.RUNTIME)
 @Target({ElementType.METHOD, ElementType.CONSTRUCTOR})

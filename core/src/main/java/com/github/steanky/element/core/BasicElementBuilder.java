@@ -1,8 +1,8 @@
 package com.github.steanky.element.core;
 
+import com.github.steanky.element.core.annotation.ElementModel;
 import com.github.steanky.element.core.dependency.DependencyProvider;
 import com.github.steanky.element.core.key.KeyParser;
-import com.github.steanky.element.core.annotation.ElementModel;
 import com.github.steanky.ethylene.core.collection.ConfigNode;
 import com.github.steanky.ethylene.core.processor.ConfigProcessException;
 import com.github.steanky.ethylene.core.processor.ConfigProcessor;
@@ -25,19 +25,16 @@ public class BasicElementBuilder implements ElementBuilder {
     /**
      * Creates a new instance of this class.
      *
-     * @param keyParser the {@link KeyParser} used to parse keys from strings
-     * @param keyExtractor the {@link KeyExtractor} used to extract keys from {@link ConfigNode} objects
-     * @param elementInspector the {@link ElementInspector} used to extract a factory and processor from an element
-     *                         object class
-     * @param processorRegistry a {@link Registry} of {@link ConfigProcessor}s used to derive ConfigProcessor
-     *                          instances from data keys
-     * @param factoryRegistry a Registry of {@link ElementFactory} used to derive ElementFactory instances from data
-     *                        keys
+     * @param keyParser         the {@link KeyParser} used to parse keys from strings
+     * @param keyExtractor      the {@link KeyExtractor} used to extract keys from {@link ConfigNode} objects
+     * @param elementInspector  the {@link ElementInspector} used to extract a factory and processor from an element
+     *                          object class
+     * @param processorRegistry a {@link Registry} of {@link ConfigProcessor}s used to derive ConfigProcessor instances
+     *                          from data keys
+     * @param factoryRegistry   a Registry of {@link ElementFactory} used to derive ElementFactory instances from data
+     *                          keys
      */
-    public BasicElementBuilder(final @NotNull KeyParser keyParser, final @NotNull KeyExtractor keyExtractor,
-            final @NotNull ElementInspector elementInspector,
-            final @NotNull Registry<ConfigProcessor<? extends Keyed>> processorRegistry,
-            final @NotNull Registry<ElementFactory<?, ?>> factoryRegistry) {
+    public BasicElementBuilder(final @NotNull KeyParser keyParser, final @NotNull KeyExtractor keyExtractor, final @NotNull ElementInspector elementInspector, final @NotNull Registry<ConfigProcessor<? extends Keyed>> processorRegistry, final @NotNull Registry<ElementFactory<?, ?>> factoryRegistry) {
         this.keyParser = Objects.requireNonNull(keyParser);
         this.keyExtractor = Objects.requireNonNull(keyExtractor);
         this.elementInspector = Objects.requireNonNull(elementInspector);
@@ -48,14 +45,14 @@ public class BasicElementBuilder implements ElementBuilder {
     @Override
     public void registerElementClass(final @NotNull Class<?> elementClass) {
         final ElementModel elementModel = elementClass.getAnnotation(ElementModel.class);
-        if(elementModel == null) {
+        if (elementModel == null) {
             throw new ElementException(elementClass + " does not have an ElementModel annotation");
         }
 
         final Key elementKey = keyParser.parseKey(elementModel.value());
         final ElementInspector.Information elementInformation = elementInspector.inspect(elementClass);
         final ConfigProcessor<? extends Keyed> processor = elementInformation.processor();
-        if(processor != null) {
+        if (processor != null) {
             processorRegistry.register(elementKey, processor);
         }
 
@@ -66,11 +63,9 @@ public class BasicElementBuilder implements ElementBuilder {
     public @NotNull Keyed loadData(final @NotNull ConfigNode node) {
         try {
             return processorRegistry.lookup(keyExtractor.extract(node)).dataFromElement(node);
-        }
-        catch (ConfigProcessException e) {
+        } catch (ConfigProcessException e) {
             throw new ElementException("Could not process node", e);
-        }
-        catch (Exception e) {
+        } catch (Exception e) {
             throw new ElementException("Unable to load data", e);
         }
     }
@@ -78,13 +73,11 @@ public class BasicElementBuilder implements ElementBuilder {
 
     @Override
     @SuppressWarnings("unchecked")
-    public <TElement> @NotNull TElement loadElement(final @NotNull Keyed data,
-            final @NotNull DependencyProvider dependencyProvider) {
+    public <TElement> @NotNull TElement loadElement(final @NotNull Keyed data, final @NotNull DependencyProvider dependencyProvider) {
         try {
-            return (TElement) ((ElementFactory<Keyed, ?>) factoryRegistry.lookup(data.key()))
-                    .make(data, dependencyProvider);
-        }
-        catch (Exception e) {
+            return (TElement) ((ElementFactory<Keyed, ?>) factoryRegistry.lookup(data.key())).make(data,
+                    dependencyProvider);
+        } catch (Exception e) {
             throw new ElementException("Exception when loading element", e);
         }
     }

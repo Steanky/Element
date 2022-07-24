@@ -15,6 +15,7 @@ public interface ElementBuilder {
      * {@link ElementException} will be thrown.
      *
      * @param elementClass the class to register
+     *
      * @throws ElementException if an exception occurs
      */
     void registerElementClass(final @NotNull Class<?> elementClass);
@@ -23,6 +24,7 @@ public interface ElementBuilder {
      * Loads some data from a {@link ConfigNode}.
      *
      * @param node the node to load data from
+     *
      * @return a data object, which may be used to create an element object along with a {@link DependencyProvider}
      */
     @NotNull Keyed loadData(final @NotNull ConfigNode node);
@@ -31,11 +33,11 @@ public interface ElementBuilder {
      * Loads an element object from the given {@link Keyed} data object, and potentially uses the given
      * {@link DependencyProvider} to supply dependencies.
      *
-     * @param data the data object
+     * @param data               the data object
      * @param dependencyProvider the DependencyProvider implementation used to provide dependencies
+     * @param <TElement>         the type of object produced
+     *
      * @return the element object
-     * @param <TElement> the type of object produced
      */
-    <TElement> @NotNull TElement loadElement(final @NotNull Keyed data,
-            final @NotNull DependencyProvider dependencyProvider);
+    <TElement> @NotNull TElement loadElement(final @NotNull Keyed data, final @NotNull DependencyProvider dependencyProvider);
 }

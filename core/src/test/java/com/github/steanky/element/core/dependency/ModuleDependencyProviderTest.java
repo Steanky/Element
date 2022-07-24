@@ -7,61 +7,10 @@ import net.kyori.adventure.key.Key;
 import org.jetbrains.annotations.NotNull;
 import org.junit.jupiter.api.Test;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
 class ModuleDependencyProviderTest {
-    public static class SimpleModule implements DependencyModule {
-        @DependencySupplier("test:non_static_method")
-        public int nonStaticMethod() {
-            return 69;
-        }
-
-        @DependencySupplier("test:static_method")
-        public static int staticMethod() {
-            return 69420;
-        }
-    }
-
-    static class NonPublicModule implements DependencyModule {
-    }
-
-    public static class KeyedModule implements DependencyModule {
-        @DependencySupplier("test:non_static_method")
-        public @NotNull Key nonStaticMethod(@NotNull Key name) {
-            return name;
-        }
-
-        @DependencySupplier("test:static_method")
-        public static @NotNull Key staticMethod(@NotNull Key name) {
-            return name;
-        }
-
-        public int ignored(@NotNull String method1, int method2) {
-            return 6974566;
-        }
-    }
-
-    public static class VoidMethod implements DependencyModule {
-        @DependencySupplier("test:void_method")
-        public static void testMethod() {
-
-        }
-    }
-
-    public static class TooManyParameters implements DependencyModule {
-        @DependencySupplier("test:too_many_parameters")
-        public static int testMethod(Key first, Key second) {
-            return 0;
-        }
-    }
-
-    public static class WrongType implements DependencyModule {
-        @DependencySupplier("test:wrong_type")
-        public static int testMethod(String first) {
-            return 0;
-        }
-    }
-
     @Test
     void simpleModule() {
         DependencyProvider dependencyProvider = new ModuleDependencyProvider(new SimpleModule(), new BasicKeyParser());
@@ -74,7 +23,8 @@ class ModuleDependencyProviderTest {
 
     @Test
     void nonPublicModule() {
-        assertThrows(ElementException.class, () -> new ModuleDependencyProvider(new NonPublicModule(), new BasicKeyParser()));
+        assertThrows(ElementException.class,
+                () -> new ModuleDependencyProvider(new NonPublicModule(), new BasicKeyParser()));
     }
 
     @Test
@@ -108,18 +58,70 @@ class ModuleDependencyProviderTest {
 
     @Test
     void voidMethod() {
-        assertThrows(ElementException.class, () -> new ModuleDependencyProvider(new VoidMethod(), new BasicKeyParser()));
+        assertThrows(ElementException.class,
+                () -> new ModuleDependencyProvider(new VoidMethod(), new BasicKeyParser()));
     }
 
     @Test
     void tooManyParameters() {
-        assertThrows(ElementException.class, () -> new ModuleDependencyProvider(new TooManyParameters(),
-                new BasicKeyParser()));
+        assertThrows(ElementException.class,
+                () -> new ModuleDependencyProvider(new TooManyParameters(), new BasicKeyParser()));
     }
 
     @Test
     void wrongType() {
-        assertThrows(ElementException.class, () -> new ModuleDependencyProvider(new WrongType(),
-                new BasicKeyParser()));
+        assertThrows(ElementException.class, () -> new ModuleDependencyProvider(new WrongType(), new BasicKeyParser()));
+    }
+
+    public static class SimpleModule implements DependencyModule {
+        @DependencySupplier("test:static_method")
+        public static int staticMethod() {
+            return 69420;
+        }
+
+        @DependencySupplier("test:non_static_method")
+        public int nonStaticMethod() {
+            return 69;
+        }
+    }
+
+    static class NonPublicModule implements DependencyModule {
+    }
+
+    public static class KeyedModule implements DependencyModule {
+        @DependencySupplier("test:static_method")
+        public static @NotNull Key staticMethod(@NotNull Key name) {
+            return name;
+        }
+
+        @DependencySupplier("test:non_static_method")
+        public @NotNull Key nonStaticMethod(@NotNull Key name) {
+            return name;
+        }
+
+        public int ignored(@NotNull String method1, int method2) {
+            return 6974566;
+        }
+    }
+
+    public static class VoidMethod implements DependencyModule {
+        @DependencySupplier("test:void_method")
+        public static void testMethod() {
+
+        }
+    }
+
+    public static class TooManyParameters implements DependencyModule {
+        @DependencySupplier("test:too_many_parameters")
+        public static int testMethod(Key first, Key second) {
+            return 0;
+        }
+    }
+
+    public static class WrongType implements DependencyModule {
+        @DependencySupplier("test:wrong_type")
+        public static int testMethod(String first) {
+            return 0;
+        }
     }
 }

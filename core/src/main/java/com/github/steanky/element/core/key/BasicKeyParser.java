@@ -19,15 +19,17 @@ public class BasicKeyParser implements KeyParser {
      * Creates a new instance of this class.
      *
      * @param defaultNamespace the default namespace, which cannot be null or nonconforming to its pattern
-     * @throws IllegalArgumentException if defaultNamespace is null, empty, or otherwise does not conform to its pattern
+     *
+     * @throws IllegalArgumentException if defaultNamespace is null, empty, or otherwise does not conform to its
+     *                                  pattern
      */
     public BasicKeyParser(final @NotNull @Pattern(Constants.NAMESPACE_PATTERN) String defaultNamespace) {
-        if(defaultNamespace.isEmpty()) {
+        if (defaultNamespace.isEmpty()) {
             throw new IllegalArgumentException("Empty namespace not allowed");
         }
 
-        for(final char character : defaultNamespace.toCharArray()) {
-            if(!validNamespaceChar(character)) {
+        for (final char character : defaultNamespace.toCharArray()) {
+            if (!validNamespaceChar(character)) {
                 throw new IllegalArgumentException("Invalid default namespace: " + defaultNamespace);
             }
         }
@@ -42,18 +44,6 @@ public class BasicKeyParser implements KeyParser {
         this(Key.MINECRAFT_NAMESPACE);
     }
 
-    @Override
-    public @NotNull Key parseKey(final @NotNull @Subst(Constants.NAMESPACE_OR_KEY) String keyString) {
-        @Subst(Constants.NAMESPACE_OR_KEY)
-        final Key key = parseInput(keyString);
-
-        if(!hasExplicitNamespace(keyString)) {
-            return Key.key(defaultNamespace, keyString);
-        }
-
-        return key;
-    }
-
     private static boolean validNamespaceChar(final int value) {
         return value == '_' || value == '-' || (value >= 'a' && value <= 'z') || (value >= '0' && value <= '9') ||
                 value == '.';
@@ -66,9 +56,20 @@ public class BasicKeyParser implements KeyParser {
     private static Key parseInput(final @Subst(Constants.NAMESPACED_KEY) String input) {
         try {
             return Key.key(input);
-        }
-        catch (InvalidKeyException e) {
+        } catch (InvalidKeyException e) {
             throw new ElementException("Illegal key string " + input, e);
         }
+    }
+
+    @Override
+    public @NotNull Key parseKey(final @NotNull @Subst(Constants.NAMESPACE_OR_KEY) String keyString) {
+        @Subst(Constants.NAMESPACE_OR_KEY)
+        final Key key = parseInput(keyString);
+
+        if (!hasExplicitNamespace(keyString)) {
+            return Key.key(defaultNamespace, keyString);
+        }
+
+        return key;
     }
 }

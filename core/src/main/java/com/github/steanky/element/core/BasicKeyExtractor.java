@@ -19,7 +19,7 @@ public class BasicKeyExtractor implements KeyExtractor {
     /**
      * Create a new instance of this class.
      *
-     * @param keyName the name of the key passed to {@link ConfigElement#getStringOrThrow(Object...)}
+     * @param keyName   the name of the key passed to {@link ConfigElement#getStringOrThrow(Object...)}
      * @param keyParser the {@link KeyParser} instance used to parse strings into {@link Key} instances
      */
     public BasicKeyExtractor(final @NotNull String keyName, final @NotNull KeyParser keyParser) {
@@ -31,8 +31,7 @@ public class BasicKeyExtractor implements KeyExtractor {
     public @NotNull Key extract(final @NotNull ConfigNode node) {
         try {
             return keyParser.parseKey(node.getStringOrThrow(keyName));
-        }
-        catch (ConfigProcessException e) {
+        } catch (ConfigProcessException e) {
             throw new ElementException("Failed to extract key", e);
         }
     }

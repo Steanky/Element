@@ -11,7 +11,9 @@ import org.jetbrains.annotations.NotNull;
 public interface KeyExtractor {
     /**
      * Extracts a {@link Key} from a {@link ConfigNode}. If no key can be found, throws an {@link ElementException}.
+     *
      * @param node the node to extract a key from
+     *
      * @return the extracted key
      * @throws ElementException if no valid key may be extracted
      */

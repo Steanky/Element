@@ -17,6 +17,7 @@ import java.lang.annotation.Target;
 public @interface ElementModel {
     /**
      * The name of this element, which must be a valid key string.
+     *
      * @return the name of this element
      */
     @NotNull @Pattern(Constants.KEY_PATTERN) String value();

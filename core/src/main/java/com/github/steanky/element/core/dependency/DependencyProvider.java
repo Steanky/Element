@@ -14,19 +14,23 @@ public interface DependencyProvider {
     /**
      * Provides the given dependency, which may be named.
      *
-     * @param type the dependency type
-     * @param name the name used to further narrow down the instance; may be null, depending on the implementation
-     * @return the dependency object
+     * @param type          the dependency type
+     * @param name          the name used to further narrow down the instance; may be null, depending on the
+     *                      implementation
      * @param <TDependency> the type of object to depend upon
+     *
+     * @return the dependency object
      * @throws ElementException if the dependency could not be loaded
      */
     <TDependency> @NotNull TDependency provide(final @NotNull Key type, final @Nullable Key name);
 
     /**
      * Provides the given dependency, assuming a null name.
-     * @param type the dependency type
-     * @return the dependency object
+     *
+     * @param type          the dependency type
      * @param <TDependency> the type of object to depend upon
+     *
+     * @return the dependency object
      * @throws ElementException if the dependency could not be loaded
      */
     default <TDependency> @NotNull TDependency provide(final @NotNull Key type) {

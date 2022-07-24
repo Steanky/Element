@@ -13,6 +13,7 @@ public class ElementException extends RuntimeException {
 
     /**
      * Creates a new ElementException with the given detail message and no cause.
+     *
      * @param message the detail message
      */
     public ElementException(String message) {
@@ -21,8 +22,9 @@ public class ElementException extends RuntimeException {
 
     /**
      * Creates a new ElementException with the given detail message and cause.
+     *
      * @param message the detail message
-     * @param cause the cause of this exception
+     * @param cause   the cause of this exception
      */
     public ElementException(String message, Throwable cause) {
         super(message, cause);
@@ -30,6 +32,7 @@ public class ElementException extends RuntimeException {
 
     /**
      * Creates a new ElementException with the given cause and no detail message.
+     *
      * @param cause the cause of this exception
      */
     public ElementException(Throwable cause) {
