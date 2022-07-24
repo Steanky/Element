@@ -101,6 +101,30 @@ class ModuleDependencyProviderTest {
         assertNotSame(dependencyProvider.provide(key2), object2);
     }
 
+    @Test
+    void namedMemoizing() {
+        final DependencyProvider dependencyProvider = new ModuleDependencyProvider(new NamedMemoizing(),
+                                                                                   new BasicKeyParser());
+        final Key key = Key.key("test:memoized");
+        final Key first = Key.key("test:first");
+        final Key second = Key.key("test:second");
+        final Object firstObject = dependencyProvider.provide(key, first);
+        final Object secondObject = dependencyProvider.provide(key, second);
+
+        assertSame(firstObject, dependencyProvider.provide(key, first));
+        assertNotSame(firstObject, secondObject);
+
+        assertSame(secondObject, dependencyProvider.provide(key, second));
+    }
+
+    public static class NamedMemoizing implements DependencyModule {
+        @DependencySupplier("test:memoized")
+        @Memoized
+        public static @NotNull Object memoized(@NotNull Key name) {
+            return new Object();
+        }
+    }
+
     public static class NotMemoizing implements DependencyModule {
         @DependencySupplier("test:static")
         public static @NotNull Object memoizedStatic() {
