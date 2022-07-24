@@ -2,20 +2,21 @@ package com.github.steanky.element.core.dependency;
 
 import com.github.steanky.element.core.ElementException;
 import com.github.steanky.element.core.annotation.DependencySupplier;
+import com.github.steanky.element.core.annotation.Memoized;
 import com.github.steanky.element.core.key.BasicKeyParser;
 import net.kyori.adventure.key.Key;
 import org.jetbrains.annotations.NotNull;
 import org.junit.jupiter.api.Test;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.*;
 
 class ModuleDependencyProviderTest {
     @Test
     void simpleModule() {
-        DependencyProvider dependencyProvider = new ModuleDependencyProvider(new SimpleModule(), new BasicKeyParser());
-        int first = dependencyProvider.provide(Key.key("test:non_static_method"));
-        int second = dependencyProvider.provide(Key.key("test:static_method"));
+        final DependencyProvider dependencyProvider = new ModuleDependencyProvider(new SimpleModule(),
+                                                                               new BasicKeyParser());
+        final int first = dependencyProvider.provide(Key.key("test:non_static_method"));
+        final int second = dependencyProvider.provide(Key.key("test:static_method"));
 
         assertEquals(69, first);
         assertEquals(69420, second);
@@ -29,12 +30,12 @@ class ModuleDependencyProviderTest {
 
     @Test
     void namedDependencies() {
-        DependencyProvider dependencyProvider = new ModuleDependencyProvider(new KeyedModule(), new BasicKeyParser());
-        Key nonStatic = Key.key("test:non_static_method");
-        Key staticKey = Key.key("test:static_method");
+        final DependencyProvider dependencyProvider = new ModuleDependencyProvider(new KeyedModule(), new BasicKeyParser());
+        final Key nonStatic = Key.key("test:non_static_method");
+        final Key staticKey = Key.key("test:static_method");
 
-        Key first = dependencyProvider.provide(nonStatic, nonStatic);
-        Key second = dependencyProvider.provide(staticKey, staticKey);
+        final Key first = dependencyProvider.provide(nonStatic, nonStatic);
+        final Key second = dependencyProvider.provide(staticKey, staticKey);
 
         assertEquals(nonStatic, first);
         assertEquals(staticKey, second);
@@ -42,16 +43,16 @@ class ModuleDependencyProviderTest {
 
     @Test
     void nullKey() {
-        DependencyProvider dependencyProvider = new ModuleDependencyProvider(new KeyedModule(), new BasicKeyParser());
-        Key nonStatic = Key.key("test:non_static_method");
+        final DependencyProvider dependencyProvider = new ModuleDependencyProvider(new KeyedModule(), new BasicKeyParser());
+        final Key nonStatic = Key.key("test:non_static_method");
 
         assertThrows(ElementException.class, () -> dependencyProvider.provide(nonStatic));
     }
 
     @Test
     void nonNullKey() {
-        DependencyProvider dependencyProvider = new ModuleDependencyProvider(new SimpleModule(), new BasicKeyParser());
-        Key nonStatic = Key.key("test:non_static_method");
+        final DependencyProvider dependencyProvider = new ModuleDependencyProvider(new SimpleModule(), new BasicKeyParser());
+        final Key nonStatic = Key.key("test:non_static_method");
 
         assertThrows(ElementException.class, () -> dependencyProvider.provide(nonStatic, nonStatic));
     }
@@ -71,6 +72,59 @@ class ModuleDependencyProviderTest {
     @Test
     void wrongType() {
         assertThrows(ElementException.class, () -> new ModuleDependencyProvider(new WrongType(), new BasicKeyParser()));
+    }
+
+    @Test
+    void memoized() {
+        final DependencyProvider dependencyProvider = new ModuleDependencyProvider(new MemoizingModule(),
+                                                                                   new BasicKeyParser());
+        final Key key = Key.key("test:memoized");
+        final Object object = dependencyProvider.provide(key);
+        assertSame(dependencyProvider.provide(key), object);
+
+        final Key key2 = Key.key("test:memoized_static");
+        final Object object2 = dependencyProvider.provide(key2);
+        assertSame(dependencyProvider.provide(key2), object2);
+    }
+
+    @Test
+    void notMemoized() {
+        final DependencyProvider dependencyProvider = new ModuleDependencyProvider(new NotMemoizing(),
+                                                                                   new BasicKeyParser());
+
+        final Key key = Key.key("test:non_static");
+        final Object object = dependencyProvider.provide(key);
+        assertNotSame(dependencyProvider.provide(key), object);
+
+        final Key key2 = Key.key("test:static");
+        final Object object2 = dependencyProvider.provide(key2);
+        assertNotSame(dependencyProvider.provide(key2), object2);
+    }
+
+    public static class NotMemoizing implements DependencyModule {
+        @DependencySupplier("test:static")
+        public static @NotNull Object memoizedStatic() {
+            return new Object();
+        }
+
+        @DependencySupplier("test:non_static")
+        public @NotNull Object memoized() {
+            return new Object();
+        }
+    }
+
+    public static class MemoizingModule implements DependencyModule {
+        @DependencySupplier("test:memoized_static")
+        @Memoized
+        public static @NotNull Object memoizedStatic() {
+            return new Object();
+        }
+
+        @DependencySupplier("test:memoized")
+        @Memoized
+        public @NotNull Object memoized() {
+            return new Object();
+        }
     }
 
     public static class SimpleModule implements DependencyModule {
