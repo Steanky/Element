@@ -6,7 +6,7 @@ if (localSettings.exists()) {
 }
 
 
-sequenceOf("core").forEach {
+sequenceOf("core", "example").forEach {
     val projectDirectory = file(it)
     include(":${rootProject.name}-$it")
     project(":${rootProject.name}-$it").projectDir = projectDirectory
