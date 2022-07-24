@@ -1,5 +1,5 @@
 plugins {
-    id("element.java-library-conventions")
+    id("element.java-conventions")
 }
 
 repositories {
@@ -7,6 +7,7 @@ repositories {
 }
 
 dependencies {
-    api(libs.ethylene.core)
-    api(libs.adventure.text)
+    implementation(libs.ethylene.core)
+    implementation(libs.adventure.text)
+    implementation(project(":element-core"))
 }

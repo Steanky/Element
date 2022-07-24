@@ -3,6 +3,7 @@ package com.github.steanky.element.core.dependency;
 import com.github.steanky.element.core.ElementException;
 import com.github.steanky.element.core.ReflectionUtils;
 import com.github.steanky.element.core.annotation.DependencySupplier;
+import com.github.steanky.element.core.annotation.Memoizing;
 import com.github.steanky.element.core.key.KeyParser;
 import net.kyori.adventure.key.Key;
 import org.jetbrains.annotations.NotNull;
@@ -71,18 +72,28 @@ public class ModuleDependencyProvider implements DependencyProvider {
                 throw new ElementException("Supplier has too many parameters");
             }
 
+            final boolean memoize;
+
             if (supplierParameters.length == 0) {
-                dependencyMap.put(dependencyName, new DependencyFunction() {
-                    @Override
-                    public boolean requiresKey() {
-                        return false;
-                    }
+                memoize = declaredMethod.isAnnotationPresent(Memoizing.class);
+
+                dependencyMap.put(dependencyName, new DependencyFunction(false) {
+                    private Object value = null;
 
                     @Override
-                    public Object apply(Key key) {
-                        return ReflectionUtils.invokeMethod(declaredMethod, module);
+                    public Object apply(final Key key) {
+                        if(!memoize) {
+                            return ReflectionUtils.invokeMethod(declaredMethod, module);
+                        }
+
+                        if(value != null) {
+                            return value;
+                        }
+
+                        return value = ReflectionUtils.invokeMethod(declaredMethod, module);
                     }
                 });
+
                 continue;
             }
 
@@ -91,15 +102,17 @@ public class ModuleDependencyProvider implements DependencyProvider {
                 throw new ElementException("Expected subclass of Key, was " + parameterType);
             }
 
-            dependencyMap.put(dependencyName, new DependencyFunction() {
-                @Override
-                public boolean requiresKey() {
-                    return true;
-                }
+            memoize = declaredMethod.isAnnotationPresent(Memoizing.class);
+            dependencyMap.put(dependencyName, new DependencyFunction(true) {
+                private final Map<Key, Object> values = memoize ? new HashMap<>(4) : null;
 
                 @Override
                 public Object apply(Key key) {
-                    return ReflectionUtils.invokeMethod(declaredMethod, module, key);
+                    if(!memoize) {
+                        return ReflectionUtils.invokeMethod(declaredMethod, module, key);
+                    }
+
+                    return values.computeIfAbsent(key, k -> ReflectionUtils.invokeMethod(declaredMethod, module, k));
                 }
             });
         }
@@ -110,7 +123,7 @@ public class ModuleDependencyProvider implements DependencyProvider {
                 throw new ElementException("Unable to resolve dependency " + type);
             }
 
-            if (function.requiresKey() == (name == null)) {
+            if (function.requiresKey == (name == null)) {
                 throw new ElementException(name == null ? "Dependency supplier needs a key, but none was provided" :
                         "Dependency supplier takes no arguments, but a key was provided");
             }
@@ -130,7 +143,11 @@ public class ModuleDependencyProvider implements DependencyProvider {
         return (TDependency) dependencyFunction.apply(type, name);
     }
 
-    private interface DependencyFunction extends Function<Key, Object> {
-        boolean requiresKey();
+    private static abstract class DependencyFunction implements Function<Key, Object> {
+        private final boolean requiresKey;
+
+        private DependencyFunction(boolean requiresKey) {
+            this.requiresKey = requiresKey;
+        }
     }
 }
