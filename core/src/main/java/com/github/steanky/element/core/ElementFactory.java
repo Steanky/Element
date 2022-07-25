@@ -17,7 +17,6 @@ public interface ElementFactory<TData extends Keyed, TElement> {
      *
      * @param data               the data used to create the element
      * @param dependencyProvider the {@link DependencyProvider} implementation used to provide necessary dependencies
-     *
      * @return the element object
      */
     @NotNull TElement make(final @NotNull TData data, final @NotNull DependencyProvider dependencyProvider);

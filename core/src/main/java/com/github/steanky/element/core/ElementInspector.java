@@ -16,7 +16,6 @@ public interface ElementInspector {
      * Performs an inspection on the given element class.
      *
      * @param elementClass the class from which to extract information
-     *
      * @return an {@link Information} object representing the element's information
      */
     @NotNull Information inspect(final @NotNull Class<?> elementClass);

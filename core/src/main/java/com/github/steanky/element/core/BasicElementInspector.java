@@ -31,7 +31,8 @@ public class BasicElementInspector implements ElementInspector {
         this.keyParser = Objects.requireNonNull(keyParser);
     }
 
-    private static ElementFactory<?, ?> getFactory(final Class<?> elementClass, final Method[] declaredMethods, final boolean hasProcessor, final KeyParser parser) {
+    private static ElementFactory<?, ?> getFactory(final Class<?> elementClass, final Method[] declaredMethods,
+            final boolean hasProcessor, final KeyParser parser) {
         Method factoryMethod = null;
         for (final Method declaredMethod : declaredMethods) {
             if (declaredMethod.isAnnotationPresent(FactoryMethod.class)) {
@@ -158,7 +159,8 @@ public class BasicElementInspector implements ElementInspector {
         };
     }
 
-    private static ConfigProcessor<? extends Keyed> getProcessor(final Class<?> elementClass, final Method[] declaredMethods) {
+    private static ConfigProcessor<? extends Keyed> getProcessor(final Class<?> elementClass,
+            final Method[] declaredMethods) {
         Method processorMethod = null;
         for (final Method declaredMethod : declaredMethods) {
             if (declaredMethod.isAnnotationPresent(ProcessorMethod.class)) {
@@ -195,27 +197,31 @@ public class BasicElementInspector implements ElementInspector {
         return null;
     }
 
-    private static void validateNoParameters(final Class<?> elementClass, final Method method, final Supplier<String> exceptionMessage) {
+    private static void validateNoParameters(final Class<?> elementClass, final Method method,
+            final Supplier<String> exceptionMessage) {
         if (method.getParameterCount() != 0) {
             formatException(elementClass, exceptionMessage.get());
         }
     }
 
-    private static void validatePublicStatic(final Class<?> elementClass, final Member member, final Supplier<String> exceptionMessage) {
+    private static void validatePublicStatic(final Class<?> elementClass, final Member member,
+            final Supplier<String> exceptionMessage) {
         final int modifiers = member.getModifiers();
         if (!Modifier.isPublic(modifiers) || !Modifier.isStatic(modifiers)) {
             formatException(elementClass, exceptionMessage.get());
         }
     }
 
-    private static void validateReturnType(final Class<?> elementClass, final Class<?> requiredType, final Method method, final Supplier<String> exceptionMessage) {
+    private static void validateReturnType(final Class<?> elementClass, final Class<?> requiredType,
+            final Method method, final Supplier<String> exceptionMessage) {
         final Class<?> returnType = method.getReturnType();
         if (!requiredType.isAssignableFrom(returnType)) {
             formatException(elementClass, exceptionMessage.get());
         }
     }
 
-    private static ParameterizedType validateParameterizedReturnType(final Class<?> elementClass, final Method method, final Supplier<String> exceptionMessage) {
+    private static ParameterizedType validateParameterizedReturnType(final Class<?> elementClass, final Method method,
+            final Supplier<String> exceptionMessage) {
         final Type genericReturnType = method.getGenericReturnType();
         if (!(genericReturnType instanceof ParameterizedType)) {
             formatException(elementClass, exceptionMessage.get());

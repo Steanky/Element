@@ -11,5 +11,4 @@ import java.lang.annotation.Target;
  */
 @Retention(RetentionPolicy.RUNTIME)
 @Target({ElementType.PARAMETER, ElementType.TYPE})
-public @interface ElementData {
-}
+public @interface ElementData {}

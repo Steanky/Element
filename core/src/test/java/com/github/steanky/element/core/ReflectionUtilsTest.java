@@ -26,8 +26,7 @@ class ReflectionUtilsTest {
         return null;
     }
 
-    private static class UnsupportedCustomType implements Type {
-    }
+    private static class UnsupportedCustomType implements Type {}
 
     @Nested
     class UnderlyingClass {
@@ -37,53 +36,46 @@ class ReflectionUtilsTest {
         }
 
         @Test
-        void parameterizedType()
-        throws NoSuchFieldException {
+        void parameterizedType() throws NoSuchFieldException {
             Type type = ReflectionUtilsTest.class.getDeclaredField("parameterizedType").getGenericType();
             assertEquals(List.class, ReflectionUtils.getUnderlyingClass(type));
         }
 
         @Test
-        void upperBoundedWildcard()
-        throws NoSuchFieldException {
+        void upperBoundedWildcard() throws NoSuchFieldException {
             Type type = ((ParameterizedType) ReflectionUtilsTest.class.getDeclaredField("upperBound")
-                                                                      .getGenericType()).getActualTypeArguments()[0];
+                    .getGenericType()).getActualTypeArguments()[0];
             assertEquals(String.class, ReflectionUtils.getUnderlyingClass(type));
         }
 
         @Test
-        void lowerBoundedWildcard()
-        throws NoSuchFieldException {
+        void lowerBoundedWildcard() throws NoSuchFieldException {
             Type type = ((ParameterizedType) ReflectionUtilsTest.class.getDeclaredField("lowerBound")
-                                                                      .getGenericType()).getActualTypeArguments()[0];
+                    .getGenericType()).getActualTypeArguments()[0];
             assertEquals(Object.class, ReflectionUtils.getUnderlyingClass(type));
         }
 
         @Test
-        void genericArray()
-        throws NoSuchFieldException {
+        void genericArray() throws NoSuchFieldException {
             Type type = ReflectionUtilsTest.class.getDeclaredField("genericArray").getGenericType();
             assertEquals(List[].class, ReflectionUtils.getUnderlyingClass(type));
         }
 
         @Test
-        void typeVariable()
-        throws NoSuchMethodException {
+        void typeVariable() throws NoSuchMethodException {
             Type type = ReflectionUtilsTest.class.getDeclaredMethod("uselessMethod").getGenericReturnType();
             assertEquals(String.class, ReflectionUtils.getUnderlyingClass(type));
         }
 
         @Test
-        void wildcard()
-        throws NoSuchFieldException {
+        void wildcard() throws NoSuchFieldException {
             Type type = ((ParameterizedType) ReflectionUtilsTest.class.getDeclaredField("wildcard")
-                                                                      .getGenericType()).getActualTypeArguments()[0];
+                    .getGenericType()).getActualTypeArguments()[0];
             assertEquals(Object.class, ReflectionUtils.getUnderlyingClass(type));
         }
 
         @Test
-        void cursedReturnType()
-        throws NoSuchMethodException {
+        void cursedReturnType() throws NoSuchMethodException {
             Type type = ReflectionUtilsTest.class.getDeclaredMethod("cursed").getGenericReturnType();
             assertEquals(String[][][][][].class, ReflectionUtils.getUnderlyingClass(type));
         }

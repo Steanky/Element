@@ -81,11 +81,11 @@ public class ModuleDependencyProvider implements DependencyProvider {
 
                     @Override
                     public Object apply(final Key key) {
-                        if(!memoize) {
+                        if (!memoize) {
                             return ReflectionUtils.invokeMethod(declaredMethod, module);
                         }
 
-                        if(value != null) {
+                        if (value != null) {
                             return value;
                         }
 
@@ -107,7 +107,7 @@ public class ModuleDependencyProvider implements DependencyProvider {
 
                 @Override
                 public Object apply(Key key) {
-                    if(!memoize) {
+                    if (!memoize) {
                         return ReflectionUtils.invokeMethod(declaredMethod, module, key);
                     }
 

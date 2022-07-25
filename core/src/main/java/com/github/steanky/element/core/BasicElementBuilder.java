@@ -34,7 +34,10 @@ public class BasicElementBuilder implements ElementBuilder {
      * @param factoryRegistry   a Registry of {@link ElementFactory} used to derive ElementFactory instances from data
      *                          keys
      */
-    public BasicElementBuilder(final @NotNull KeyParser keyParser, final @NotNull KeyExtractor keyExtractor, final @NotNull ElementInspector elementInspector, final @NotNull Registry<ConfigProcessor<? extends Keyed>> processorRegistry, final @NotNull Registry<ElementFactory<?, ?>> factoryRegistry) {
+    public BasicElementBuilder(final @NotNull KeyParser keyParser, final @NotNull KeyExtractor keyExtractor,
+            final @NotNull ElementInspector elementInspector,
+            final @NotNull Registry<ConfigProcessor<? extends Keyed>> processorRegistry,
+            final @NotNull Registry<ElementFactory<?, ?>> factoryRegistry) {
         this.keyParser = Objects.requireNonNull(keyParser);
         this.keyExtractor = Objects.requireNonNull(keyExtractor);
         this.elementInspector = Objects.requireNonNull(elementInspector);
@@ -73,7 +76,8 @@ public class BasicElementBuilder implements ElementBuilder {
 
     @Override
     @SuppressWarnings("unchecked")
-    public <TElement> @NotNull TElement loadElement(final @NotNull Keyed data, final @NotNull DependencyProvider dependencyProvider) {
+    public <TElement> @NotNull TElement loadElement(final @NotNull Keyed data,
+            final @NotNull DependencyProvider dependencyProvider) {
         try {
             return (TElement) ((ElementFactory<Keyed, ?>) factoryRegistry.lookup(data.key())).make(data,
                     dependencyProvider);

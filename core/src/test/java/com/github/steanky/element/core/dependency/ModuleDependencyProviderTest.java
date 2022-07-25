@@ -14,7 +14,7 @@ class ModuleDependencyProviderTest {
     @Test
     void simpleModule() {
         final DependencyProvider dependencyProvider = new ModuleDependencyProvider(new SimpleModule(),
-                                                                               new BasicKeyParser());
+                new BasicKeyParser());
         final int first = dependencyProvider.provide(Key.key("test:non_static_method"));
         final int second = dependencyProvider.provide(Key.key("test:static_method"));
 
@@ -30,7 +30,8 @@ class ModuleDependencyProviderTest {
 
     @Test
     void namedDependencies() {
-        final DependencyProvider dependencyProvider = new ModuleDependencyProvider(new KeyedModule(), new BasicKeyParser());
+        final DependencyProvider dependencyProvider = new ModuleDependencyProvider(new KeyedModule(),
+                new BasicKeyParser());
         final Key nonStatic = Key.key("test:non_static_method");
         final Key staticKey = Key.key("test:static_method");
 
@@ -43,7 +44,8 @@ class ModuleDependencyProviderTest {
 
     @Test
     void nullKey() {
-        final DependencyProvider dependencyProvider = new ModuleDependencyProvider(new KeyedModule(), new BasicKeyParser());
+        final DependencyProvider dependencyProvider = new ModuleDependencyProvider(new KeyedModule(),
+                new BasicKeyParser());
         final Key nonStatic = Key.key("test:non_static_method");
 
         assertThrows(ElementException.class, () -> dependencyProvider.provide(nonStatic));
@@ -51,7 +53,8 @@ class ModuleDependencyProviderTest {
 
     @Test
     void nonNullKey() {
-        final DependencyProvider dependencyProvider = new ModuleDependencyProvider(new SimpleModule(), new BasicKeyParser());
+        final DependencyProvider dependencyProvider = new ModuleDependencyProvider(new SimpleModule(),
+                new BasicKeyParser());
         final Key nonStatic = Key.key("test:non_static_method");
 
         assertThrows(ElementException.class, () -> dependencyProvider.provide(nonStatic, nonStatic));
@@ -77,7 +80,7 @@ class ModuleDependencyProviderTest {
     @Test
     void memoized() {
         final DependencyProvider dependencyProvider = new ModuleDependencyProvider(new MemoizingModule(),
-                                                                                   new BasicKeyParser());
+                new BasicKeyParser());
         final Key key = Key.key("test:memoized");
         final Object object = dependencyProvider.provide(key);
         assertSame(dependencyProvider.provide(key), object);
@@ -90,7 +93,7 @@ class ModuleDependencyProviderTest {
     @Test
     void notMemoized() {
         final DependencyProvider dependencyProvider = new ModuleDependencyProvider(new NotMemoizing(),
-                                                                                   new BasicKeyParser());
+                new BasicKeyParser());
 
         final Key key = Key.key("test:non_static");
         final Object object = dependencyProvider.provide(key);
@@ -104,7 +107,7 @@ class ModuleDependencyProviderTest {
     @Test
     void namedMemoizing() {
         final DependencyProvider dependencyProvider = new ModuleDependencyProvider(new NamedMemoizing(),
-                                                                                   new BasicKeyParser());
+                new BasicKeyParser());
         final Key key = Key.key("test:memoized");
         final Key first = Key.key("test:first");
         final Key second = Key.key("test:second");
@@ -163,8 +166,7 @@ class ModuleDependencyProviderTest {
         }
     }
 
-    static class NonPublicModule implements DependencyModule {
-    }
+    static class NonPublicModule implements DependencyModule {}
 
     public static class KeyedModule implements DependencyModule {
         @DependencySupplier("test:static_method")

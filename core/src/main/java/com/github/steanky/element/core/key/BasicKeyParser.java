@@ -19,7 +19,6 @@ public class BasicKeyParser implements KeyParser {
      * Creates a new instance of this class.
      *
      * @param defaultNamespace the default namespace, which cannot be null or nonconforming to its pattern
-     *
      * @throws IllegalArgumentException if defaultNamespace is null, empty, or otherwise does not conform to its
      *                                  pattern
      */
@@ -63,7 +62,6 @@ public class BasicKeyParser implements KeyParser {
 
     @Override
     public @NotNull Key parseKey(final @NotNull @Subst(Constants.NAMESPACE_OR_KEY) String keyString) {
-        @Subst(Constants.NAMESPACE_OR_KEY)
         final Key key = parseInput(keyString);
 
         if (!hasExplicitNamespace(keyString)) {

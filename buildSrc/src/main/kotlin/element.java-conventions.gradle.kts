@@ -32,9 +32,9 @@ tasks.withType<JavaCompile> {
 
 tasks.withType<Javadoc> {
     (options as StandardJavadocDocletOptions).tags(
-        "apiNote:a:API Note:",
-        "implSpec:a:Implementation Requirements:",
-        "implNote:a:Implementation Note:"
+            "apiNote:a:API Note:",
+            "implSpec:a:Implementation Requirements:",
+            "implNote:a:Implementation Note:"
     )
 }
 

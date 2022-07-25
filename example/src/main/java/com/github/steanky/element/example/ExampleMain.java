@@ -20,6 +20,73 @@ import java.util.Objects;
 import java.util.function.Function;
 
 public class ExampleMain {
+    public static void main(final String @NotNull [] args) {
+        simpleElement();
+        compositeElement();
+    }
+
+    public static void compositeElement() {
+        final KeyParser parser = new BasicKeyParser("example");
+        final KeyExtractor extractor = new BasicKeyExtractor("serialKey", parser);
+        final ElementInspector elementInspector = new BasicElementInspector(parser);
+
+        final Registry<ConfigProcessor<? extends Keyed>> keyRegistry = new HashRegistry<>();
+        final Registry<ElementFactory<?, ?>> factoryRegistry = new HashRegistry<>();
+
+        final ElementBuilder builder = new BasicElementBuilder(parser, extractor, elementInspector, keyRegistry,
+                factoryRegistry);
+        builder.registerElementClass(ExampleElement.class);
+        builder.registerElementClass(CompositeElement.class);
+
+        final ConfigNode dataNode = new LinkedConfigNode(3);
+        dataNode.putString("serialKey", "composite_element");
+        dataNode.putNumber("data", 10);
+        dataNode.putString("subElementName", "example:sub_element");
+
+        final ConfigNode subNode = new LinkedConfigNode(3);
+        subNode.putString("serialKey", "example_element");
+        subNode.putString("name", "sub_element");
+        subNode.putNumber("value", 10);
+
+        dataNode.put("subNode", subNode);
+
+        final DependencyProvider provider = new ModuleDependencyProvider(new CompositeModule(builder, dataNode, parser),
+                parser);
+        final Keyed data = builder.loadData(dataNode);
+        final CompositeElement element = builder.loadElement(data, provider);
+    }
+
+    public static void simpleElement() {
+        final KeyParser parser = new BasicKeyParser("example");
+        final KeyExtractor extractor = new BasicKeyExtractor("serialKey", parser);
+        final ElementInspector elementInspector = new BasicElementInspector(parser);
+
+        final Registry<ConfigProcessor<? extends Keyed>> keyRegistry = new HashRegistry<>();
+        final Registry<ElementFactory<?, ?>> factoryRegistry = new HashRegistry<>();
+
+        final ElementBuilder builder = new BasicElementBuilder(parser, extractor, elementInspector, keyRegistry,
+                factoryRegistry);
+        builder.registerElementClass(ExampleElement.class);
+
+        // Create and populate a ConfigNode with the required data
+        // Typically, this would be loaded from a file or some other source of data
+        final ConfigNode dataNode = new LinkedConfigNode(3);
+        dataNode.putString("serialKey", "example_element");
+        dataNode.putNumber("value", 10);
+        dataNode.putString("name", "data name");
+
+        final DependencyProvider provider = new ModuleDependencyProvider(new SimpleExampleModule(), parser);
+
+        final Keyed data = builder.loadData(dataNode);
+        final ExampleElement element = builder.loadElement(data, provider);
+
+        // Prints Data[value=10, name=data name]
+        System.out.println(element.data);
+
+        // Prints Dependency
+        System.out.println(element.dependency);
+    }
+
     public static class SimpleExampleModule implements DependencyModule {
         @DependencySupplier("dependency")
         public @NotNull String getDependency() {
@@ -33,7 +100,7 @@ public class ExampleMain {
         private final KeyParser keyParser;
 
         public CompositeModule(final @NotNull ElementBuilder builder, final @NotNull ConfigNode data,
-                               final @NotNull KeyParser keyParser) {
+                final @NotNull KeyParser keyParser) {
             this.builder = Objects.requireNonNull(builder);
             this.data = Objects.requireNonNull(data);
             this.keyParser = Objects.requireNonNull(keyParser);
@@ -42,12 +109,12 @@ public class ExampleMain {
         @DependencySupplier("sub_element")
         @Memoized
         public @NotNull Function<DependencyProvider, ExampleElement> exampleElementSupplier(final @NotNull Key name) {
-            for(final ConfigElement element : data.values()) {
-                if(element.isNode()) {
+            for (final ConfigElement element : data.values()) {
+                if (element.isNode()) {
                     final ConfigNode subNode = element.asNode();
                     final String subNameString = subNode.getStringOrDefault("", "name");
-                    if(!subNameString.isEmpty()) {
-                        if(keyParser.parseKey(subNameString).equals(name)) {
+                    if (!subNameString.isEmpty()) {
+                        if (keyParser.parseKey(subNameString).equals(name)) {
                             return dependencyModule -> builder.loadElement(builder.loadData(subNode), dependencyModule);
                         }
                     }
@@ -82,20 +149,18 @@ public class ExampleMain {
                 return node;
             }
         };
+        private final Data data;
+        private final String dependency;
+        @FactoryMethod
+        public ExampleElement(final @NotNull Data data,
+                final @NotNull @ElementDependency("dependency") String dependency) {
+            this.data = Objects.requireNonNull(data);
+            this.dependency = Objects.requireNonNull(dependency);
+        }
 
         @ProcessorMethod
         public static @NotNull ConfigProcessor<Data> processor() {
             return PROCESSOR;
-        }
-
-        private final Data data;
-        private final String dependency;
-
-        @FactoryMethod
-        public ExampleElement(final @NotNull Data data,
-                              final @NotNull @ElementDependency("dependency") String dependency) {
-            this.data = Objects.requireNonNull(data);
-            this.dependency = Objects.requireNonNull(dependency);
         }
 
         @ElementData
@@ -140,8 +205,8 @@ public class ExampleMain {
         public static @NotNull ElementFactory<Data, CompositeElement> factory() {
             return (data, dependencyProvider) -> {
                 //noinspection PatternValidation
-                final Function<DependencyProvider, ExampleElement> function = dependencyProvider
-                        .provide(Key.key("example:sub_element"), Key.key(data.subElementName));
+                final Function<DependencyProvider, ExampleElement> function = dependencyProvider.provide(
+                        Key.key("example:sub_element"), Key.key(data.subElementName));
 
                 return new CompositeElement(data, function.apply(dependencyProvider));
             };
@@ -161,72 +226,5 @@ public class ExampleMain {
                 return SERIAL_KEY;
             }
         }
-    }
-
-    public static void main(final String @NotNull [] args) {
-        simpleElement();
-        compositeElement();
-    }
-
-    public static void compositeElement() {
-        final KeyParser parser = new BasicKeyParser("example");
-        final KeyExtractor extractor = new BasicKeyExtractor("serialKey", parser);
-        final ElementInspector elementInspector = new BasicElementInspector(parser);
-
-        final Registry<ConfigProcessor<? extends Keyed>> keyRegistry = new HashRegistry<>();
-        final Registry<ElementFactory<?, ?>> factoryRegistry = new HashRegistry<>();
-
-        final ElementBuilder builder = new BasicElementBuilder(parser, extractor, elementInspector, keyRegistry,
-                                                               factoryRegistry);
-        builder.registerElementClass(ExampleElement.class);
-        builder.registerElementClass(CompositeElement.class);
-
-        final ConfigNode dataNode = new LinkedConfigNode(3);
-        dataNode.putString("serialKey", "composite_element");
-        dataNode.putNumber("data", 10);
-        dataNode.putString("subElementName", "example:sub_element");
-
-        final ConfigNode subNode = new LinkedConfigNode(3);
-        subNode.putString("serialKey", "example_element");
-        subNode.putString("name", "sub_element");
-        subNode.putNumber("value", 10);
-
-        dataNode.put("subNode", subNode);
-
-        final DependencyProvider provider = new ModuleDependencyProvider(new CompositeModule(builder, dataNode, parser),
-                                                                         parser);
-        final Keyed data = builder.loadData(dataNode);
-        final CompositeElement element = builder.loadElement(data, provider);
-    }
-
-    public static void simpleElement() {
-        final KeyParser parser = new BasicKeyParser("example");
-        final KeyExtractor extractor = new BasicKeyExtractor("serialKey", parser);
-        final ElementInspector elementInspector = new BasicElementInspector(parser);
-
-        final Registry<ConfigProcessor<? extends Keyed>> keyRegistry = new HashRegistry<>();
-        final Registry<ElementFactory<?, ?>> factoryRegistry = new HashRegistry<>();
-
-        final ElementBuilder builder = new BasicElementBuilder(parser, extractor, elementInspector, keyRegistry,
-                                                               factoryRegistry);
-        builder.registerElementClass(ExampleElement.class);
-
-        // Create and populate a ConfigNode with the required data
-        // Typically, this would be loaded from a file or some other source of data
-        final ConfigNode dataNode = new LinkedConfigNode(3);
-        dataNode.putString("serialKey", "example_element");
-        dataNode.putNumber("value", 10);
-        dataNode.putString("name", "data name");
-
-        final DependencyProvider provider = new ModuleDependencyProvider(new SimpleExampleModule(), parser);
-
-        final Keyed data = builder.loadData(dataNode);
-        final ExampleElement element = builder.loadElement(data, provider);
-
-        // Prints Data[value=10, name=data name]
-        System.out.println(element.data);
-
-        // Prints Dependency
-        System.out.println(element.dependency);
     }
 }
