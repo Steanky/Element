@@ -8,5 +8,5 @@ repositories {
 
 dependencies {
     api(libs.ethylene.core)
-    api(libs.adventure.text)
+    api(libs.adventure.key)
 }

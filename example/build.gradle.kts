@@ -8,6 +8,6 @@ repositories {
 
 dependencies {
     implementation(libs.ethylene.core)
-    implementation(libs.adventure.text)
+    implementation(libs.adventure.key)
     implementation(project(":element-core"))
 }
