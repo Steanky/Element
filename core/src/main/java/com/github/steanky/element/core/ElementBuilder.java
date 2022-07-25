@@ -113,6 +113,7 @@ public interface ElementBuilder {
      *
      * @param nodes the list of data objects to load
      * @param dependencyProvider the object which provides dependencies for all loaded elements
+     * @param exceptionHandler the consumer which handles exceptions after all data has been iterated
      * @return a {@link Collection} containing all successfully loaded element objects
      * @param <TElement> the type of element object
      */
