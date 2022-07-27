@@ -7,7 +7,6 @@ import org.jetbrains.annotations.NotNull;
 /**
  * Converts strings into {@link Key} objects.
  */
-@FunctionalInterface
 public interface KeyParser {
     /**
      * Converts the given String into a {@link Key}.
@@ -16,5 +15,7 @@ public interface KeyParser {
      * @return the key represented by the string
      * @throws ElementException if the given string is invalid
      */
-    @NotNull Key parseKey(final @NotNull String key);
+    @NotNull Key parseKey(final @NotNull @KeyString String key);
+
+    @NotNull @NamespaceString String defaultNamespace();
 }

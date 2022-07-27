@@ -39,7 +39,7 @@ public class HashRegistry<TRegistrant> implements Registry<TRegistrant> {
         this(16, 0.75F);
     }
 
-    private static <T> T lock(Lock lock, Supplier<? extends T> function) {
+    private static <T> T lock(final Lock lock, final Supplier<? extends T> function) {
         try {
             lock.lock();
             return function.get();
@@ -81,7 +81,7 @@ public class HashRegistry<TRegistrant> implements Registry<TRegistrant> {
     }
 
     @Override
-    public TRegistrant registerIfAbsent(@NotNull Key key, @NotNull TRegistrant registrant) {
+    public TRegistrant registerIfAbsent(final @NotNull Key key, final @NotNull TRegistrant registrant) {
         Objects.requireNonNull(key);
         Objects.requireNonNull(registrant);
         return lock(readWriteLock.writeLock(), () -> map.putIfAbsent(key, registrant));

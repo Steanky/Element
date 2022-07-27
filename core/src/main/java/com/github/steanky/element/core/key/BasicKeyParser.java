@@ -1,15 +1,19 @@
 package com.github.steanky.element.core.key;
 
 import com.github.steanky.element.core.ElementException;
-import net.kyori.adventure.key.InvalidKeyException;
 import net.kyori.adventure.key.Key;
-import org.intellij.lang.annotations.Pattern;
 import org.intellij.lang.annotations.Subst;
 import org.jetbrains.annotations.NotNull;
 
 /**
  * Basic implementation of {@link KeyParser}. Supports variable "default" namespaces for {@link Key} objects to have,
  * which will be used as the namespace when it is unspecified by the input string.
+ *
+ * @implNote
+ * Although similar, {@link BasicKeyParser#parseKey(String)} and {@link Key#key(String)} have subtly different behaviors
+ * when handling empty namespaces. BasicKeyParser will treat key strings like {@code :test} as having a namespace which
+ * is an empty string, with the value {@code test}. Key will use the default namespace, {@link Key#MINECRAFT_NAMESPACE},
+ * in this case. BasicKeyParser will only use its default namespace <i>if there is no separator character present</i>.
  */
 public class BasicKeyParser implements KeyParser {
     @Subst(Constants.NAMESPACE_OR_KEY)
@@ -22,15 +26,9 @@ public class BasicKeyParser implements KeyParser {
      * @throws IllegalArgumentException if defaultNamespace is null, empty, or otherwise does not conform to its
      *                                  pattern
      */
-    public BasicKeyParser(final @NotNull @Pattern(Constants.NAMESPACE_PATTERN) String defaultNamespace) {
-        if (defaultNamespace.isEmpty()) {
-            throw new IllegalArgumentException("Empty namespace not allowed");
-        }
-
-        for (final char character : defaultNamespace.toCharArray()) {
-            if (!validNamespaceChar(character)) {
-                throw new IllegalArgumentException("Invalid default namespace: " + defaultNamespace);
-            }
+    public BasicKeyParser(final @NotNull @NamespaceString String defaultNamespace) {
+        if(!namespaceValid(defaultNamespace)) {
+            throw new IllegalArgumentException("Invalid default namespace: " + defaultNamespace);
         }
 
         this.defaultNamespace = defaultNamespace;
@@ -43,31 +41,58 @@ public class BasicKeyParser implements KeyParser {
         this(Key.MINECRAFT_NAMESPACE);
     }
 
+    @Override
+    public @NotNull Key parseKey(final @NotNull @KeyString String keyString) {
+        final int separatorIndex = keyString.indexOf(Constants.NAMESPACE_SEPARATOR);
+
+        //resolve default namespaces differently than in adventure: leading : means empty namespace, no : means default
+        @Subst(Constants.NAMESPACE_OR_KEY)
+        final String namespace = separatorIndex >= 0 ? keyString.substring(0, separatorIndex) : defaultNamespace;
+
+        @Subst(Constants.NAMESPACE_OR_KEY)
+        final String value = separatorIndex >= 0 ? keyString.substring(separatorIndex + 1) : keyString;
+        if(!namespaceValid(namespace)) {
+            throw new ElementException("Invalid namespace: " + keyString);
+        }
+        if(!valueValid(value)) {
+            throw new ElementException("Invalid value: " + value);
+        }
+
+        return Key.key(namespace, value);
+    }
+
+    @NamespaceString
+    @Override
+    public @NotNull String defaultNamespace() {
+        return defaultNamespace;
+    }
+
+    //below logic currently duplicates what is in KeyImpl, this should no longer be necessary after Adventure 4.12.0
+    @SuppressWarnings("BooleanMethodIsAlwaysInverted")
+    private static boolean namespaceValid(final String namespace) {
+        for (int i = 0, length = namespace.length(); i < length; i++) {
+            if (!validNamespaceChar(namespace.charAt(i))) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    private static boolean valueValid(final String value) {
+        for (int i = 0, length = value.length(); i < length; i++) {
+            if (!validValueChar(value.charAt(i))) {
+                return false;
+            }
+        }
+        return true;
+    }
+
     private static boolean validNamespaceChar(final int value) {
         return value == '_' || value == '-' || (value >= 'a' && value <= 'z') || (value >= '0' && value <= '9') ||
                 value == '.';
     }
 
-    private static boolean hasExplicitNamespace(final String validKeyString) {
-        return validKeyString.indexOf(Constants.NAMESPACE_SEPARATOR) > 0;
-    }
-
-    private static Key parseInput(final @Subst(Constants.NAMESPACED_KEY) String input) {
-        try {
-            return Key.key(input);
-        } catch (InvalidKeyException e) {
-            throw new ElementException("Illegal key string " + input, e);
-        }
-    }
-
-    @Override
-    public @NotNull Key parseKey(final @NotNull @Subst(Constants.NAMESPACE_OR_KEY) String keyString) {
-        final Key key = parseInput(keyString);
-
-        if (!hasExplicitNamespace(keyString)) {
-            return Key.key(defaultNamespace, keyString);
-        }
-
-        return key;
+    private static boolean validValueChar(final int value) {
+        return validNamespaceChar(value) || value == '/';
     }
 }

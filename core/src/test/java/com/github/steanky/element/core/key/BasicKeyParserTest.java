@@ -9,7 +9,6 @@ class BasicKeyParserTest {
     @SuppressWarnings("PatternValidation")
     @Test
     void invalidNamespaces() {
-        assertThrows(IllegalArgumentException.class, () -> new BasicKeyParser(""));
         assertThrows(IllegalArgumentException.class, () -> new BasicKeyParser("/"));
         assertThrows(IllegalArgumentException.class, () -> new BasicKeyParser("test/"));
         assertThrows(IllegalArgumentException.class, () -> new BasicKeyParser("/test"));
@@ -19,16 +18,17 @@ class BasicKeyParserTest {
 
     @Test
     void validNamespaces() {
-        assertDoesNotThrow(() -> new BasicKeyParser("example"));
-        assertDoesNotThrow(() -> new BasicKeyParser("ex.ample"));
-        assertDoesNotThrow(() -> new BasicKeyParser("example_"));
-        assertDoesNotThrow(() -> new BasicKeyParser("exam-ple"));
-        assertDoesNotThrow(() -> new BasicKeyParser(".exa-mpl_"));
+        assertDoesNotThrow(() -> new BasicKeyParser("example5"));
+        assertDoesNotThrow(() -> new BasicKeyParser("ex.am5ple"));
+        assertDoesNotThrow(() -> new BasicKeyParser("exa4mple_"));
+        assertDoesNotThrow(() -> new BasicKeyParser("exam-2ple"));
+        assertDoesNotThrow(() -> new BasicKeyParser(".exa1-mpl_"));
+        assertDoesNotThrow(() -> new BasicKeyParser(""));
     }
 
     @Test
     void parseExplicitKey() {
-        final KeyParser parser = new BasicKeyParser(Key.MINECRAFT_NAMESPACE);
+        final KeyParser parser = new BasicKeyParser("default");
         final Key key = parser.parseKey("explicit:value");
 
         assertEquals("explicit", key.namespace());
@@ -42,5 +42,37 @@ class BasicKeyParserTest {
 
         assertEquals("default", key.namespace());
         assertEquals("value", key.value());
+    }
+
+    @Test
+    void parseEmptyNamespace() {
+        KeyParser parser = new BasicKeyParser("default");
+        Key key = parser.parseKey(":test");
+        assertEquals("", key.namespace());
+        assertEquals("test", key.value());
+    }
+
+    @Test
+    void parseEmptyValue() {
+        KeyParser parser = new BasicKeyParser("default");
+        Key key = parser.parseKey("test:");
+        assertEquals("test", key.namespace());
+        assertEquals("", key.value());
+    }
+
+    @Test
+    void parseEmptyNamespaceAndValue() {
+        KeyParser parser = new BasicKeyParser("default");
+        Key key = parser.parseKey(":");
+        assertEquals("", key.namespace());
+        assertEquals("", key.value());
+    }
+
+    @Test
+    void defaultWhenEmptyString() {
+        KeyParser parser = new BasicKeyParser("default");
+        Key key = parser.parseKey("");
+        assertEquals("default", key.namespace());
+        assertEquals("", key.value());
     }
 }
