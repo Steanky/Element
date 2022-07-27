@@ -1,8 +1,7 @@
 package com.github.steanky.element.core.annotation;
 
 import com.github.steanky.element.core.dependency.ModuleDependencyProvider;
-import com.github.steanky.element.core.key.Constants;
-import org.intellij.lang.annotations.Pattern;
+import com.github.steanky.element.core.key.KeyString;
 import org.jetbrains.annotations.NotNull;
 
 import java.lang.annotation.ElementType;
@@ -22,5 +21,5 @@ public @interface DependencySupplier {
      *
      * @return the type identifier of this dependency
      */
-    @NotNull @Pattern(Constants.KEY_PATTERN) String value();
+    @NotNull @KeyString String value();
 }

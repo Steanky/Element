@@ -65,7 +65,7 @@ public class HashRegistry<TRegistrant> implements Registry<TRegistrant> {
     public @NotNull TRegistrant lookup(final @NotNull Key key) {
         Objects.requireNonNull(key);
         return lock(readWriteLock.readLock(), () -> {
-            TRegistrant registrant = map.get(key);
+            final TRegistrant registrant = map.get(key);
             if (registrant == null) {
                 throw new NoSuchElementException("No registrant under key " + key);
             }

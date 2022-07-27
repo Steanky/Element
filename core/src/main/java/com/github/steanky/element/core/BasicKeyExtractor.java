@@ -1,10 +1,12 @@
 package com.github.steanky.element.core;
 
+import com.github.steanky.element.core.key.Constants;
 import com.github.steanky.element.core.key.KeyParser;
 import com.github.steanky.ethylene.core.ConfigElement;
 import com.github.steanky.ethylene.core.collection.ConfigNode;
 import com.github.steanky.ethylene.core.processor.ConfigProcessException;
 import net.kyori.adventure.key.Key;
+import org.intellij.lang.annotations.Subst;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Objects;
@@ -30,7 +32,9 @@ public class BasicKeyExtractor implements KeyExtractor {
     @Override
     public @NotNull Key extract(final @NotNull ConfigNode node) {
         try {
-            return keyParser.parseKey(node.getStringOrThrow(keyName));
+            @Subst(Constants.NAMESPACE_OR_KEY)
+            final String keyString = node.getStringOrThrow(keyName);
+            return keyParser.parseKey(keyString);
         } catch (ConfigProcessException e) {
             throw new ElementException("Failed to extract key", e);
         }

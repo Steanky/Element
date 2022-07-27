@@ -17,5 +17,10 @@ public interface KeyParser {
      */
     @NotNull Key parseKey(final @NotNull @KeyString String key);
 
+    /**
+     * Returns the default namespace used by this KeyParser.
+     *
+     * @return the default namespace used by this KeyParser
+     */
     @NotNull @NamespaceString String defaultNamespace();
 }

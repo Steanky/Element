@@ -1,7 +1,6 @@
 package com.github.steanky.element.core.annotation;
 
-import com.github.steanky.element.core.key.Constants;
-import org.intellij.lang.annotations.Pattern;
+import com.github.steanky.element.core.key.KeyString;
 import org.jetbrains.annotations.NotNull;
 
 import java.lang.annotation.ElementType;
@@ -20,5 +19,5 @@ public @interface ElementModel {
      *
      * @return the name of this element
      */
-    @NotNull @Pattern(Constants.KEY_PATTERN) String value();
+    @NotNull @KeyString String value();
 }

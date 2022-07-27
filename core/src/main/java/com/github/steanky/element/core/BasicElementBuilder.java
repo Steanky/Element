@@ -2,12 +2,14 @@ package com.github.steanky.element.core;
 
 import com.github.steanky.element.core.annotation.ElementModel;
 import com.github.steanky.element.core.dependency.DependencyProvider;
+import com.github.steanky.element.core.key.Constants;
 import com.github.steanky.element.core.key.KeyParser;
 import com.github.steanky.ethylene.core.collection.ConfigNode;
 import com.github.steanky.ethylene.core.processor.ConfigProcessException;
 import com.github.steanky.ethylene.core.processor.ConfigProcessor;
 import net.kyori.adventure.key.Key;
 import net.kyori.adventure.key.Keyed;
+import org.intellij.lang.annotations.Subst;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Objects;
@@ -52,7 +54,10 @@ public class BasicElementBuilder implements ElementBuilder {
             throw new ElementException(elementClass + " does not have an ElementModel annotation");
         }
 
-        final Key elementKey = keyParser.parseKey(elementModel.value());
+        @Subst(Constants.NAMESPACE_OR_KEY)
+        final String value = elementModel.value();
+
+        final Key elementKey = keyParser.parseKey(value);
         final ElementInspector.Information elementInformation = elementInspector.inspect(elementClass);
         final ConfigProcessor<? extends Keyed> processor = elementInformation.processor();
         if (processor != null) {

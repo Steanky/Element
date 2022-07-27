@@ -4,10 +4,12 @@ import com.github.steanky.element.core.annotation.ElementData;
 import com.github.steanky.element.core.annotation.ElementDependency;
 import com.github.steanky.element.core.annotation.FactoryMethod;
 import com.github.steanky.element.core.annotation.ProcessorMethod;
+import com.github.steanky.element.core.key.Constants;
 import com.github.steanky.element.core.key.KeyParser;
 import com.github.steanky.ethylene.core.processor.ConfigProcessor;
 import net.kyori.adventure.key.Key;
 import net.kyori.adventure.key.Keyed;
+import org.intellij.lang.annotations.Subst;
 import org.jetbrains.annotations.NotNull;
 
 import java.lang.reflect.*;
@@ -85,8 +87,7 @@ public class BasicElementInspector implements ElementInspector {
         final Constructor<?> finalFactoryConstructor = factoryConstructor;
         final Parameter[] parameters = factoryConstructor.getParameters();
         if (parameters.length == 0) {
-            return (ElementFactory<Keyed, Object>) (keyed, dependencyProvider) -> ReflectionUtils.invokeConstructor(
-                    finalFactoryConstructor);
+            return (keyed, dependencyProvider) -> ReflectionUtils.invokeConstructor(finalFactoryConstructor);
         }
 
         final ArrayList<Key> dependencyTypeKeys = new ArrayList<>(parameters.length);
@@ -110,24 +111,27 @@ public class BasicElementInspector implements ElementInspector {
                 dependency = parameter.getType().getAnnotation(ElementDependency.class);
                 if (dependency == null) {
                     formatException(elementClass,
-                            "missing ElementDependency annotation on parameter of constructor " + "factory");
+                            "missing ElementDependency annotation on parameter of constructor factory");
                 }
             }
 
-            dependencyTypeKeys.add(parser.parseKey(dependency.value()));
+            @Subst(Constants.NAMESPACE_OR_KEY)
+            final String value = dependency.value();
+            dependencyTypeKeys.add(parser.parseKey(value));
 
+            @Subst(Constants.NAMESPACE_OR_KEY)
             final String name = dependency.name();
-            dependencyNameKeys.add(name.isEmpty() ? null : parser.parseKey(name));
+            dependencyNameKeys.add(name.equals(ElementDependency.DEFAULT_NAME) ? null : parser.parseKey(name));
         }
 
         if (dataParameterIndex == -1 && hasProcessor) {
             formatException(elementClass,
-                    "no data parameter found on constructor factory, but class specifies a " + "processor");
+                    "no data parameter found on constructor factory, but class specifies a processor");
         }
 
         if (dataParameterIndex != -1 && !hasProcessor) {
             formatException(elementClass,
-                    "found data parameter on constructor factory, but class does not specify a " + "processor");
+                    "found data parameter on constructor factory, but class does not specify a processor");
         }
 
         dependencyTypeKeys.trimToSize();
@@ -238,7 +242,8 @@ public class BasicElementInspector implements ElementInspector {
     public @NotNull Information inspect(final @NotNull Class<?> elementClass) {
         final Method[] declaredMethods = elementClass.getDeclaredMethods();
         final ConfigProcessor<? extends Keyed> processor = getProcessor(elementClass, declaredMethods);
-        final ElementFactory<?, ?> factory = getFactory(elementClass, declaredMethods, processor != null, keyParser);
+        final ElementFactory<?, ?> factory = getFactory(elementClass, declaredMethods, processor != null,
+                keyParser);
 
         return new Information(processor, factory);
     }

@@ -4,8 +4,10 @@ import com.github.steanky.element.core.ElementException;
 import com.github.steanky.element.core.ReflectionUtils;
 import com.github.steanky.element.core.annotation.DependencySupplier;
 import com.github.steanky.element.core.annotation.Memoized;
+import com.github.steanky.element.core.key.Constants;
 import com.github.steanky.element.core.key.KeyParser;
 import net.kyori.adventure.key.Key;
+import org.intellij.lang.annotations.Subst;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -66,7 +68,9 @@ public class ModuleDependencyProvider implements DependencyProvider {
                 throw new ElementException("Void-returning DependencySupplier method");
             }
 
-            final Key dependencyName = keyParser.parseKey(supplierAnnotation.value());
+            @Subst(Constants.NAMESPACE_OR_KEY)
+            final String dependencyString = supplierAnnotation.value();
+            final Key dependencyName = keyParser.parseKey(dependencyString);
             final Parameter[] supplierParameters = declaredMethod.getParameters();
             if (supplierParameters.length > 1) {
                 throw new ElementException("Supplier has too many parameters");
