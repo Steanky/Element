@@ -40,7 +40,7 @@ public interface ElementBuilder {
      * @param node the node to load data from
      * @return a data object, which may be used to create an element object along with a {@link DependencyProvider}
      */
-    @NotNull Keyed loadData(final @NotNull ConfigNode node);
+    @NotNull Object loadData(final @NotNull ConfigNode node);
 
     /**
      * Convenience method designed to load elements in bulk. Each element will be created using the same
@@ -148,6 +148,6 @@ public interface ElementBuilder {
      * @param <TElement>         the type of object produced
      * @return the element object
      */
-    <TElement> @NotNull TElement loadElement(final @NotNull Keyed data,
+    <TElement> @NotNull TElement loadElement(final @NotNull Object data,
             final @NotNull DependencyProvider dependencyProvider);
 }

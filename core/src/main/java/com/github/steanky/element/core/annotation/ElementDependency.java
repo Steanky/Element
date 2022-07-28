@@ -1,8 +1,6 @@
 package com.github.steanky.element.core.annotation;
 
-import com.github.steanky.element.core.key.Constants;
 import com.github.steanky.element.core.key.KeyString;
-import org.intellij.lang.annotations.Pattern;
 import org.jetbrains.annotations.NotNull;
 
 import java.lang.annotation.ElementType;
@@ -17,6 +15,9 @@ import java.lang.annotation.Target;
 @Retention(RetentionPolicy.RUNTIME)
 @Target({ElementType.PARAMETER, ElementType.TYPE})
 public @interface ElementDependency {
+    /**
+     * The default name. This is invalid as a key string, by design.
+     */
     String DEFAULT_NAME = "DEFAULT";
 
     /**

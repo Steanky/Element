@@ -30,11 +30,13 @@ public class ExampleMain {
         final KeyExtractor extractor = new BasicKeyExtractor("serialKey", parser);
         final ElementInspector elementInspector = new BasicElementInspector(parser);
 
-        final Registry<ConfigProcessor<? extends Keyed>> keyRegistry = new HashRegistry<>();
+        final Registry<ConfigProcessor<?>> keyRegistry = new HashRegistry<>();
         final Registry<ElementFactory<?, ?>> factoryRegistry = new HashRegistry<>();
 
-        final ElementBuilder builder = new BasicElementBuilder(parser, extractor, elementInspector, keyRegistry,
-                factoryRegistry);
+        final BasicDataIdentifier dataIdentifier = new BasicDataIdentifier(parser);
+
+        final ElementBuilder builder = new BasicElementBuilder(parser, extractor, elementInspector, dataIdentifier,
+                keyRegistry, factoryRegistry);
         builder.registerElementClass(ExampleElement.class);
         builder.registerElementClass(CompositeElement.class);
 
@@ -52,7 +54,7 @@ public class ExampleMain {
 
         final DependencyProvider provider = new ModuleDependencyProvider(new CompositeModule(builder, dataNode, parser),
                 parser);
-        final Keyed data = builder.loadData(dataNode);
+        final Object data = builder.loadData(dataNode);
         final CompositeElement element = builder.loadElement(data, provider);
     }
 
@@ -61,11 +63,13 @@ public class ExampleMain {
         final KeyExtractor extractor = new BasicKeyExtractor("serialKey", parser);
         final ElementInspector elementInspector = new BasicElementInspector(parser);
 
-        final Registry<ConfigProcessor<? extends Keyed>> keyRegistry = new HashRegistry<>();
+        final Registry<ConfigProcessor<?>> keyRegistry = new HashRegistry<>();
         final Registry<ElementFactory<?, ?>> factoryRegistry = new HashRegistry<>();
 
-        final ElementBuilder builder = new BasicElementBuilder(parser, extractor, elementInspector, keyRegistry,
-                factoryRegistry);
+        final BasicDataIdentifier dataIdentifier = new BasicDataIdentifier(parser);
+
+        final ElementBuilder builder = new BasicElementBuilder(parser, extractor, elementInspector, dataIdentifier,
+                keyRegistry, factoryRegistry);
         builder.registerElementClass(ExampleElement.class);
 
         // Create and populate a ConfigNode with the required data
@@ -77,7 +81,7 @@ public class ExampleMain {
 
         final DependencyProvider provider = new ModuleDependencyProvider(new SimpleExampleModule(), parser);
 
-        final Keyed data = builder.loadData(dataNode);
+        final Object data = builder.loadData(dataNode);
         final ExampleElement element = builder.loadElement(data, provider);
 
         // Prints Data[value=10, name=data name]

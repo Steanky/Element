@@ -11,7 +11,7 @@ import org.jetbrains.annotations.NotNull;
  * @param <TElement> the type of element to create
  */
 @FunctionalInterface
-public interface ElementFactory<TData extends Keyed, TElement> {
+public interface ElementFactory<TData, TElement> {
     /**
      * Creates an element from the given data.
      *

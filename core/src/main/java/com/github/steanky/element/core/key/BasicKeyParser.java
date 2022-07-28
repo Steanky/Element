@@ -49,13 +49,12 @@ public class BasicKeyParser implements KeyParser {
         //resolve default namespaces differently than in adventure: leading : means empty namespace, no : means default
         @Subst(Constants.NAMESPACE_OR_KEY)
         final String namespace = hasSeparator ? keyString.substring(0, separatorIndex) : defaultNamespace;
-
-        @Subst(Constants.NAMESPACE_OR_KEY)
-        final String value = hasSeparator ? keyString.substring(separatorIndex + 1) : keyString;
         if(!namespaceValid(namespace)) {
             throw new ElementException("Invalid namespace: " + keyString);
         }
 
+        @Subst(Constants.NAMESPACE_OR_KEY)
+        final String value = hasSeparator ? keyString.substring(separatorIndex + 1) : keyString;
         if(!valueValid(value)) {
             throw new ElementException("Invalid value: " + value);
         }
@@ -63,7 +62,16 @@ public class BasicKeyParser implements KeyParser {
         return Key.key(namespace, value);
     }
 
-    @NamespaceString
+    @Override
+    public @NotNull String parseString(final @NotNull Key key) {
+        final String namespace = key.namespace();
+        if(namespace.equals(defaultNamespace)) {
+            return key.value();
+        }
+
+        return namespace + Constants.NAMESPACE_SEPARATOR + key.value();
+    }
+
     @Override
     public @NotNull String defaultNamespace() {
         return defaultNamespace;

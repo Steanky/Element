@@ -21,7 +21,8 @@ public class BasicElementBuilder implements ElementBuilder {
     private final KeyParser keyParser;
     private final KeyExtractor keyExtractor;
     private final ElementInspector elementInspector;
-    private final Registry<ConfigProcessor<? extends Keyed>> processorRegistry;
+    private final DataIdentifier dataIdentifier;
+    private final Registry<ConfigProcessor<?>> processorRegistry;
     private final Registry<ElementFactory<?, ?>> factoryRegistry;
 
     /**
@@ -37,12 +38,13 @@ public class BasicElementBuilder implements ElementBuilder {
      *                          keys
      */
     public BasicElementBuilder(final @NotNull KeyParser keyParser, final @NotNull KeyExtractor keyExtractor,
-            final @NotNull ElementInspector elementInspector,
-            final @NotNull Registry<ConfigProcessor<? extends Keyed>> processorRegistry,
+            final @NotNull ElementInspector elementInspector, final @NotNull DataIdentifier dataIdentifier,
+            final @NotNull Registry<ConfigProcessor<?>> processorRegistry,
             final @NotNull Registry<ElementFactory<?, ?>> factoryRegistry) {
         this.keyParser = Objects.requireNonNull(keyParser);
         this.keyExtractor = Objects.requireNonNull(keyExtractor);
         this.elementInspector = Objects.requireNonNull(elementInspector);
+        this.dataIdentifier = Objects.requireNonNull(dataIdentifier);
         this.processorRegistry = Objects.requireNonNull(processorRegistry);
         this.factoryRegistry = Objects.requireNonNull(factoryRegistry);
     }
@@ -68,7 +70,7 @@ public class BasicElementBuilder implements ElementBuilder {
     }
 
     @Override
-    public @NotNull Keyed loadData(final @NotNull ConfigNode node) {
+    public @NotNull Object loadData(final @NotNull ConfigNode node) {
         try {
             return processorRegistry.lookup(keyExtractor.extract(node)).dataFromElement(node);
         } catch (ConfigProcessException e) {
@@ -78,14 +80,13 @@ public class BasicElementBuilder implements ElementBuilder {
         }
     }
 
-
     @Override
     @SuppressWarnings("unchecked")
-    public <TElement> @NotNull TElement loadElement(final @NotNull Keyed data,
+    public <TElement> @NotNull TElement loadElement(final @NotNull Object data,
             final @NotNull DependencyProvider dependencyProvider) {
         try {
-            return (TElement) ((ElementFactory<Keyed, ?>) factoryRegistry.lookup(data.key())).make(data,
-                    dependencyProvider);
+            final Key key = dataIdentifier.identifyKey(data);
+            return (TElement) ((ElementFactory<Object, ?>) factoryRegistry.lookup(key)).make(data, dependencyProvider);
         } catch (Exception e) {
             throw new ElementException("Exception when loading element", e);
         }
