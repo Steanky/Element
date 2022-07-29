@@ -5,6 +5,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 @FunctionalInterface
-public interface DataResolver<TData> {
-    @NotNull Object resolveCompositeData(final @Nullable TData data, final @Nullable Key key);
+public interface DataResolver<TIn, TOut> {
+    @NotNull TOut resolveCompositeData(final @NotNull TIn data, final @Nullable Key key);
 }

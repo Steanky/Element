@@ -39,7 +39,7 @@ public class BasicElementInspector implements ElementInspector {
     private static ElementFactory<?, ?> getFactory(final Class<?> elementClass, final Method[] declaredMethods,
             final boolean hasProcessor, final KeyParser parser) {
         Method factoryMethod = null;
-        final Map<Key, DataResolver<?>> dataResolvers = new HashMap<>(2);
+        final Map<Key, DataResolver<?, ?>> dataResolvers = new HashMap<>(2);
         for (final Method declaredMethod : declaredMethods) {
             if (declaredMethod.isAnnotationPresent(FactoryMethod.class)) {
                 if (factoryMethod != null) {
@@ -75,7 +75,7 @@ public class BasicElementInspector implements ElementInspector {
                     final ParameterizedType type = validateParameterizedReturnType(elementClass, declaredMethod,
                             () -> "FactoryMethod returned raw parameterized class");
 
-                    if(type.getActualTypeArguments().length != 1) {
+                    if(type.getActualTypeArguments().length != 2) {
                         formatException(elementClass, "Unexpected number of type arguments on ResolverMethod return " +
                                 "type");
                     }
@@ -211,7 +211,7 @@ public class BasicElementInspector implements ElementInspector {
 
     private static Object[] resolveArguments(final Object data, final DependencyProvider provider,
             final ElementBuilder builder, final ElementSpec spec,
-            final Function<? super Key, ? extends DataResolver<?>> resolverLookup) {
+            final Function<? super Key, ? extends DataResolver<?, ?>> resolverLookup) {
         final Object[] args;
         if (spec.dataIndex == -1) {
             args = new Object[spec.parameters.size()];
@@ -237,16 +237,21 @@ public class BasicElementInspector implements ElementInspector {
 
     private static Object processParameter(final Object data, final ElementParameter parameter,
             final DependencyProvider provider, final ElementBuilder builder,
-            final Function<? super Key, ? extends DataResolver<?>> resolverLookup) {
+            final Function<? super Key, ? extends DataResolver<?, ?>> resolverLookup) {
         if(!parameter.composite) {
             return provider.provide(parameter.typeKey, parameter.nameKey);
         }
 
         //noinspection unchecked
-        final DataResolver<Object> resolver = (DataResolver<Object>) resolverLookup.apply(parameter.typeKey);
+        final DataResolver<Object, Object> resolver = (DataResolver<Object, Object>) resolverLookup.apply(parameter
+                .typeKey);
 
         final Object compositeData;
         if(resolver != null) {
+            if(data == null) {
+                throw new ElementException("Data was null, but there was a data resolver for type " + parameter.typeKey);
+            }
+
             compositeData = resolver.resolveCompositeData(data, parameter.nameKey);
         }
         else {

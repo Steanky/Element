@@ -52,7 +52,7 @@ public class ModuleDependencyProvider implements DependencyProvider {
 
         final Method[] declaredMethods = moduleClass.getDeclaredMethods();
 
-        final Map<Key, DependencyFunction> dependencyMap = new HashMap<>(declaredMethods.length);
+        final Map<Key, DependencyFunction> dependencyFunctionMap = new HashMap<>(declaredMethods.length);
         for (final Method declaredMethod : declaredMethods) {
             final DependencySupplier supplierAnnotation = declaredMethod.getAnnotation(DependencySupplier.class);
             if (supplierAnnotation == null) {
@@ -80,7 +80,7 @@ public class ModuleDependencyProvider implements DependencyProvider {
             if (supplierParameters.length == 0) {
                 memoize = declaredMethod.isAnnotationPresent(Memoized.class);
 
-                dependencyMap.put(dependencyName, new DependencyFunction(false) {
+                dependencyFunctionMap.put(dependencyName, new DependencyFunction(false) {
                     private Object value = null;
 
                     @Override
@@ -106,7 +106,7 @@ public class ModuleDependencyProvider implements DependencyProvider {
             }
 
             memoize = declaredMethod.isAnnotationPresent(Memoized.class);
-            dependencyMap.put(dependencyName, new DependencyFunction(true) {
+            dependencyFunctionMap.put(dependencyName, new DependencyFunction(true) {
                 private final Map<Key, Object> values = memoize ? new HashMap<>(4) : null;
 
                 @Override
@@ -121,7 +121,7 @@ public class ModuleDependencyProvider implements DependencyProvider {
         }
 
         return (type, name) -> {
-            final DependencyFunction function = dependencyMap.get(type);
+            final DependencyFunction function = dependencyFunctionMap.get(type);
             if (function == null) {
                 throw new ElementException("Unable to resolve dependency " + type);
             }

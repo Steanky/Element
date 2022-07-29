@@ -11,9 +11,20 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.Objects;
 
+/**
+ * Basic implementation of {@link DataIdentifier}. Can correctly identify all subclasses of {@link Keyed}, {@link Key}
+ * objects themselves, {@link String} objects (if they can be parsed into a valid key), objects whose type has the
+ * {@link ElementData} annotation which itself provides a valid key, or classes which are nested in an
+ * {@link ElementModel} class which provides a valid key.
+ */
 public class BasicDataIdentifier implements DataIdentifier {
     private final KeyParser keyParser;
 
+    /**
+     * Creates a new instance of this class.
+     *
+     * @param keyParser the parser used to parse keys from strings, when necessary
+     */
     public BasicDataIdentifier(final @NotNull KeyParser keyParser) {
         this.keyParser = Objects.requireNonNull(keyParser);
     }
