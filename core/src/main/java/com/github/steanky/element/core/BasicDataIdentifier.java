@@ -23,7 +23,7 @@ public class BasicDataIdentifier implements DataIdentifier {
         if (data instanceof Keyed keyed) {
             return keyed.key();
         }
-        else if(data instanceof Key key) {
+        else if(data instanceof Key key) { //necessary until adventure 4.12.0
             return key;
         }
         else if(data instanceof @Subst(Constants.NAMESPACE_OR_KEY) String keyString) {

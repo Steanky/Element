@@ -207,7 +207,7 @@ public class ExampleMain {
 
         @FactoryMethod
         public static @NotNull ElementFactory<Data, CompositeElement> factory() {
-            return (data, dependencyProvider) -> {
+            return (data, dependencyProvider, builder) -> {
                 //noinspection PatternValidation
                 final Function<DependencyProvider, ExampleElement> function = dependencyProvider.provide(
                         Key.key("example:sub_element"), Key.key(data.subElementName));

@@ -1,11 +1,10 @@
 package com.github.steanky.element.core;
 
 import com.github.steanky.element.core.dependency.DependencyProvider;
-import net.kyori.adventure.key.Keyed;
 import org.jetbrains.annotations.NotNull;
 
 /**
- * Creates an element from some {@link Keyed} data.
+ * Creates an element from some data.
  *
  * @param <TData>    the data object
  * @param <TElement> the type of element to create
@@ -17,7 +16,9 @@ public interface ElementFactory<TData, TElement> {
      *
      * @param data               the data used to create the element
      * @param dependencyProvider the {@link DependencyProvider} implementation used to provide necessary dependencies
+     * @param builder            the builder which may be used to create necessary sub-objects
      * @return the element object
      */
-    @NotNull TElement make(final @NotNull TData data, final @NotNull DependencyProvider dependencyProvider);
+    @NotNull TElement make(final @NotNull TData data, final @NotNull DependencyProvider dependencyProvider,
+            final @NotNull ElementBuilder builder);
 }

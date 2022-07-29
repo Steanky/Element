@@ -86,7 +86,8 @@ public class BasicElementBuilder implements ElementBuilder {
             final @NotNull DependencyProvider dependencyProvider) {
         try {
             final Key key = dataIdentifier.identifyKey(data);
-            return (TElement) ((ElementFactory<Object, ?>) factoryRegistry.lookup(key)).make(data, dependencyProvider);
+            return (TElement) ((ElementFactory<Object, ?>) factoryRegistry.lookup(key)).make(data, dependencyProvider,
+                    this);
         } catch (Exception e) {
             throw new ElementException("Exception when loading element", e);
         }

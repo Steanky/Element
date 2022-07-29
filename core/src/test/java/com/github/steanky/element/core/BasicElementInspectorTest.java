@@ -146,7 +146,7 @@ class BasicElementInspectorTest {
 
     @ElementModel("test:simple_element_class")
     static class SimpleElementClass {
-        private static final ElementFactory<Data, SimpleElementClass> FACTORY = (data, dependencyProvider) -> new SimpleElementClass(
+        private static final ElementFactory<Data, SimpleElementClass> FACTORY = (data, dependencyProvider, builder) -> new SimpleElementClass(
                 data);
 
         private static final ConfigProcessor<? extends Keyed> PROCESSOR = new ConfigProcessor<Data>() {
@@ -189,7 +189,7 @@ class BasicElementInspectorTest {
 
     @ElementModel("test:data_annotation_in_constructor")
     static class DataAnnotationInConstructor {
-        private static final ElementFactory<Data, DataAnnotationInConstructor> FACTORY = (data, dependencyProvider) -> new DataAnnotationInConstructor(
+        private static final ElementFactory<Data, DataAnnotationInConstructor> FACTORY = (data, dependencyProvider, builder) -> new DataAnnotationInConstructor(
                 data);
 
         private static final ConfigProcessor<? extends Keyed> PROCESSOR = new ConfigProcessor<Data>() {
@@ -231,7 +231,7 @@ class BasicElementInspectorTest {
 
     @ElementModel("test:missing_factory_annotation")
     static class MissingFactoryAnnotation {
-        private static final ElementFactory<Data, MissingFactoryAnnotation> FACTORY = (data, dependencyProvider) -> new MissingFactoryAnnotation(
+        private static final ElementFactory<Data, MissingFactoryAnnotation> FACTORY = (data, dependencyProvider, builder) -> new MissingFactoryAnnotation(
                 data);
 
         private static final ConfigProcessor<? extends Keyed> PROCESSOR = new ConfigProcessor<Data>() {
@@ -272,7 +272,7 @@ class BasicElementInspectorTest {
 
     @ElementModel("test:missing_processor_annotation")
     static class MissingProcessorAnnotation {
-        private static final ElementFactory<Data, MissingProcessorAnnotation> FACTORY = (data, dependencyProvider) -> new MissingProcessorAnnotation(
+        private static final ElementFactory<Data, MissingProcessorAnnotation> FACTORY = (data, dependencyProvider, builder) -> new MissingProcessorAnnotation(
                 data);
 
         private static final ConfigProcessor<? extends Keyed> PROCESSOR = new ConfigProcessor<Data>() {
@@ -314,7 +314,7 @@ class BasicElementInspectorTest {
 
     @ElementModel("test:missing_processor_and_factory_annotation")
     static class MissingProcessorAndFactoryAnnotation {
-        private static final ElementFactory<Data, MissingProcessorAndFactoryAnnotation> FACTORY = (data, dependencyProvider) -> new MissingProcessorAndFactoryAnnotation(
+        private static final ElementFactory<Data, MissingProcessorAndFactoryAnnotation> FACTORY = (data, dependencyProvider, builder) -> new MissingProcessorAndFactoryAnnotation(
                 data);
 
         private static final ConfigProcessor<? extends Keyed> PROCESSOR = new ConfigProcessor<Data>() {
@@ -355,7 +355,7 @@ class BasicElementInspectorTest {
 
     @ElementModel("test:null_factory")
     static class NullFactory {
-        private static final ElementFactory<Data, NullFactory> FACTORY = (data, dependencyProvider) -> new NullFactory(
+        private static final ElementFactory<Data, NullFactory> FACTORY = (data, dependencyProvider, builder) -> new NullFactory(
                 data);
 
         private static final ConfigProcessor<? extends Keyed> PROCESSOR = new ConfigProcessor<Data>() {
@@ -398,7 +398,7 @@ class BasicElementInspectorTest {
 
     @ElementModel("test:null_processor")
     static class NullProcessor {
-        private static final ElementFactory<Data, NullProcessor> FACTORY = (data, dependencyProvider) -> new NullProcessor(
+        private static final ElementFactory<Data, NullProcessor> FACTORY = (data, dependencyProvider, builder) -> new NullProcessor(
                 data);
 
         private static final ConfigProcessor<? extends Keyed> PROCESSOR = new ConfigProcessor<Data>() {
@@ -441,7 +441,7 @@ class BasicElementInspectorTest {
 
     @ElementModel("test:bad_factory_return_type")
     static class BadFactoryReturnType {
-        private static final ElementFactory<Data, Object> FACTORY = (data, dependencyProvider) -> new BadFactoryReturnType(
+        private static final ElementFactory<Data, Object> FACTORY = (data, dependencyProvider, builder) -> new BadFactoryReturnType(
                 data);
 
         private static final ConfigProcessor<? extends Keyed> PROCESSOR = new ConfigProcessor<Data>() {
@@ -484,7 +484,7 @@ class BasicElementInspectorTest {
 
     @ElementModel("test:bad_processor_return_type")
     static class BadProcessorReturnType {
-        private static final ElementFactory<Data, BadProcessorReturnType> FACTORY = (data, dependencyProvider) -> new BadProcessorReturnType(
+        private static final ElementFactory<Data, BadProcessorReturnType> FACTORY = (data, dependencyProvider, builder) -> new BadProcessorReturnType(
                 data);
 
         private static final ConfigProcessor<? extends Keyed> PROCESSOR = new ConfigProcessor<Data>() {
@@ -527,7 +527,7 @@ class BasicElementInspectorTest {
 
     @ElementModel("test:subclass_factory_return_type")
     static class SubclassFactoryReturnType {
-        private static final ElementFactory<Data, Subclass> FACTORY = (data, dependencyProvider) -> new Subclass(data);
+        private static final ElementFactory<Data, Subclass> FACTORY = (data, dependencyProvider, builder) -> new Subclass(data);
         private static final ConfigProcessor<? extends Keyed> PROCESSOR = new ConfigProcessor<Data>() {
             @Override
             public Data dataFromElement(@NotNull ConfigElement element) {
@@ -652,7 +652,7 @@ class BasicElementInspectorTest {
             }
         };
 
-        public static ElementFactory<Data, DataAndDependenciesFactory> FACTORY = (data, dependencyProvider) -> new DataAndDependenciesFactory(
+        public static ElementFactory<Data, DataAndDependenciesFactory> FACTORY = (data, dependencyProvider, builder) -> new DataAndDependenciesFactory(
                 data, dependencyProvider.provide(Key.key("test:dependency"), null));
         private final Data data;
 

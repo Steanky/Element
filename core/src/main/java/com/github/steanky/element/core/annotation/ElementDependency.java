@@ -3,15 +3,13 @@ package com.github.steanky.element.core.annotation;
 import com.github.steanky.element.core.key.KeyString;
 import org.jetbrains.annotations.NotNull;
 
-import java.lang.annotation.ElementType;
-import java.lang.annotation.Retention;
-import java.lang.annotation.RetentionPolicy;
-import java.lang.annotation.Target;
+import java.lang.annotation.*;
 
 /**
  * Used to denote a typed and optionally-named "dependency". May be declared on a constructor parameter directly, or on
  * the dependency class itself.
  */
+@Documented
 @Retention(RetentionPolicy.RUNTIME)
 @Target({ElementType.PARAMETER, ElementType.TYPE})
 public @interface ElementDependency {
