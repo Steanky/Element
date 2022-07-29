@@ -203,8 +203,7 @@ public class BasicElementInspector implements ElementInspector {
 
         final ElementSpec elementSpec = new ElementSpec(elementParameters, dataParameterIndex);
         return (data, dependencyProvider, builder) -> {
-            final Object[] args = resolveArguments(data, dependencyProvider, builder, elementSpec,
-                    dataResolvers::get);
+            final Object[] args = resolveArguments(data, dependencyProvider, builder, elementSpec, dataResolvers::get);
             return ReflectionUtils.invokeConstructor(finalFactoryConstructor, args);
         };
     }
@@ -282,13 +281,8 @@ public class BasicElementInspector implements ElementInspector {
                 validateReturnType(elementClass, ConfigProcessor.class, declaredMethod,
                         () -> "ProcessorMethod must " + "return a ConfigProcessor");
 
-                final ParameterizedType type = validateParameterizedReturnType(elementClass, declaredMethod,
+                validateParameterizedReturnType(elementClass, declaredMethod,
                         () -> "ProcessorMethod cannot return a raw generic");
-                final Class<?> underlying = ReflectionUtils.getUnderlyingClass(type.getActualTypeArguments()[0]);
-                if (!Keyed.class.isAssignableFrom(underlying)) {
-                    formatException(elementClass, "ConfigProcessor returned by the ProcessorMethod must process Keyed" +
-                            " or a subclass of Keyed");
-                }
 
                 processorMethod = declaredMethod;
             }

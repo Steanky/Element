@@ -9,6 +9,9 @@ import java.lang.annotation.*;
 @Retention(RetentionPolicy.RUNTIME)
 @Target(ElementType.PARAMETER)
 public @interface Composite {
+    /**
+     * Default value. Not a valid key string.
+     */
     String DEFAULT_VALUE = "DEFAULT";
 
     @NotNull @KeyString String value() default DEFAULT_VALUE;

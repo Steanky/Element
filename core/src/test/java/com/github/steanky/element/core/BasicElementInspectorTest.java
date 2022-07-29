@@ -69,12 +69,6 @@ class BasicElementInspectorTest {
     }
 
     @Test
-    void badProcessorReturnType() {
-        ElementInspector inspector = new BasicElementInspector(new BasicKeyParser());
-        assertThrows(ElementException.class, () -> inspector.inspect(BadProcessorReturnType.class));
-    }
-
-    @Test
     void subclassFactoryReturnType() {
         ElementInspector inspector = new BasicElementInspector(new BasicKeyParser());
         ElementInspector.Information information = inspector.inspect(SubclassFactoryReturnType.class);
@@ -474,49 +468,6 @@ class BasicElementInspectorTest {
         @ElementData
         public record Data() implements Keyed {
             public static final Key KEY = Key.key("test:bad_factory_return_type");
-
-            @Override
-            public @NotNull Key key() {
-                return KEY;
-            }
-        }
-    }
-
-    @ElementModel("test:bad_processor_return_type")
-    static class BadProcessorReturnType {
-        private static final ElementFactory<Data, BadProcessorReturnType> FACTORY = (data, dependencyProvider, builder) -> new BadProcessorReturnType(
-                data);
-
-        private static final ConfigProcessor<? extends Keyed> PROCESSOR = new ConfigProcessor<Data>() {
-            @Override
-            public Data dataFromElement(@NotNull ConfigElement element) {
-                return new Data();
-            }
-
-            @Override
-            public @NotNull ConfigElement elementFromData(Data keyed) {
-                return new LinkedConfigNode(0);
-            }
-        };
-        private final Data data;
-
-        public BadProcessorReturnType(@NotNull Data data) {
-            this.data = data;
-        }
-
-        @FactoryMethod
-        public static ElementFactory<Data, BadProcessorReturnType> factory() {
-            return FACTORY;
-        }
-
-        @ProcessorMethod
-        public static ConfigProcessor<?> processor() {
-            return PROCESSOR;
-        }
-
-        @ElementData
-        public record Data() implements Keyed {
-            public static final Key KEY = Key.key("test:bad_processor_return_type");
 
             @Override
             public @NotNull Key key() {

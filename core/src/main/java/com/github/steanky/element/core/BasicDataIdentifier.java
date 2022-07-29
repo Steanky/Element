@@ -53,9 +53,9 @@ public class BasicDataIdentifier implements DataIdentifier {
             return keyParser.parseKey(value);
         }
 
-        final Class<?> host = dataClass.getNestHost();
-        if(host != dataClass) { //getNestHost defined to return 'this' when class is not nested
-            final ElementModel model = host.getDeclaredAnnotation(ElementModel.class);
+        final Class<?> declaring = dataClass.getDeclaringClass();
+        if(declaring != null) {
+            final ElementModel model = declaring.getDeclaredAnnotation(ElementModel.class);
             if(model != null) {
                 @Subst(Constants.NAMESPACE_OR_KEY)
                 final String value = model.value();
@@ -63,6 +63,6 @@ public class BasicDataIdentifier implements DataIdentifier {
             }
         }
 
-        throw new ElementException("Unable to identify data object of type " + dataClass);
+        throw new ElementException("ElementData annotation must specify a key " + dataClass);
     }
 }

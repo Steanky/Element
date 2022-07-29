@@ -11,16 +11,14 @@ import org.jetbrains.annotations.Nullable;
  */
 @FunctionalInterface
 public interface DependencyProvider {
-    /**
-     * Provides the given dependency, which may be named.
-     *
-     * @param type          the dependency type
-     * @param name          the name used to further narrow down the instance; may be null, depending on the
-     *                      implementation
-     * @param <TDependency> the type of object to depend upon
-     * @return the dependency object
-     * @throws ElementException if the dependency could not be loaded
-     */
+    DependencyProvider EMPTY = new DependencyProvider() {
+        @NotNull
+        @Override
+        public <TDependency> TDependency provide(@NotNull Key type, @Nullable Key name) {
+            throw new ElementException("Unable to resolve dependency of type " + type);
+        }
+    };
+
     <TDependency> @NotNull TDependency provide(final @NotNull Key type, final @Nullable Key name);
 
     /**
