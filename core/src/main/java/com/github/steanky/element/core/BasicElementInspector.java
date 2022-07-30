@@ -76,16 +76,23 @@ public class BasicElementInspector implements ElementInspector {
                             () -> "FactoryMethod returned raw parameterized class");
 
                     if(type.getActualTypeArguments().length != 2) {
-                        formatException(elementClass, "Unexpected number of type arguments on ResolverMethod return " +
+                        formatException(elementClass, "unexpected number of type arguments on ResolverMethod return " +
                                 "type");
                     }
 
+                    final Class<?> resolverClass = resolverMethod.value();
+                    final ElementModel modelAnnotation = resolverClass.getDeclaredAnnotation(ElementModel.class);
+                    if(modelAnnotation == null) {
+                        formatException(elementClass, "ResolverMethod bound to class without the ElementModel " +
+                                "annotation");
+                    }
+
                     @Subst(Constants.NAMESPACE_OR_KEY)
-                    final String value = resolverMethod.value();
+                    final String value = modelAnnotation.value();
                     final Key resolverKey = parser.parseKey(value);
 
                     if(dataResolvers.containsKey(resolverKey)) {
-                        formatException(elementClass, "ResolverMethod for key " + resolverKey + " already exists");
+                        formatException(elementClass, "ResolverMethod for element type " + resolverKey + " already exists");
                     }
 
                     dataResolvers.put(resolverKey, ReflectionUtils.invokeMethod(declaredMethod, null));

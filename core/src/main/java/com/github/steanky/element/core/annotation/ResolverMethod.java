@@ -1,6 +1,5 @@
 package com.github.steanky.element.core.annotation;
 
-import com.github.steanky.element.core.key.KeyString;
 import org.jetbrains.annotations.NotNull;
 
 import java.lang.annotation.*;
@@ -13,8 +12,8 @@ import java.lang.annotation.*;
 @Target(ElementType.METHOD)
 public @interface ResolverMethod {
     /**
-     * The type key of the subcomponent.
-     * @return the type key of the subcomponent, which must be a valid key string
+     * The type of the subcomponent.
+     * @return the type of the subcomponent
      */
-    @NotNull @KeyString String value();
+    @NotNull Class<?> value();
 }

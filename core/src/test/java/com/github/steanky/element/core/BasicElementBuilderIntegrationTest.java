@@ -108,7 +108,7 @@ class BasicElementBuilderIntegrationTest {
             public record Data(int value) {}
         }
 
-        @ResolverMethod("complex_nested_child")
+        @ResolverMethod(Child.class)
         public static @NotNull DataResolver<Data, Child.Data> resolver() {
             return (data, key) -> data.childData;
         }
