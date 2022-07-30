@@ -29,19 +29,18 @@ class BasicElementBuilderIntegrationTest {
         final Registry<ElementFactory<?, ?>> factoryRegistry = new HashRegistry<>();
 
         builder = new BasicElementBuilder(parser, extractor, inspector, identifier, processorRegistry, factoryRegistry);
+        builder.registerElementClass(Simple.class);
+        builder.registerElementClass(SimpleData.class);
     }
 
     @Test
     void simpleElement() {
-        builder.registerElementClass(Simple.class);
         final Simple simple = builder.loadElement("simple", DependencyProvider.EMPTY);
         assertEquals(10, simple.method());
     }
 
     @Test
     void simpleData() {
-        builder.registerElementClass(SimpleData.class);
-
         final ConfigNode dataNode = new LinkedConfigNode(2);
         dataNode.putString("serialKey", "simple_data");
         dataNode.putNumber("data", 2);
@@ -73,7 +72,7 @@ class BasicElementBuilderIntegrationTest {
                 }
 
                 @Override
-                public @NotNull ConfigElement elementFromData(Data data) throws ConfigProcessException {
+                public @NotNull ConfigElement elementFromData(Data data) {
                     final ConfigNode node = new LinkedConfigNode(1);
                     node.putNumber("data", data.data);
                     return node;

@@ -346,6 +346,10 @@ public class BasicElementInspector implements ElementInspector {
 
     @Override
     public @NotNull Information inspect(final @NotNull Class<?> elementClass) {
+        if(!Modifier.isStatic(elementClass.getModifiers()) && elementClass.getDeclaringClass() != null) {
+            throw new ElementException(elementClass + " is non-static and has a declaring class");
+        }
+
         final Method[] declaredMethods = elementClass.getDeclaredMethods();
         final ConfigProcessor<? extends Keyed> processor = getProcessor(elementClass, declaredMethods);
         final ElementFactory<?, ?> factory = getFactory(elementClass, declaredMethods, processor != null,

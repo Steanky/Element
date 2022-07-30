@@ -123,7 +123,7 @@ public class ModuleDependencyProvider implements DependencyProvider {
         return (type, name) -> {
             final DependencyFunction function = dependencyFunctionMap.get(type);
             if (function == null) {
-                throw new ElementException("Unable to resolve dependency " + type);
+                throw new ElementException("Unable to resolve dependency of type " + type);
             }
 
             if (function.requiresKey == (name == null)) {
@@ -133,7 +133,7 @@ public class ModuleDependencyProvider implements DependencyProvider {
 
             final Object dependency = function.apply(name);
             if (dependency == null) {
-                throw new ElementException("Unable to resolve dependency name " + name);
+                throw new ElementException("Unable to resolve dependency of type " + type + " and name " + name);
             }
 
             return dependency;

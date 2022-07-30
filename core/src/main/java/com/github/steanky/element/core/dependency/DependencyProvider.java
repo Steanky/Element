@@ -11,10 +11,13 @@ import org.jetbrains.annotations.Nullable;
  */
 @FunctionalInterface
 public interface DependencyProvider {
+    /**
+     * The empty DependencyProvider instance, which cannot provide any dependencies. Useful for instantiating elements
+     * which don't have dependencies.
+     */
     DependencyProvider EMPTY = new DependencyProvider() {
-        @NotNull
         @Override
-        public <TDependency> TDependency provide(@NotNull Key type, @Nullable Key name) {
+        public <TDependency> @NotNull TDependency provide(@NotNull Key type, @Nullable Key name) {
             throw new ElementException("Unable to resolve dependency of type " + type);
         }
     };
