@@ -138,6 +138,18 @@ class BasicElementInspectorTest {
         assertNotNull(information.factory());
     }
 
+    @Test
+    void throwsWhenNonStaticInner() {
+        ElementInspector inspector = new BasicElementInspector(new BasicKeyParser());
+        assertThrows(ElementException.class, () -> inspector.inspect(NonStaticInnerClass.class));
+    }
+
+    @ElementModel("test:non_static_inner_class")
+    class NonStaticInnerClass {
+        @FactoryMethod
+        public NonStaticInnerClass() {}
+    }
+
     @ElementModel("test:simple_element_class")
     static class SimpleElementClass {
         private static final ElementFactory<Data, SimpleElementClass> FACTORY = (data, dependencyProvider, builder) -> new SimpleElementClass(

@@ -227,7 +227,7 @@ public class BasicElementInspector implements ElementInspector {
             args[i] = processParameter(data, spec.parameters.get(i), provider, builder, resolverLookup);
         }
 
-        for (int i = spec.dataIndex + 1; i < spec.parameters.size(); i++) {
+        for (int i = spec.dataIndex + 1; i < args.length; i++) {
             args[i] = processParameter(data, spec.parameters.get(i - 1), provider, builder, resolverLookup);
         }
 

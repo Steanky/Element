@@ -150,4 +150,8 @@ public interface ElementBuilder {
      */
     <TElement> @NotNull TElement loadElement(final @NotNull Object data,
             final @NotNull DependencyProvider dependencyProvider);
+
+    default <TElement> @NotNull TElement loadElement(final @NotNull Object data) {
+        return loadElement(data, DependencyProvider.EMPTY);
+    }
 }
