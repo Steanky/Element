@@ -75,7 +75,7 @@ public interface ElementBuilder {
                 if (exception == null) {
                     exception = new ElementException(e);
                 } else {
-                    e.addSuppressed(e);
+                    exception.addSuppressed(e);
                 }
             }
         }

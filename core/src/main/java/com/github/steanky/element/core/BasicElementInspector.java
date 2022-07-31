@@ -92,7 +92,8 @@ public class BasicElementInspector implements ElementInspector {
                     final Key resolverKey = parser.parseKey(value);
 
                     if(dataResolvers.containsKey(resolverKey)) {
-                        formatException(elementClass, "ResolverMethod for element type " + resolverKey + " already exists");
+                        formatException(elementClass, "ResolverMethod for element type " + resolverKey + " already " +
+                                "exists");
                     }
 
                     dataResolvers.put(resolverKey, ReflectionUtils.invokeMethod(declaredMethod, null));
@@ -274,7 +275,7 @@ public class BasicElementInspector implements ElementInspector {
         }
     }
 
-    private static ConfigProcessor<? extends Keyed> getProcessor(final Class<?> elementClass,
+    private static ConfigProcessor<?> getProcessor(final Class<?> elementClass,
             final Method[] declaredMethods) {
         Method processorMethod = null;
         for (final Method declaredMethod : declaredMethods) {
@@ -296,7 +297,7 @@ public class BasicElementInspector implements ElementInspector {
         }
 
         if (processorMethod != null) {
-            final ConfigProcessor<? extends Keyed> processor = ReflectionUtils.invokeMethod(processorMethod, null);
+            final ConfigProcessor<?> processor = ReflectionUtils.invokeMethod(processorMethod, null);
             if (processor == null) {
                 formatException(elementClass, "ProcessorMethod returned null");
             }
@@ -358,7 +359,7 @@ public class BasicElementInspector implements ElementInspector {
         }
 
         final Method[] declaredMethods = elementClass.getDeclaredMethods();
-        final ConfigProcessor<? extends Keyed> processor = getProcessor(elementClass, declaredMethods);
+        final ConfigProcessor<?> processor = getProcessor(elementClass, declaredMethods);
         final ElementFactory<?, ?> factory = getFactory(elementClass, declaredMethods, processor != null,
                 keyParser);
 

@@ -32,6 +32,10 @@ public class HashRegistry<TRegistrant> implements Registry<TRegistrant> {
         this.readWriteLock = new ReentrantReadWriteLock();
     }
 
+    public HashRegistry(final int initialSize) {
+        this(initialSize, 0.75F);
+    }
+
     /**
      * Creates a new HashRegistry with the default initial size (16) and load factor (0.75).
      */

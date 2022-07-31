@@ -8,7 +8,6 @@ import com.github.steanky.ethylene.core.collection.ConfigNode;
 import com.github.steanky.ethylene.core.processor.ConfigProcessException;
 import com.github.steanky.ethylene.core.processor.ConfigProcessor;
 import net.kyori.adventure.key.Key;
-import net.kyori.adventure.key.Keyed;
 import org.intellij.lang.annotations.Subst;
 import org.jetbrains.annotations.NotNull;
 
@@ -61,7 +60,7 @@ public class BasicElementBuilder implements ElementBuilder {
 
         final Key elementKey = keyParser.parseKey(value);
         final ElementInspector.Information elementInformation = elementInspector.inspect(elementClass);
-        final ConfigProcessor<? extends Keyed> processor = elementInformation.processor();
+        final ConfigProcessor<?> processor = elementInformation.processor();
         if (processor != null) {
             processorRegistry.register(elementKey, processor);
         }

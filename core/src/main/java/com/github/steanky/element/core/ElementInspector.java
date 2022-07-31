@@ -23,7 +23,7 @@ public interface ElementInspector {
     /**
      * Represents information about an element class.
      */
-    record Information(@Nullable ConfigProcessor<? extends Keyed> processor, @NotNull ElementFactory<?, ?> factory) {
+    record Information(@Nullable ConfigProcessor<?> processor, @NotNull ElementFactory<?, ?> factory) {
         /**
          * Represents information extracted from an Element Model-compliant class.
          *
