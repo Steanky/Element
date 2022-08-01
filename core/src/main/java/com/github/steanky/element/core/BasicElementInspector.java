@@ -128,7 +128,8 @@ public class BasicElementInspector implements ElementInspector {
                 }
 
                 final Class<?> compositeType = parameter.getType();
-                if(!compositeType.isAnnotationPresent(ElementModel.class)) {
+                final ElementModel modelAnnotation = compositeType.getDeclaredAnnotation(ElementModel.class);
+                if(modelAnnotation == null) {
                     formatException(elementClass, "Composite parameter type must have the ElementModel annotation");
                 }
 
@@ -156,13 +157,17 @@ public class BasicElementInspector implements ElementInspector {
                 }
 
                 if(resolverMethod == null) {
-                    formatException(elementClass, "dependency annotated as CompositeType does not supply a " +
-                            "ResolverMethod");
+                    @Subst(Constants.NAMESPACE_OR_KEY)
+                    final String type = modelAnnotation.value();
+                    final Key typeKey = parser.parseKey(type);
+
+                    elementParameters.add(new ElementParameter(typeKey, null, null));
+                }
+                else {
+                    final DataResolver<Object, Object> resolver = ReflectionUtils.invokeMethod(resolverMethod, null);
+                    elementParameters.add(new ElementParameter(null, compositeName, resolver));
                 }
 
-                final DataResolver<Object, Object> resolver = ReflectionUtils.invokeMethod(resolverMethod, null);
-
-                elementParameters.add(new ElementParameter(null, compositeName, resolver));
                 continue;
             }
             else if(dependency == null) {
@@ -225,11 +230,18 @@ public class BasicElementInspector implements ElementInspector {
 
     private static Object processParameter(final Object data, final ElementParameter parameter,
             final DependencyProvider provider, final ElementBuilder builder) {
-        if(parameter.resolver == null) {
-            return provider.provide(parameter.typeKey, parameter.nameKey);
+        if(parameter.typeKey != null && parameter.nameKey == null && parameter.resolver == null) {
+            //case 1: composite dependency with no data
+            return builder.loadElement(parameter.typeKey, provider);
         }
 
-        return builder.loadElement(parameter.resolver.resolveCompositeData(data, parameter.nameKey), provider);
+        if(parameter.typeKey == null) {
+            //case 2: no known composite type (must be extracted from data)
+            return builder.loadElement(parameter.resolver.resolveCompositeData(data, parameter.nameKey), provider);
+        }
+
+        //case 3: dependency, not a composite type
+        return provider.provide(parameter.typeKey, parameter.nameKey);
     }
 
     private static ConfigProcessor<?> getProcessor(final Class<?> elementClass,

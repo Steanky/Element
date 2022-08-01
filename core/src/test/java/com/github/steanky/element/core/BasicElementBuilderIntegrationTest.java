@@ -81,6 +81,11 @@ class BasicElementBuilderIntegrationTest {
         public static class Child {
             private final Data data;
 
+            @ResolverMethod
+            public static @NotNull DataResolver<ComplexNested.Data, Child.Data> resolver() {
+                return (data, key) -> data.childData;
+            }
+
             @ProcessorMethod
             public static @NotNull ConfigProcessor<Data> processor() {
                 return new ConfigProcessor<>() {
@@ -106,11 +111,6 @@ class BasicElementBuilderIntegrationTest {
 
             @ElementData
             public record Data(int value) {}
-        }
-
-        @ResolverMethod(Child.class)
-        public static @NotNull DataResolver<Data, Child.Data> resolver() {
-            return (data, key) -> data.childData;
         }
 
         @ProcessorMethod
