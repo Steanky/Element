@@ -20,7 +20,7 @@ import java.util.function.Supplier;
 public class BasicElementInspector implements ElementInspector {
     private record ElementSpec(List<ElementParameter> parameters, int dataIndex) {}
 
-    private record ElementParameter(Key typeKey, Key nameKey, DataResolver<Object, Object> resolver) {}
+    private record ElementParameter(Key typeKey, Key nameKey, DataResolver<Object, Object> resolver, boolean isComposite) {}
 
     private final KeyParser keyParser;
 
@@ -161,11 +161,11 @@ public class BasicElementInspector implements ElementInspector {
                     final String type = modelAnnotation.value();
                     final Key typeKey = parser.parseKey(type);
 
-                    elementParameters.add(new ElementParameter(typeKey, null, null));
+                    elementParameters.add(new ElementParameter(typeKey, null, null, true));
                 }
                 else {
                     final DataResolver<Object, Object> resolver = ReflectionUtils.invokeMethod(resolverMethod, null);
-                    elementParameters.add(new ElementParameter(null, compositeName, resolver));
+                    elementParameters.add(new ElementParameter(null, compositeName, resolver, true));
                 }
 
                 continue;
@@ -181,7 +181,7 @@ public class BasicElementInspector implements ElementInspector {
             final String name = dependency.name();
 
             elementParameters.add(new ElementParameter(parser.parseKey(value), name
-                    .equals(ElementDependency.DEFAULT_NAME) ? null : parser.parseKey(name), null));
+                    .equals(ElementDependency.DEFAULT_NAME) ? null : parser.parseKey(name), null, false));
         }
 
         if (dataParameterIndex == -1 && hasProcessor) {
@@ -230,18 +230,15 @@ public class BasicElementInspector implements ElementInspector {
 
     private static Object processParameter(final Object data, final ElementParameter parameter,
             final DependencyProvider provider, final ElementBuilder builder) {
-        if(parameter.typeKey != null && parameter.nameKey == null && parameter.resolver == null) {
-            //case 1: composite dependency with no data
-            return builder.loadElement(parameter.typeKey, provider);
+        if(!parameter.isComposite) {
+            return provider.provide(parameter.typeKey, parameter.nameKey);
         }
 
-        if(parameter.typeKey == null) {
-            //case 2: no known composite type (must be extracted from data)
+        if(parameter.resolver != null) {
             return builder.loadElement(parameter.resolver.resolveCompositeData(data, parameter.nameKey), provider);
         }
 
-        //case 3: dependency, not a composite type
-        return provider.provide(parameter.typeKey, parameter.nameKey);
+        return builder.loadElement(parameter.typeKey, provider);
     }
 
     private static ConfigProcessor<?> getProcessor(final Class<?> elementClass,
