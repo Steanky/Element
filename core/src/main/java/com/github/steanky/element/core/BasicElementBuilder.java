@@ -31,6 +31,7 @@ public class BasicElementBuilder implements ElementBuilder {
      * @param keyExtractor      the {@link KeyExtractor} used to extract keys from {@link ConfigNode} objects
      * @param elementInspector  the {@link ElementInspector} used to extract a factory and processor from an element
      *                          object class
+     * @param dataIdentifier    the {@link DataIdentifier} used to extract keys from data objects
      * @param processorRegistry a {@link Registry} of {@link ConfigProcessor}s used to derive ConfigProcessor instances
      *                          from data keys
      * @param factoryRegistry   a Registry of {@link ElementFactory} used to derive ElementFactory instances from data

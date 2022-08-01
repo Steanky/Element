@@ -6,14 +6,11 @@ import com.github.steanky.element.core.key.Constants;
 import com.github.steanky.element.core.key.KeyParser;
 import com.github.steanky.ethylene.core.processor.ConfigProcessor;
 import net.kyori.adventure.key.Key;
-import net.kyori.adventure.key.Keyed;
 import org.intellij.lang.annotations.Subst;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.lang.reflect.*;
 import java.util.*;
-import java.util.function.Function;
 import java.util.function.Supplier;
 
 /**
@@ -21,9 +18,9 @@ import java.util.function.Supplier;
  * from methods/constructors, in compliance with the general element model specification.
  */
 public class BasicElementInspector implements ElementInspector {
-    private record ElementSpec(@NotNull List<ElementParameter> parameters, int dataIndex) {}
+    private record ElementSpec(List<ElementParameter> parameters, int dataIndex) {}
 
-    private record ElementParameter(@NotNull Key typeKey, @Nullable Key nameKey, boolean composite) {}
+    private record ElementParameter(Key typeKey, Key nameKey, DataResolver<Object, Object> resolver) {}
 
     private final KeyParser keyParser;
 
@@ -39,11 +36,10 @@ public class BasicElementInspector implements ElementInspector {
     private static ElementFactory<?, ?> getFactory(final Class<?> elementClass, final Method[] declaredMethods,
             final boolean hasProcessor, final KeyParser parser) {
         Method factoryMethod = null;
-        final Map<Key, DataResolver<?, ?>> dataResolvers = new HashMap<>(2);
         for (final Method declaredMethod : declaredMethods) {
             if (declaredMethod.isAnnotationPresent(FactoryMethod.class)) {
                 if (factoryMethod != null) {
-                    formatException(elementClass, "cannot have more than one ElementProcessor method");
+                    formatException(elementClass, "has more than one FactoryMethod");
                 }
 
                 validatePublicStatic(elementClass, declaredMethod, () -> "FactoryMethod not declared public static");
@@ -63,41 +59,6 @@ public class BasicElementInspector implements ElementInspector {
                         "factory whose return type is assignable to the class it belongs");
 
                 factoryMethod = declaredMethod;
-            }
-            else {
-                final ResolverMethod resolverMethod = declaredMethod.getAnnotation(ResolverMethod.class);
-                if(resolverMethod != null) {
-                    validatePublicStatic(elementClass, declaredMethod, () -> "ResolverMethod not declared public " +
-                            "static");
-                    validateReturnType(elementClass, DataResolver.class, declaredMethod,
-                            () -> "ResolverMethod must return DataResolver");
-                    validateNoParameters(elementClass, declaredMethod, () -> "ResolverMethod has parameters");
-                    final ParameterizedType type = validateParameterizedReturnType(elementClass, declaredMethod,
-                            () -> "FactoryMethod returned raw parameterized class");
-
-                    if(type.getActualTypeArguments().length != 2) {
-                        formatException(elementClass, "unexpected number of type arguments on ResolverMethod return " +
-                                "type");
-                    }
-
-                    final Class<?> resolverClass = resolverMethod.value();
-                    final ElementModel modelAnnotation = resolverClass.getDeclaredAnnotation(ElementModel.class);
-                    if(modelAnnotation == null) {
-                        formatException(elementClass, "ResolverMethod bound to class without the ElementModel " +
-                                "annotation");
-                    }
-
-                    @Subst(Constants.NAMESPACE_OR_KEY)
-                    final String value = modelAnnotation.value();
-                    final Key resolverKey = parser.parseKey(value);
-
-                    if(dataResolvers.containsKey(resolverKey)) {
-                        formatException(elementClass, "ResolverMethod for element type " + resolverKey + " already " +
-                                "exists");
-                    }
-
-                    dataResolvers.put(resolverKey, ReflectionUtils.invokeMethod(declaredMethod, null));
-                }
             }
         }
 
@@ -135,7 +96,7 @@ public class BasicElementInspector implements ElementInspector {
         final ArrayList<ElementParameter> elementParameters = new ArrayList<>(parameters.length);
         int dataParameterIndex = -1;
         for (int i = 0; i < parameters.length; i++) {
-            Parameter parameter = parameters[i];
+            final Parameter parameter = parameters[i];
 
             if (parameter.isAnnotationPresent(ElementData.class) ||
                     parameter.getType().isAnnotationPresent(ElementData.class)) {
@@ -167,20 +128,41 @@ public class BasicElementInspector implements ElementInspector {
                 }
 
                 final Class<?> compositeType = parameter.getType();
-                final ElementModel model = compositeType.getDeclaredAnnotation(ElementModel.class);
-                if(model == null) {
+                if(!compositeType.isAnnotationPresent(ElementModel.class)) {
                     formatException(elementClass, "Composite parameter type must have the ElementModel annotation");
                 }
-
-                @Subst(Constants.NAMESPACE_OR_KEY)
-                final String value = model.value();
-                final Key compositeKey = parser.parseKey(value);
 
                 @Subst(Constants.NAMESPACE_OR_KEY)
                 final String name = composite.value();
                 final Key compositeName = name.equals(Composite.DEFAULT_VALUE) ? null : parser.parseKey(name);
 
-                elementParameters.add(new ElementParameter(compositeKey, compositeName, true));
+                final Method[] compositeMethods = compositeType.getDeclaredMethods();
+                Method resolverMethod = null;
+                for (final Method compositeMethod : compositeMethods) {
+                    final ResolverMethod resolverMethodAnnotation = compositeMethod.getAnnotation(ResolverMethod.class);
+                    if (resolverMethodAnnotation != null) {
+                        if(resolverMethod != null) {
+                            formatException(compositeType, "has more than one ResolverMethod");
+                        }
+
+                        validatePublicStatic(compositeType, compositeMethod, () -> "ResolverMethod not declared " +
+                                "public static");
+                        validateReturnType(compositeType, DataResolver.class, compositeMethod,
+                                () -> "ResolverMethod must return a DataResolver");
+                        validateNoParameters(compositeType, compositeMethod, () -> "ResolverMethod has parameters");
+
+                        resolverMethod = compositeMethod;
+                    }
+                }
+
+                if(resolverMethod == null) {
+                    formatException(elementClass, "dependency annotated as CompositeType does not supply a " +
+                            "ResolverMethod");
+                }
+
+                final DataResolver<Object, Object> resolver = ReflectionUtils.invokeMethod(resolverMethod, null);
+
+                elementParameters.add(new ElementParameter(null, compositeName, resolver));
                 continue;
             }
             else if(dependency == null) {
@@ -194,7 +176,7 @@ public class BasicElementInspector implements ElementInspector {
             final String name = dependency.name();
 
             elementParameters.add(new ElementParameter(parser.parseKey(value), name
-                    .equals(ElementDependency.DEFAULT_NAME) ? null : parser.parseKey(name), false));
+                    .equals(ElementDependency.DEFAULT_NAME) ? null : parser.parseKey(name), null));
         }
 
         if (dataParameterIndex == -1 && hasProcessor) {
@@ -211,19 +193,18 @@ public class BasicElementInspector implements ElementInspector {
 
         final ElementSpec elementSpec = new ElementSpec(elementParameters, dataParameterIndex);
         return (data, dependencyProvider, builder) -> {
-            final Object[] args = resolveArguments(data, dependencyProvider, builder, elementSpec, dataResolvers::get);
+            final Object[] args = resolveArguments(data, dependencyProvider, builder, elementSpec);
             return ReflectionUtils.invokeConstructor(finalFactoryConstructor, args);
         };
     }
 
     private static Object[] resolveArguments(final Object data, final DependencyProvider provider,
-            final ElementBuilder builder, final ElementSpec spec,
-            final Function<? super Key, ? extends DataResolver<?, ?>> resolverLookup) {
+            final ElementBuilder builder, final ElementSpec spec) {
         final Object[] args;
         if (spec.dataIndex == -1) {
             args = new Object[spec.parameters.size()];
             for (int i = 0; i < spec.parameters.size(); i++) {
-                args[i] = processParameter(null, spec.parameters.get(i), provider, builder, resolverLookup);
+                args[i] = processParameter(null, spec.parameters.get(i), provider, builder);
             }
 
             return args;
@@ -232,47 +213,23 @@ public class BasicElementInspector implements ElementInspector {
         args = new Object[spec.parameters.size() + 1];
         args[spec.dataIndex] = data;
         for (int i = 0; i < spec.dataIndex; i++) {
-            args[i] = processParameter(data, spec.parameters.get(i), provider, builder, resolverLookup);
+            args[i] = processParameter(data, spec.parameters.get(i), provider, builder);
         }
 
         for (int i = spec.dataIndex + 1; i < args.length; i++) {
-            args[i] = processParameter(data, spec.parameters.get(i - 1), provider, builder, resolverLookup);
+            args[i] = processParameter(data, spec.parameters.get(i - 1), provider, builder);
         }
 
         return args;
     }
 
     private static Object processParameter(final Object data, final ElementParameter parameter,
-            final DependencyProvider provider, final ElementBuilder builder,
-            final Function<? super Key, ? extends DataResolver<?, ?>> resolverLookup) {
-        if(!parameter.composite) {
+            final DependencyProvider provider, final ElementBuilder builder) {
+        if(parameter.resolver == null) {
             return provider.provide(parameter.typeKey, parameter.nameKey);
         }
 
-        //noinspection unchecked
-        final DataResolver<Object, Object> resolver = (DataResolver<Object, Object>) resolverLookup.apply(parameter
-                .typeKey);
-
-        final Object compositeData;
-        if(resolver != null) {
-            if(data == null) {
-                throw new ElementException("Data was null, but there was a data resolver for type " + parameter.typeKey);
-            }
-
-            compositeData = resolver.resolveCompositeData(data, parameter.nameKey);
-        }
-        else {
-            //resolvers aren't necessary for element types that don't have any data, so assume this is what's happening
-            compositeData = parameter.typeKey;
-        }
-
-        try {
-            return builder.loadElement(compositeData, provider);
-        }
-        catch (ElementException e) {
-            //rethrow, so we can add a bit of clarification about the context
-            throw new ElementException("Exception constructing nested element with data " + data, e);
-        }
+        return builder.loadElement(parameter.resolver.resolveCompositeData(data, parameter.nameKey), provider);
     }
 
     private static ConfigProcessor<?> getProcessor(final Class<?> elementClass,
@@ -286,8 +243,8 @@ public class BasicElementInspector implements ElementInspector {
 
                 validatePublicStatic(elementClass, declaredMethod, () -> "ProcessorMethod must be public static");
                 validateNoParameters(elementClass, declaredMethod, () -> "ProcessorMethod must have no parameters");
-                validateReturnType(elementClass, ConfigProcessor.class, declaredMethod,
-                        () -> "ProcessorMethod must " + "return a ConfigProcessor");
+                validateReturnType(elementClass, ConfigProcessor.class, declaredMethod, () -> "ProcessorMethod must " +
+                        "return a ConfigProcessor");
 
                 validateParameterizedReturnType(elementClass, declaredMethod,
                         () -> "ProcessorMethod cannot return a raw generic");
