@@ -64,12 +64,7 @@ public class BasicKeyParser implements KeyParser {
 
     @Override
     public @NotNull String parseString(final @NotNull Key key) {
-        final String namespace = key.namespace();
-        if(namespace.equals(defaultNamespace)) {
-            return key.value();
-        }
-
-        return namespace + Constants.NAMESPACE_SEPARATOR + key.value();
+        return key.namespace() + Constants.NAMESPACE_SEPARATOR + key.value();
     }
 
     @Override

@@ -140,8 +140,8 @@ public interface ElementBuilder {
     }
 
     /**
-     * Loads an element object from the given {@link Keyed} data object, and potentially uses the given
-     * {@link DependencyProvider} to supply dependencies.
+     * Loads an element object from the given data object, and potentially uses the given {@link DependencyProvider} to
+     * supply dependencies, if necessary.
      *
      * @param data               the data object
      * @param dependencyProvider the DependencyProvider implementation used to provide dependencies
@@ -151,6 +151,13 @@ public interface ElementBuilder {
     <TElement> @NotNull TElement loadElement(final @NotNull Object data,
             final @NotNull DependencyProvider dependencyProvider);
 
+    /**
+     * Loads an element object from the given data object. Uses {@link DependencyProvider#EMPTY} to provide
+     * dependencies, and therefore is intended for element objects that don't have any.
+     * @param data the data element
+     * @return the new element object
+     * @param <TElement> the type of element object
+     */
     default <TElement> @NotNull TElement loadElement(final @NotNull Object data) {
         return loadElement(data, DependencyProvider.EMPTY);
     }
