@@ -10,7 +10,9 @@ import org.intellij.lang.annotations.Subst;
 import org.jetbrains.annotations.NotNull;
 
 import java.lang.reflect.*;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Objects;
 import java.util.function.Supplier;
 
 /**
@@ -18,9 +20,6 @@ import java.util.function.Supplier;
  * from methods/constructors, in compliance with the general element model specification.
  */
 public class BasicElementInspector implements ElementInspector {
-    private record ElementSpec(List<ElementParameter> parameters, int dataIndex) {}
-    private record ElementParameter(Key typeKey, Key nameKey) {}
-
     private final KeyParser keyParser;
 
     /**
@@ -42,14 +41,14 @@ public class BasicElementInspector implements ElementInspector {
                 }
 
                 validatePublicStatic(elementClass, declaredMethod, () -> "FactoryMethod not declared public static");
-                validateReturnType(elementClass, ElementFactory.class, declaredMethod, () -> "FactoryMethod must " +
-                        "return an ElementFactory");
+                validateReturnType(elementClass, ElementFactory.class, declaredMethod,
+                        () -> "FactoryMethod must " + "return an ElementFactory");
                 validateNoParameters(elementClass, declaredMethod, () -> "FactoryMethod has parameters");
 
                 final ParameterizedType type = validateParameterizedReturnType(elementClass, declaredMethod,
                         () -> "FactoryMethod returned raw parameterized class");
                 final Type[] typeArguments = type.getActualTypeArguments();
-                if(typeArguments.length != 2) {
+                if (typeArguments.length != 2) {
                     //this is likely unreachable, as we are guaranteed to be an instance of ElementFactory
                     formatException(elementClass, "Unexpected number of type arguments on FactoryMethod return type");
                 }
@@ -103,11 +102,11 @@ public class BasicElementInspector implements ElementInspector {
                     formatException(elementClass, "more than one ElementData on constructor factory");
                 }
 
-                if(parameter.isAnnotationPresent(ElementDependency.class)) {
+                if (parameter.isAnnotationPresent(ElementDependency.class)) {
                     formatException(elementClass, "ElementDependency present on data parameter");
                 }
 
-                if(parameter.isAnnotationPresent(Composite.class)) {
+                if (parameter.isAnnotationPresent(Composite.class)) {
                     formatException(elementClass, "Composite present on data parameter");
                 }
 
@@ -121,36 +120,35 @@ public class BasicElementInspector implements ElementInspector {
             }
 
             final Composite composite = parameter.getDeclaredAnnotation(Composite.class);
-            if(composite != null) {
-                if(dependency != null) {
+            if (composite != null) {
+                if (dependency != null) {
                     formatException(elementClass, "a parameter is annotated with both ElementDependency and Composite");
                 }
 
                 final Class<?> compositeType = parameter.getType();
                 final ElementModel modelAnnotation = compositeType.getDeclaredAnnotation(ElementModel.class);
-                if(modelAnnotation == null) {
+                if (modelAnnotation == null) {
                     formatException(elementClass, "Composite parameter type must have the ElementModel annotation");
                 }
 
                 continue;
-            }
-            else if(dependency == null) {
+            } else if (dependency == null) {
                 formatException(elementClass, "parameter missing annotation");
             }
 
             final String name = dependency.name();
-            elementParameters.add(new ElementParameter(parseKey(parser, dependency.value()), name
-                    .equals(ElementDependency.DEFAULT_NAME) ? null : parseKey(parser, name)));
+            elementParameters.add(new ElementParameter(parseKey(parser, dependency.value()),
+                    name.equals(ElementDependency.DEFAULT_NAME) ? null : parseKey(parser, name)));
         }
 
         if (dataParameterIndex == -1 && hasProcessor) {
-            formatException(elementClass, "no data parameter found on constructor factory, but class specifies a " +
-                    "processor");
+            formatException(elementClass,
+                    "no data parameter found on constructor factory, but class specifies a " + "processor");
         }
 
         if (dataParameterIndex != -1 && !hasProcessor) {
-            formatException(elementClass, "found data parameter on constructor factory, but class does not specify a " +
-                    "processor");
+            formatException(elementClass,
+                    "found data parameter on constructor factory, but class does not specify a " + "processor");
         }
 
         elementParameters.trimToSize();
@@ -201,11 +199,11 @@ public class BasicElementInspector implements ElementInspector {
 
                 validatePublicStatic(elementClass, declaredMethod, () -> "ProcessorMethod must be public static");
                 validateNoParameters(elementClass, declaredMethod, () -> "ProcessorMethod must have no parameters");
-                validateReturnType(elementClass, ConfigProcessor.class, declaredMethod, () -> "ProcessorMethod must " +
-                        "return a ConfigProcessor");
+                validateReturnType(elementClass, ConfigProcessor.class, declaredMethod,
+                        () -> "ProcessorMethod must " + "return a ConfigProcessor");
 
-                validateParameterizedReturnType(elementClass, declaredMethod, () -> "ProcessorMethod cannot return a " +
-                        "raw generic");
+                validateParameterizedReturnType(elementClass, declaredMethod,
+                        () -> "ProcessorMethod cannot return a " + "raw generic");
 
                 processorMethod = declaredMethod;
             }
@@ -273,15 +271,18 @@ public class BasicElementInspector implements ElementInspector {
 
     @Override
     public @NotNull Information inspect(final @NotNull Class<?> elementClass) {
-        if(!Modifier.isStatic(elementClass.getModifiers()) && elementClass.getDeclaringClass() != null) {
+        if (!Modifier.isStatic(elementClass.getModifiers()) && elementClass.getDeclaringClass() != null) {
             throw new ElementException(elementClass + " is non-static and has a declaring class");
         }
 
         final Method[] declaredMethods = elementClass.getDeclaredMethods();
         final ConfigProcessor<?> processor = getProcessor(elementClass, declaredMethods);
-        final ElementFactory<?, ?> factory = getFactory(elementClass, declaredMethods, processor != null,
-                keyParser);
+        final ElementFactory<?, ?> factory = getFactory(elementClass, declaredMethods, processor != null, keyParser);
 
         return new Information(processor, factory);
     }
+
+    private record ElementSpec(List<ElementParameter> parameters, int dataIndex) {}
+
+    private record ElementParameter(Key typeKey, Key nameKey) {}
 }

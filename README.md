@@ -2,7 +2,8 @@
 
 [![standard-readme compliant](https://img.shields.io/badge/readme%20style-standard-brightgreen.svg?style=flat-square)](https://github.com/RichardLitt/standard-readme)
 
-Element is a DI-like framework for creating standardized "element" objects from configuration files and dependencies. It's meant for Minecraft developers, but it doesn't depend on any particular platform.
+Element is a DI-like framework for creating standardized "element" objects from configuration files and dependencies.
+It's meant for Minecraft developers, but it doesn't depend on any particular platform.
 
 ## Table of Contents
 

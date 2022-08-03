@@ -25,10 +25,10 @@ public interface DependencyProvider {
     /**
      * Provides a named dependency.
      *
-     * @param type the type key for the dependency
-     * @param name the name key for the dependency
-     * @return the dependency
+     * @param type          the type key for the dependency
+     * @param name          the name key for the dependency
      * @param <TDependency> the type of the dependency
+     * @return the dependency
      */
     <TDependency> @NotNull TDependency provide(final @NotNull Key type, final @Nullable Key name);
 

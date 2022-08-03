@@ -44,17 +44,17 @@ public interface ElementBuilder {
 
     /**
      * Convenience method designed to load elements in bulk. Each element will be created using the same
-     * {@link DependencyProvider}. If an {@link ElementException} is thrown during load, it will <i>not</i> stop
-     * any additional elements from being loaded. Rather, the exception (including any suppressed exceptions) will be
+     * {@link DependencyProvider}. If an {@link ElementException} is thrown during load, it will <i>not</i> stop any
+     * additional elements from being loaded. Rather, the exception (including any suppressed exceptions) will be
      * handled by the provided exception handler after all elements have tried to load.
      *
-     * @param nodes the list of data objects to load
+     * @param nodes              the list of data objects to load
      * @param collectionFunction the function used to create the output collection
      * @param dependencyProvider the object which provides dependencies for all loaded elements
-     * @param exceptionHandler the consumer which handles exceptions after all data has been iterated
+     * @param exceptionHandler   the consumer which handles exceptions after all data has been iterated
+     * @param <TElement>         the type of element object
+     * @param <TCollection>      the type of collection object
      * @return a {@link Collection} containing all successfully loaded element objects
-     * @param <TElement> the type of element object
-     * @param <TCollection> the type of collection object
      */
     default <TElement, TCollection extends Collection<TElement>> @NotNull TCollection loadAllElements(
             final @NotNull Collection<? extends ConfigNode> nodes,
@@ -92,12 +92,12 @@ public interface ElementBuilder {
      * {@link ElementBuilder#loadAllElements(Collection, IntFunction, DependencyProvider, Consumer)} that uses
      * {@link ElementBuilder#DEFAULT_EXCEPTION_HANDLER} to handle exceptions during load.
      *
-     * @param nodes the list of data objects to load
+     * @param nodes              the list of data objects to load
      * @param collectionFunction the function used to create the output collection
      * @param dependencyProvider the object which provides dependencies for all loaded elements
+     * @param <TElement>         the type of element object
+     * @param <TCollection>      the type of collection object
      * @return a {@link Collection} containing all successfully loaded element objects
-     * @param <TElement> the type of element object
-     * @param <TCollection> the type of collection object
      */
     default <TElement, TCollection extends Collection<TElement>> @NotNull TCollection loadAllElements(
             final @NotNull Collection<? extends ConfigNode> nodes,
@@ -111,11 +111,11 @@ public interface ElementBuilder {
      * {@link ElementBuilder#loadAllElements(Collection, IntFunction, DependencyProvider, Consumer)} that uses the
      * provided consumer to handle exceptions, and {@code ArrayList::new} for its collectionFunction.
      *
-     * @param nodes the list of data objects to load
+     * @param nodes              the list of data objects to load
      * @param dependencyProvider the object which provides dependencies for all loaded elements
-     * @param exceptionHandler the consumer which handles exceptions after all data has been iterated
+     * @param exceptionHandler   the consumer which handles exceptions after all data has been iterated
+     * @param <TElement>         the type of element object
      * @return a {@link Collection} containing all successfully loaded element objects
-     * @param <TElement> the type of element object
      */
     default <TElement> @NotNull List<TElement> loadAllElements(final @NotNull Collection<? extends ConfigNode> nodes,
             final @NotNull DependencyProvider dependencyProvider,
@@ -129,10 +129,10 @@ public interface ElementBuilder {
      * {@code ArrayList::new} for its collectionFunction, and {@link ElementBuilder#DEFAULT_EXCEPTION_HANDLER} to handle
      * exceptions during load.
      *
-     * @param nodes the list of data objects to load
+     * @param nodes              the list of data objects to load
      * @param dependencyProvider the object which provides dependencies for all loaded elements
+     * @param <TElement>         the type of element object
      * @return a {@link Collection} containing all successfully loaded element objects
-     * @param <TElement> the type of element object
      */
     default <TElement> @NotNull List<TElement> loadAllElements(final @NotNull Collection<? extends ConfigNode> nodes,
             final @NotNull DependencyProvider dependencyProvider) {
@@ -154,9 +154,10 @@ public interface ElementBuilder {
     /**
      * Loads an element object from the given data object. Uses {@link DependencyProvider#EMPTY} to provide
      * dependencies, and therefore is intended for element objects that don't have any.
-     * @param data the data element
-     * @return the new element object
+     *
+     * @param data       the data element
      * @param <TElement> the type of element object
+     * @return the new element object
      */
     default <TElement> @NotNull TElement loadElement(final @NotNull Object data) {
         return loadElement(data, DependencyProvider.EMPTY);

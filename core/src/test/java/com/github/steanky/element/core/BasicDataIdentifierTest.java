@@ -7,23 +7,10 @@ import net.kyori.adventure.key.Key;
 import net.kyori.adventure.key.Keyed;
 import org.junit.jupiter.api.Test;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
 class BasicDataIdentifierTest {
-    static class NonElementDataClass {}
-
-    @ElementData
-    static class ElementDataClass {}
-
-    @ElementData("test:test")
-    static class SpecificElementDataClass {}
-
-    @ElementModel("test:inferred")
-    static class HostInference {
-        @ElementData
-        static class HostInferenceSub {}
-    }
-
     @Test
     void keyed() {
         final DataIdentifier identifier = new BasicDataIdentifier(new BasicKeyParser("default"));
@@ -74,5 +61,19 @@ class BasicDataIdentifierTest {
 
         final Key key = identifier.identifyKey(new HostInference.HostInferenceSub());
         assertEquals(Key.key("test:inferred"), key);
+    }
+
+    static class NonElementDataClass {}
+
+    @ElementData
+    static class ElementDataClass {}
+
+    @ElementData("test:test")
+    static class SpecificElementDataClass {}
+
+    @ElementModel("test:inferred")
+    static class HostInference {
+        @ElementData
+        static class HostInferenceSub {}
     }
 }

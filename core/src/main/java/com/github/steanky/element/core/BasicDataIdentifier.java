@@ -33,32 +33,28 @@ public class BasicDataIdentifier implements DataIdentifier {
     public @NotNull Key identifyKey(final @NotNull Object data) {
         if (data instanceof Keyed keyed) {
             return keyed.key();
-        }
-        else if(data instanceof Key key) { //necessary until adventure 4.12.0
+        } else if (data instanceof Key key) { //necessary until adventure 4.12.0
             return key;
-        }
-        else if(data instanceof @Subst(Constants.NAMESPACE_OR_KEY) String keyString) {
+        } else if (data instanceof @Subst(Constants.NAMESPACE_OR_KEY)String keyString) {
             return keyParser.parseKey(keyString);
         }
 
         final Class<?> dataClass = data.getClass();
         final ElementData elementData = dataClass.getDeclaredAnnotation(ElementData.class);
-        if(elementData == null) {
+        if (elementData == null) {
             throw new ElementException("Data class " + dataClass + " must supply an ElementData annotation");
         }
 
-        if(!elementData.value().equals(ElementData.DEFAULT_VALUE)) {
-            @Subst(Constants.NAMESPACE_OR_KEY)
-            final String value = elementData.value();
+        if (!elementData.value().equals(ElementData.DEFAULT_VALUE)) {
+            @Subst(Constants.NAMESPACE_OR_KEY) final String value = elementData.value();
             return keyParser.parseKey(value);
         }
 
         final Class<?> declaring = dataClass.getDeclaringClass();
-        if(declaring != null) {
+        if (declaring != null) {
             final ElementModel model = declaring.getDeclaredAnnotation(ElementModel.class);
-            if(model != null) {
-                @Subst(Constants.NAMESPACE_OR_KEY)
-                final String value = model.value();
+            if (model != null) {
+                @Subst(Constants.NAMESPACE_OR_KEY) final String value = model.value();
                 return keyParser.parseKey(value);
             }
         }

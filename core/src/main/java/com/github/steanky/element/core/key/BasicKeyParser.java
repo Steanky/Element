@@ -9,11 +9,11 @@ import org.jetbrains.annotations.NotNull;
  * Basic implementation of {@link KeyParser}. Supports variable "default" namespaces for {@link Key} objects to have,
  * which will be used as the namespace when it is unspecified by the input string.
  *
- * @implNote
- * Although similar, {@link BasicKeyParser#parseKey(String)} and {@link Key#key(String)} have subtly different behaviors
- * when handling empty namespaces. BasicKeyParser will treat key strings like {@code :test} as having a namespace which
- * is an empty string, with the value {@code test}. Key will use the default namespace, {@link Key#MINECRAFT_NAMESPACE},
- * in this case. BasicKeyParser will only use its default namespace <i>if there is no separator character present</i>.
+ * @implNote Although similar, {@link BasicKeyParser#parseKey(String)} and {@link Key#key(String)} have subtly different
+ * behaviors when handling empty namespaces. BasicKeyParser will treat key strings like {@code :test} as having a
+ * namespace which is an empty string, with the value {@code test}. Key will use the default namespace,
+ * {@link Key#MINECRAFT_NAMESPACE}, in this case. BasicKeyParser will only use its default namespace <i>if there is no
+ * separator character present</i>.
  */
 public class BasicKeyParser implements KeyParser {
     @Subst(Constants.NAMESPACE_OR_KEY)
@@ -27,7 +27,7 @@ public class BasicKeyParser implements KeyParser {
      *                                  pattern
      */
     public BasicKeyParser(final @NotNull @NamespaceString String defaultNamespace) {
-        if(!namespaceValid(defaultNamespace)) {
+        if (!namespaceValid(defaultNamespace)) {
             throw new IllegalArgumentException("Invalid default namespace: " + defaultNamespace);
         }
 
@@ -39,37 +39,6 @@ public class BasicKeyParser implements KeyParser {
      */
     public BasicKeyParser() {
         this(Key.MINECRAFT_NAMESPACE);
-    }
-
-    @Override
-    public @NotNull Key parseKey(final @NotNull @KeyString String keyString) {
-        final int separatorIndex = keyString.indexOf(Constants.NAMESPACE_SEPARATOR);
-        final boolean hasSeparator = separatorIndex >= 0;
-
-        //resolve default namespaces differently than in adventure: leading : means empty namespace, no : means default
-        @Subst(Constants.NAMESPACE_OR_KEY)
-        final String namespace = hasSeparator ? keyString.substring(0, separatorIndex) : defaultNamespace;
-        if(!namespaceValid(namespace)) {
-            throw new ElementException("Invalid namespace: " + keyString);
-        }
-
-        @Subst(Constants.NAMESPACE_OR_KEY)
-        final String value = hasSeparator ? keyString.substring(separatorIndex + 1) : keyString;
-        if(!valueValid(value)) {
-            throw new ElementException("Invalid value: " + value);
-        }
-
-        return Key.key(namespace, value);
-    }
-
-    @Override
-    public @NotNull String parseString(final @NotNull Key key) {
-        return key.namespace() + Constants.NAMESPACE_SEPARATOR + key.value();
-    }
-
-    @Override
-    public @NotNull String defaultNamespace() {
-        return defaultNamespace;
     }
 
     //below logic currently duplicates what is in KeyImpl, this should no longer be necessary after Adventure 4.12.0
@@ -99,5 +68,36 @@ public class BasicKeyParser implements KeyParser {
 
     private static boolean validValueChar(final int value) {
         return validNamespaceChar(value) || value == '/';
+    }
+
+    @Override
+    public @NotNull Key parseKey(final @NotNull @KeyString String keyString) {
+        final int separatorIndex = keyString.indexOf(Constants.NAMESPACE_SEPARATOR);
+        final boolean hasSeparator = separatorIndex >= 0;
+
+        //resolve default namespaces differently than in adventure: leading : means empty namespace, no : means default
+        @Subst(Constants.NAMESPACE_OR_KEY) final String namespace =
+                hasSeparator ? keyString.substring(0, separatorIndex) : defaultNamespace;
+        if (!namespaceValid(namespace)) {
+            throw new ElementException("Invalid namespace: " + keyString);
+        }
+
+        @Subst(Constants.NAMESPACE_OR_KEY) final String value =
+                hasSeparator ? keyString.substring(separatorIndex + 1) : keyString;
+        if (!valueValid(value)) {
+            throw new ElementException("Invalid value: " + value);
+        }
+
+        return Key.key(namespace, value);
+    }
+
+    @Override
+    public @NotNull String parseString(final @NotNull Key key) {
+        return key.namespace() + Constants.NAMESPACE_SEPARATOR + key.value();
+    }
+
+    @Override
+    public @NotNull String defaultNamespace() {
+        return defaultNamespace;
     }
 }

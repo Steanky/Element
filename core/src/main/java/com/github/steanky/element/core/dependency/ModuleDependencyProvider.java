@@ -68,8 +68,7 @@ public class ModuleDependencyProvider implements DependencyProvider {
                 throw new ElementException("Void-returning DependencySupplier method");
             }
 
-            @Subst(Constants.NAMESPACE_OR_KEY)
-            final String dependencyString = supplierAnnotation.value();
+            @Subst(Constants.NAMESPACE_OR_KEY) final String dependencyString = supplierAnnotation.value();
             final Key dependencyName = keyParser.parseKey(dependencyString);
             final Parameter[] supplierParameters = declaredMethod.getParameters();
             if (supplierParameters.length > 1) {

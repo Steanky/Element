@@ -144,12 +144,6 @@ class BasicElementInspectorTest {
         assertThrows(ElementException.class, () -> inspector.inspect(NonStaticInnerClass.class));
     }
 
-    @ElementModel("test:non_static_inner_class")
-    class NonStaticInnerClass {
-        @FactoryMethod
-        public NonStaticInnerClass() {}
-    }
-
     @ElementModel("test:simple_element_class")
     static class SimpleElementClass {
         private static final ElementFactory<Data, SimpleElementClass> FACTORY = (data, dependencyProvider, builder) -> new SimpleElementClass(
@@ -490,7 +484,8 @@ class BasicElementInspectorTest {
 
     @ElementModel("test:subclass_factory_return_type")
     static class SubclassFactoryReturnType {
-        private static final ElementFactory<Data, Subclass> FACTORY = (data, dependencyProvider, builder) -> new Subclass(data);
+        private static final ElementFactory<Data, Subclass> FACTORY = (data, dependencyProvider, builder) -> new Subclass(
+                data);
         private static final ConfigProcessor<? extends Keyed> PROCESSOR = new ConfigProcessor<Data>() {
             @Override
             public Data dataFromElement(@NotNull ConfigElement element) {
@@ -763,5 +758,11 @@ class BasicElementInspectorTest {
         public DependenciesConstructorFactory(@ElementDependency("test:dependency") int dependency) {
             this.dependency = dependency;
         }
+    }
+
+    @ElementModel("test:non_static_inner_class")
+    class NonStaticInnerClass {
+        @FactoryMethod
+        public NonStaticInnerClass() {}
     }
 }

@@ -56,8 +56,7 @@ public class BasicElementBuilder implements ElementBuilder {
             throw new ElementException(elementClass + " does not have an ElementModel annotation");
         }
 
-        @Subst(Constants.NAMESPACE_OR_KEY)
-        final String value = elementModel.value();
+        @Subst(Constants.NAMESPACE_OR_KEY) final String value = elementModel.value();
 
         final Key elementKey = keyParser.parseKey(value);
         final ElementInspector.Information elementInformation = elementInspector.inspect(elementClass);

@@ -1,8 +1,8 @@
 package com.github.steanky.element.core.annotation;
 
 import com.github.steanky.element.core.key.KeyString;
-import org.jetbrains.annotations.NotNull;
 import net.kyori.adventure.key.Keyed;
+import org.jetbrains.annotations.NotNull;
 
 import java.lang.annotation.*;
 
@@ -21,6 +21,7 @@ public @interface ElementData {
 
     /**
      * The key string for this data. Used to identify it, assuming it does not implement {@link Keyed}.
+     *
      * @return the name of this data
      */
     @NotNull @KeyString String value() default DEFAULT_VALUE;
