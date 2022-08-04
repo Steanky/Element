@@ -3,7 +3,6 @@ package com.github.steanky.element.core;
 import com.github.steanky.element.core.dependency.DependencyProvider;
 import com.github.steanky.ethylene.core.ConfigElement;
 import com.github.steanky.ethylene.core.collection.ConfigNode;
-import net.kyori.adventure.key.Keyed;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
@@ -14,7 +13,7 @@ import java.util.function.Consumer;
 import java.util.function.IntFunction;
 
 /**
- * Represents a class capable of creating any of its registered element classes using {@link Keyed} data objects and a
+ * Represents a class capable of creating any of its registered element classes using data objects and a
  * {@link DependencyProvider} implementation.
  */
 public interface ElementBuilder {

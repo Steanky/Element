@@ -42,7 +42,7 @@ public class BasicElementInspector implements ElementInspector {
 
                 validatePublicStatic(elementClass, declaredMethod, () -> "FactoryMethod not declared public static");
                 validateReturnType(elementClass, ElementFactory.class, declaredMethod,
-                        () -> "FactoryMethod must " + "return an ElementFactory");
+                        () -> "FactoryMethod must return an ElementFactory");
                 validateNoParameters(elementClass, declaredMethod, () -> "FactoryMethod has parameters");
 
                 final ParameterizedType type = validateParameterizedReturnType(elementClass, declaredMethod,
@@ -143,12 +143,12 @@ public class BasicElementInspector implements ElementInspector {
 
         if (dataParameterIndex == -1 && hasProcessor) {
             formatException(elementClass,
-                    "no data parameter found on constructor factory, but class specifies a " + "processor");
+                    "no data parameter found on constructor factory, but class specifies a processor");
         }
 
         if (dataParameterIndex != -1 && !hasProcessor) {
             formatException(elementClass,
-                    "found data parameter on constructor factory, but class does not specify a " + "processor");
+                    "found data parameter on constructor factory, but class does not specify a processor");
         }
 
         elementParameters.trimToSize();

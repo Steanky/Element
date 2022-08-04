@@ -2,7 +2,7 @@ package com.github.steanky.element.core.dependency;
 
 import com.github.steanky.element.core.ElementException;
 import com.github.steanky.element.core.annotation.DependencySupplier;
-import com.github.steanky.element.core.annotation.Memoized;
+import com.github.steanky.element.core.annotation.Memoize;
 import com.github.steanky.element.core.key.BasicKeyParser;
 import net.kyori.adventure.key.Key;
 import org.jetbrains.annotations.NotNull;
@@ -122,7 +122,7 @@ class ModuleDependencyProviderTest {
 
     public static class NamedMemoizing implements DependencyModule {
         @DependencySupplier("test:memoized")
-        @Memoized
+        @Memoize
         public static @NotNull Object memoized(@NotNull Key name) {
             return new Object();
         }
@@ -142,13 +142,13 @@ class ModuleDependencyProviderTest {
 
     public static class MemoizingModule implements DependencyModule {
         @DependencySupplier("test:memoized_static")
-        @Memoized
+        @Memoize
         public static @NotNull Object memoizedStatic() {
             return new Object();
         }
 
         @DependencySupplier("test:memoized")
-        @Memoized
+        @Memoize
         public @NotNull Object memoized() {
             return new Object();
         }

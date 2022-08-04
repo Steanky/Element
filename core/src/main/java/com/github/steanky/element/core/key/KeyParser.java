@@ -18,14 +18,6 @@ public interface KeyParser {
     @NotNull Key parseKey(final @NotNull @KeyString String key);
 
     /**
-     * Parses the given key into an equivalent String.
-     *
-     * @param key the key
-     * @return the parsed string
-     */
-    @NotNull String parseString(final @NotNull Key key);
-
-    /**
      * Returns the default namespace used by this KeyParser.
      *
      * @return the default namespace used by this KeyParser

@@ -18,7 +18,7 @@ public final class Constants {
     public static final String NAMESPACED_KEY = "a:a";
 
     /**
-     * An example of both a namespace and a key. Useful for passing to {@link Subst}.
+     * An example of both a namespace and a complete key. Useful for passing to {@link Subst}.
      */
     public static final String NAMESPACE_OR_KEY = "a";
 

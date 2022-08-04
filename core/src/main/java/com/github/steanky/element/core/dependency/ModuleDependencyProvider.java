@@ -3,7 +3,7 @@ package com.github.steanky.element.core.dependency;
 import com.github.steanky.element.core.ElementException;
 import com.github.steanky.element.core.ReflectionUtils;
 import com.github.steanky.element.core.annotation.DependencySupplier;
-import com.github.steanky.element.core.annotation.Memoized;
+import com.github.steanky.element.core.annotation.Memoize;
 import com.github.steanky.element.core.key.Constants;
 import com.github.steanky.element.core.key.KeyParser;
 import net.kyori.adventure.key.Key;
@@ -77,7 +77,7 @@ public class ModuleDependencyProvider implements DependencyProvider {
 
             final boolean memoize;
             if (supplierParameters.length == 0) {
-                memoize = declaredMethod.isAnnotationPresent(Memoized.class);
+                memoize = declaredMethod.isAnnotationPresent(Memoize.class);
 
                 dependencyFunctionMap.put(dependencyName, new DependencyFunction(false) {
                     private Object value = null;
@@ -104,7 +104,7 @@ public class ModuleDependencyProvider implements DependencyProvider {
                 throw new ElementException("Expected subclass of Key, was " + parameterType);
             }
 
-            memoize = declaredMethod.isAnnotationPresent(Memoized.class);
+            memoize = declaredMethod.isAnnotationPresent(Memoize.class);
             dependencyFunctionMap.put(dependencyName, new DependencyFunction(true) {
                 private final Map<Key, Object> values = memoize ? new HashMap<>(4) : null;
 
