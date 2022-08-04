@@ -4,7 +4,8 @@ import net.kyori.adventure.key.Key;
 import org.jetbrains.annotations.NotNull;
 
 /**
- * Identifies a {@link Key} from a particular data object. The object may be of any type.
+ * Identifies a {@link Key} from a particular data object. Implementations will typically only be able to extract keys
+ * from a particular set of types.
  */
 @FunctionalInterface
 public interface DataIdentifier {

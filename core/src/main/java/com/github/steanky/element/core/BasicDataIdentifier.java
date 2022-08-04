@@ -14,8 +14,8 @@ import java.util.Objects;
 /**
  * Basic implementation of {@link DataIdentifier}. Can correctly identify all subclasses of {@link Keyed}, {@link Key}
  * objects themselves, {@link String} objects (if they can be parsed into a valid key), objects whose type has the
- * {@link ElementData} annotation which itself provides a valid key, or classes which are nested in an
- * {@link ElementModel} class which provides a valid key.
+ * {@link ElementData} annotation which itself provides a valid key, or types whose classes which are nested in an
+ * {@link ElementModel} class which provides a valid key, and are also annotated with ElementData.
  */
 public class BasicDataIdentifier implements DataIdentifier {
     private final KeyParser keyParser;
@@ -35,7 +35,7 @@ public class BasicDataIdentifier implements DataIdentifier {
             return keyed.key();
         } else if (data instanceof Key key) { //necessary until adventure 4.12.0
             return key;
-        } else if (data instanceof @Subst(Constants.NAMESPACE_OR_KEY)String keyString) {
+        } else if (data instanceof @Subst(Constants.NAMESPACE_OR_KEY) String keyString) {
             return keyParser.parseKey(keyString);
         }
 
