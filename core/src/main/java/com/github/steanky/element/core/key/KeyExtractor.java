@@ -11,6 +11,11 @@ import org.jetbrains.annotations.NotNull;
 @FunctionalInterface
 public interface KeyExtractor {
     /**
+     * The default KeyExtractor. Uses "serialKey" as its keyName, and {@link KeyParser#DEFAULT} for its key parser.
+     */
+    KeyExtractor DEFAULT = new BasicKeyExtractor("serialKey", KeyParser.DEFAULT);
+
+    /**
      * Extracts a {@link Key} from a {@link ConfigNode}. If no key can be found, throws an {@link ElementException}.
      *
      * @param node the node to extract a key from

@@ -35,10 +35,10 @@ public class BasicKeyParser implements KeyParser {
     }
 
     /**
-     * Creates a new instance of this class that uses the default namespace {@link Key#MINECRAFT_NAMESPACE}.
+     * Creates a new instance of this class that uses the default namespace "default".
      */
     public BasicKeyParser() {
-        this(Key.MINECRAFT_NAMESPACE);
+        this("default");
     }
 
     //below logic currently duplicates what is in KeyImpl, this should no longer be necessary after Adventure 4.12.0

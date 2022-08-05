@@ -9,6 +9,11 @@ import org.jetbrains.annotations.NotNull;
  */
 public interface KeyParser {
     /**
+     * Default KeyParser implementation. Uses the default namespace "default".
+     */
+    KeyParser DEFAULT = new BasicKeyParser();
+
+    /**
      * Converts the given String into a {@link Key}.
      *
      * @param key the key string

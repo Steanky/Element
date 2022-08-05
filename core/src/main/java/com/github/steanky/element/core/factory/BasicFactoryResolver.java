@@ -144,8 +144,8 @@ public class BasicFactoryResolver implements FactoryResolver {
                 }
 
                 final Function<Object, Object> resolver;
-                if(dataClass == null) {
-                    resolver = Function.identity();
+                if(dataClass == null) { //we have no data, so our child should not have data either
+                    resolver = ignored -> elementType;
                 }
                 else {
                     resolver = dataInspector.extractResolvers(dataClass).get(elementType);
