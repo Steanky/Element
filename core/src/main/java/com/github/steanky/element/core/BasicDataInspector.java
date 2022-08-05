@@ -21,7 +21,7 @@ public class BasicDataInspector implements DataInspector {
     private final KeyParser keyParser;
     private final Map<Class<?>, Map<Key, Function<Object, Object>>> resolverMappings;
 
-    public BasicDataInspector(@NotNull KeyParser keyParser) {
+    public BasicDataInspector(final @NotNull KeyParser keyParser) {
         this.keyParser = Objects.requireNonNull(keyParser);
         this.resolverMappings = new WeakHashMap<>();
     }
@@ -39,44 +39,40 @@ public class BasicDataInspector implements DataInspector {
                 for (final RecordComponent component : recordComponents) {
                     final CompositeData dataAnnotation = component.getDeclaredAnnotation(CompositeData.class);
                     if (dataAnnotation != null) {
-                        registerAccessorMethod(dataAnnotation, resolvers, component.getAccessor());
-                    }
-                }
-            } else {
-                final Method[] declaredMethods = data.getDeclaredMethods();
-
-                for (final Method method : declaredMethods) {
-                    final CompositeData dataAnnotation = method.getDeclaredAnnotation(CompositeData.class);
-                    if (dataAnnotation != null) {
-                        validatePublic(data, method, () -> "CompositeData accessor is not public");
-                        validateNotStatic(data, method, () -> "CompositeData accessor is static");
-                        validateDeclaredParameterCount(data, method, 0,
-                                () -> "CompositeData accessor has" + " parameters");
-
-                        if (method.getReturnType().equals(void.class)) {
-                            formatException(data, "CompositeData accessor returns void");
-                        }
-
-                        registerAccessorMethod(dataAnnotation, resolvers, method);
+                        registerAccessorMethod(dataAnnotation.value(), resolvers, component.getAccessor());
                     }
                 }
 
+                return resolvers;
+            }
+
+            final Method[] declaredMethods = data.getDeclaredMethods();
+            for (final Method method : declaredMethods) {
+                final CompositeData dataAnnotation = method.getDeclaredAnnotation(CompositeData.class);
+                if (dataAnnotation != null) {
+                    validatePublic(data, method, () -> "CompositeData accessor is not public");
+                    validateNotStatic(data, method, () -> "CompositeData accessor is static");
+                    validateDeclaredParameterCount(data, method, 0,
+                            () -> "CompositeData accessor has parameters");
+
+                    if (method.getReturnType().equals(void.class)) {
+                        formatException(data, "CompositeData accessor returns void");
+                    }
+
+                    registerAccessorMethod(dataAnnotation.value(), resolvers, method);
+                }
             }
 
             return resolvers;
         });
     }
 
-    private void registerAccessorMethod(final CompositeData dataAnnotation,
+    private void registerAccessorMethod(@Subst(Constants.NAMESPACE_OR_KEY) String keyString,
             final Map<Key, Function<Object, Object>> resolvers, final Method accessor) {
-        if (dataAnnotation != null) {
-            @Subst(Constants.NAMESPACE_OR_KEY) final String keyValue = dataAnnotation.value();
 
-            final Key key = keyParser.parseKey(keyValue);
-            if (resolvers.putIfAbsent(key, (data) -> ReflectionUtils.invokeMethod(accessor, data)) != null) {
-                formatException(accessor.getDeclaringClass(),
-                        "CompositeData accessor already exists for composite " + "data named " + key);
-            }
+        if (resolvers.putIfAbsent(keyParser.parseKey(keyString), (data) -> ReflectionUtils.invokeMethod(accessor, data)) != null) {
+            formatException(accessor.getDeclaringClass(),
+                    "CompositeData accessor already exists for composite data");
         }
     }
 }

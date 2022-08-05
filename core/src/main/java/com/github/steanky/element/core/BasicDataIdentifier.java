@@ -19,14 +19,16 @@ import java.util.Objects;
  */
 public class BasicDataIdentifier implements DataIdentifier {
     private final KeyParser keyParser;
+    private final ElementTypeIdentifier typeIdentifier;
 
     /**
      * Creates a new instance of this class.
      *
      * @param keyParser the parser used to parse keys from strings, when necessary
      */
-    public BasicDataIdentifier(final @NotNull KeyParser keyParser) {
+    public BasicDataIdentifier(final @NotNull KeyParser keyParser, final @NotNull ElementTypeIdentifier typeIdentifier) {
         this.keyParser = Objects.requireNonNull(keyParser);
+        this.typeIdentifier = Objects.requireNonNull(typeIdentifier);
     }
 
     @Override
@@ -52,11 +54,7 @@ public class BasicDataIdentifier implements DataIdentifier {
 
         final Class<?> declaring = dataClass.getDeclaringClass();
         if (declaring != null) {
-            final ElementModel model = declaring.getDeclaredAnnotation(ElementModel.class);
-            if (model != null) {
-                @Subst(Constants.NAMESPACE_OR_KEY) final String value = model.value();
-                return keyParser.parseKey(value);
-            }
+            return typeIdentifier.identify(declaring);
         }
 
         throw new ElementException("ElementData annotation must specify a key " + dataClass);

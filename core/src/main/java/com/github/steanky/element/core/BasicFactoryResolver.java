@@ -23,10 +23,13 @@ public class BasicFactoryResolver implements FactoryResolver {
 
     private final KeyParser keyParser;
     private final DataInspector dataInspector;
+    private final ElementTypeIdentifier elementTypeIdentifier;
 
-    public BasicFactoryResolver(@NotNull KeyParser keyParser, final @NotNull DataInspector dataInspector) {
+    public BasicFactoryResolver(@NotNull KeyParser keyParser, final @NotNull DataInspector dataInspector,
+            final @NotNull ElementTypeIdentifier elementTypeIdentifier) {
         this.keyParser = Objects.requireNonNull(keyParser);
         this.dataInspector = Objects.requireNonNull(dataInspector);
+        this.elementTypeIdentifier = Objects.requireNonNull(elementTypeIdentifier);
     }
 
     @Override
@@ -126,10 +129,13 @@ public class BasicFactoryResolver implements FactoryResolver {
                     formatException(elementClass, "a parameter is annotated with both ElementDependency and Composite");
                 }
 
-                final Class<?> compositeType = parameter.getType();
-                final ElementModel modelAnnotation = compositeType.getDeclaredAnnotation(ElementModel.class);
-                if (modelAnnotation == null) {
-                    formatException(elementClass, "Composite parameter type must have the ElementModel annotation");
+                final Key elementType;
+                try {
+                    elementType = elementTypeIdentifier.identify(parameter.getType());
+                }
+                catch (ElementException ignored) {
+                    formatException(elementClass, "Composite parameter used on a non-element class");
+                    return null;
                 }
 
                 final Function<Object, Object> resolver;
@@ -137,8 +143,7 @@ public class BasicFactoryResolver implements FactoryResolver {
                     resolver = Function.identity();
                 }
                 else {
-                    resolver = dataInspector.extractResolvers(dataClass).get(parseKey(keyParser, modelAnnotation
-                            .value()));
+                    resolver = dataInspector.extractResolvers(dataClass).get(elementType);
                 }
 
                 elementParameters.add(new ElementParameter(null, null, resolver));

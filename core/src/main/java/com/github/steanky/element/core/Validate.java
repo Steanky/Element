@@ -70,7 +70,7 @@ class Validate {
         return (ParameterizedType) genericReturnType;
     }
 
-    static void formatException(final Class<?> elementClass, final String message) {
+    static void formatException(final Class<?> elementClass, final String message) throws ElementException {
         throw new ElementException(elementClass + ": " + message);
     }
 }
