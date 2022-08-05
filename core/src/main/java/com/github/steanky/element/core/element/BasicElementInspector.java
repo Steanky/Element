@@ -1,7 +1,7 @@
 package com.github.steanky.element.core.element;
 
-import com.github.steanky.element.core.FactoryResolver;
-import com.github.steanky.element.core.ProcessorResolver;
+import com.github.steanky.element.core.factory.FactoryResolver;
+import com.github.steanky.element.core.processor.ProcessorResolver;
 import com.github.steanky.ethylene.core.processor.ConfigProcessor;
 import org.jetbrains.annotations.NotNull;
 
@@ -35,10 +35,8 @@ public class BasicElementInspector implements ElementInspector {
             throw formatException(elementClass, "not public");
         }
 
-        final Method[] declaredMethods = elementClass.getDeclaredMethods();
-        final ConfigProcessor<?> processor = processorResolver.resolveProcessor(elementClass, declaredMethods);
-        final ElementFactory<?, ?> factory = factoryResolver.resolveFactory(elementClass, declaredMethods,
-                processor != null);
+        final ConfigProcessor<?> processor = processorResolver.resolveProcessor(elementClass);
+        final ElementFactory<?, ?> factory = factoryResolver.resolveFactory(elementClass, processor != null);
 
         return new Information(processor, factory);
     }

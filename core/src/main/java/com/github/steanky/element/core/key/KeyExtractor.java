@@ -1,5 +1,6 @@
-package com.github.steanky.element.core;
+package com.github.steanky.element.core.key;
 
+import com.github.steanky.element.core.ElementException;
 import com.github.steanky.ethylene.core.collection.ConfigNode;
 import net.kyori.adventure.key.Key;
 import org.jetbrains.annotations.NotNull;

@@ -1,7 +1,7 @@
 package com.github.steanky.element.core.element;
 
 import com.github.steanky.element.core.ElementException;
-import com.github.steanky.element.core.KeyExtractor;
+import com.github.steanky.element.core.key.KeyExtractor;
 import com.github.steanky.element.core.Registry;
 import com.github.steanky.element.core.annotation.ElementModel;
 import com.github.steanky.element.core.data.DataIdentifier;

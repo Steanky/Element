@@ -1,5 +1,6 @@
-package com.github.steanky.element.core;
+package com.github.steanky.element.core.factory;
 
+import com.github.steanky.element.core.ElementException;
 import com.github.steanky.element.core.annotation.*;
 import com.github.steanky.element.core.data.DataInspector;
 import com.github.steanky.element.core.dependency.DependencyProvider;
@@ -38,8 +39,8 @@ public class BasicFactoryResolver implements FactoryResolver {
     }
 
     @Override
-    public @NotNull ElementFactory<?, ?> resolveFactory(@NotNull Class<?> elementClass,
-            @NotNull Method[] declaredMethods, boolean hasProcessor) {
+    public @NotNull ElementFactory<?, ?> resolveFactory(@NotNull Class<?> elementClass, boolean hasProcessor) {
+        final Method[] declaredMethods = elementClass.getDeclaredMethods();
         Method factoryMethod = null;
         for (final Method declaredMethod : declaredMethods) {
             if (declaredMethod.isAnnotationPresent(FactoryMethod.class)) {

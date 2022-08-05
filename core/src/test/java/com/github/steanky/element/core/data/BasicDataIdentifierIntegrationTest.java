@@ -14,10 +14,10 @@ import org.junit.jupiter.api.Test;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
-class BasicDataIdentifierTest {
+class BasicDataIdentifierIntegrationTest {
     private final DataIdentifier identifier;
 
-    public BasicDataIdentifierTest() {
+    public BasicDataIdentifierIntegrationTest() {
         final KeyParser parser = new BasicKeyParser("default");
         final ElementTypeIdentifier elementTypeIdentifier = new BasicElementTypeIdentifier(parser);
         this.identifier = new BasicDataIdentifier(parser, elementTypeIdentifier);

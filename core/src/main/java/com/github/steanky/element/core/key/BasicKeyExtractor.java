@@ -1,7 +1,6 @@
-package com.github.steanky.element.core;
+package com.github.steanky.element.core.key;
 
-import com.github.steanky.element.core.key.Constants;
-import com.github.steanky.element.core.key.KeyParser;
+import com.github.steanky.element.core.ElementException;
 import com.github.steanky.ethylene.core.ConfigElement;
 import com.github.steanky.ethylene.core.collection.ConfigNode;
 import com.github.steanky.ethylene.core.processor.ConfigProcessException;

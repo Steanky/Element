@@ -1,4 +1,4 @@
-package com.github.steanky.element.core;
+package com.github.steanky.element.core.processor;
 
 import com.github.steanky.element.core.annotation.ProcessorMethod;
 import com.github.steanky.element.core.util.ReflectionUtils;
@@ -12,8 +12,8 @@ import static com.github.steanky.element.core.util.Validate.*;
 
 public class BasicProcessorResolver implements ProcessorResolver {
     @Override
-    public @Nullable ConfigProcessor<?> resolveProcessor(@NotNull Class<?> elementClass,
-            Method @NotNull [] declaredMethods) {
+    public @Nullable ConfigProcessor<?> resolveProcessor(@NotNull Class<?> elementClass) {
+        final Method[] declaredMethods = elementClass.getDeclaredMethods();
         Method processorMethod = null;
         for (final Method declaredMethod : declaredMethods) {
             if (declaredMethod.isAnnotationPresent(ProcessorMethod.class)) {
