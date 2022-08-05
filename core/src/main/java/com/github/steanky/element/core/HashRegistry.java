@@ -12,8 +12,7 @@ import java.util.concurrent.locks.Lock;
 import java.util.function.Supplier;
 
 /**
- * A {@link HashMap}-based Registry implementation. Uses a {@link java.util.concurrent.ConcurrentHashMap} to ensure
- * synchronous access.
+ * A {@link HashMap}-based Registry implementation. Uses a {@link ConcurrentHashMap} to ensure synchronous access.
  *
  * @param <TRegistrant> the kind of object stored as a registrant
  */

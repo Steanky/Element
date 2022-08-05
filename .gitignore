@@ -8,10 +8,10 @@
 # Directories used by Gradle
 /.gradle/
 /build/
+/*/build
 
-# Gradle directories in ./buildSrc
-/buildSrc/build
+# .gradle in ./buildSrc
 /buildSrc/.gradle
 
-# Ignore local gradle settings file
+# Local gradle settings file
 local.settings.gradle.kts
