@@ -25,7 +25,7 @@ public class BasicElementInspector implements ElementInspector {
     @Override
     public @NotNull Information inspect(final @NotNull Class<?> elementClass) {
         if (!Modifier.isStatic(elementClass.getModifiers()) && elementClass.getDeclaringClass() != null) {
-            formatException(elementClass, "is non-static and has a declaring class");
+            throw formatException(elementClass, "is non-static and has a declaring class");
         }
 
         final Method[] declaredMethods = elementClass.getDeclaredMethods();

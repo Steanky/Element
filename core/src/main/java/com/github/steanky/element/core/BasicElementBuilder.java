@@ -13,6 +13,8 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.Objects;
 
+import static com.github.steanky.element.core.Validate.*;
+
 /**
  * Standard implementation of {@link ElementBuilder}.
  */
@@ -53,7 +55,7 @@ public class BasicElementBuilder implements ElementBuilder {
     public void registerElementClass(final @NotNull Class<?> elementClass) {
         final ElementModel elementModel = elementClass.getAnnotation(ElementModel.class);
         if (elementModel == null) {
-            throw new ElementException(elementClass + " does not have an ElementModel annotation");
+            throw formatException(elementClass, "no ElementModel annotation");
         }
 
         @Subst(Constants.NAMESPACE_OR_KEY) final String value = elementModel.value();

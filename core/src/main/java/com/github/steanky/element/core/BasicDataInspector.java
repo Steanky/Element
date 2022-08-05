@@ -56,7 +56,7 @@ public class BasicDataInspector implements DataInspector {
                             () -> "CompositeData accessor has parameters");
 
                     if (method.getReturnType().equals(void.class)) {
-                        formatException(data, "CompositeData accessor returns void");
+                        throw formatException(data, "CompositeData accessor returns void");
                     }
 
                     registerAccessorMethod(dataAnnotation.value(), resolvers, method);
@@ -71,7 +71,7 @@ public class BasicDataInspector implements DataInspector {
             final Map<Key, Function<Object, Object>> resolvers, final Method accessor) {
 
         if (resolvers.putIfAbsent(keyParser.parseKey(keyString), (data) -> ReflectionUtils.invokeMethod(accessor, data)) != null) {
-            formatException(accessor.getDeclaringClass(),
+            throw formatException(accessor.getDeclaringClass(),
                     "CompositeData accessor already exists for composite data");
         }
     }

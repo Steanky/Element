@@ -11,6 +11,8 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.Objects;
 
+import static com.github.steanky.element.core.Validate.*;
+
 /**
  * Basic implementation of {@link DataIdentifier}. Can correctly identify all subclasses of {@link Keyed}, {@link Key}
  * objects themselves, {@link String} objects (if they can be parsed into a valid key), objects whose type has the
@@ -44,7 +46,7 @@ public class BasicDataIdentifier implements DataIdentifier {
         final Class<?> dataClass = data.getClass();
         final ElementData elementData = dataClass.getDeclaredAnnotation(ElementData.class);
         if (elementData == null) {
-            throw new ElementException("Data class " + dataClass + " must supply an ElementData annotation");
+            throw formatException(dataClass, "must supply an ElementData annotation");
         }
 
         if (!elementData.value().equals(ElementData.DEFAULT_VALUE)) {
@@ -57,6 +59,6 @@ public class BasicDataIdentifier implements DataIdentifier {
             return typeIdentifier.identify(declaring);
         }
 
-        throw new ElementException("ElementData annotation must specify a key " + dataClass);
+        throw formatException(dataClass, "must specify a key");
     }
 }

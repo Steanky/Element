@@ -17,7 +17,7 @@ public class BasicProcessorResolver implements ProcessorResolver {
         for (final Method declaredMethod : declaredMethods) {
             if (declaredMethod.isAnnotationPresent(ProcessorMethod.class)) {
                 if (processorMethod != null) {
-                    formatException(elementClass, "cannot have more than one ProcessorMethod");
+                    throw formatException(elementClass, "more than one ProcessorMethod");
                 }
 
                 validatePublicStatic(elementClass, declaredMethod, () -> "ProcessorMethod is not public static");
@@ -34,7 +34,7 @@ public class BasicProcessorResolver implements ProcessorResolver {
         if (processorMethod != null) {
             final ConfigProcessor<?> processor = ReflectionUtils.invokeMethod(processorMethod, null);
             if (processor == null) {
-                formatException(elementClass, "ProcessorMethod returned null");
+                throw formatException(elementClass, "ProcessorMethod returned null");
             }
 
             return processor;
