@@ -8,7 +8,6 @@ import org.jetbrains.annotations.Nullable;
 import java.lang.reflect.Method;
 
 import static com.github.steanky.element.core.Validate.*;
-import static com.github.steanky.element.core.Validate.formatException;
 
 public class BasicProcessorResolver implements ProcessorResolver {
     @Override

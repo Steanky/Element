@@ -12,19 +12,21 @@ import java.lang.reflect.*;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
+import java.util.function.Function;
 
 import static com.github.steanky.element.core.Validate.*;
-import static com.github.steanky.element.core.Validate.formatException;
 
 public class BasicFactoryResolver implements FactoryResolver {
     private record ElementSpec(List<ElementParameter> parameters, int dataIndex) {}
 
-    private record ElementParameter(Key typeKey, Key nameKey) {}
+    private record ElementParameter(Key typeKey, Key nameKey, Function<Object, Object> resolver) {}
 
     private final KeyParser keyParser;
+    private final DataInspector dataInspector;
 
-    public BasicFactoryResolver(@NotNull KeyParser keyParser) {
+    public BasicFactoryResolver(@NotNull KeyParser keyParser, final @NotNull DataInspector dataInspector) {
         this.keyParser = Objects.requireNonNull(keyParser);
+        this.dataInspector = Objects.requireNonNull(dataInspector);
     }
 
     @Override
@@ -90,6 +92,7 @@ public class BasicFactoryResolver implements FactoryResolver {
 
         final ArrayList<ElementParameter> elementParameters = new ArrayList<>(parameters.length);
         int dataParameterIndex = -1;
+        Class<?> dataClass = null;
         for (int i = 0; i < parameters.length; i++) {
             final Parameter parameter = parameters[i];
 
@@ -108,6 +111,7 @@ public class BasicFactoryResolver implements FactoryResolver {
                 }
 
                 dataParameterIndex = i;
+                dataClass = parameter.getType();
                 continue;
             }
 
@@ -128,6 +132,16 @@ public class BasicFactoryResolver implements FactoryResolver {
                     formatException(elementClass, "Composite parameter type must have the ElementModel annotation");
                 }
 
+                final Function<Object, Object> resolver;
+                if(dataClass == null) {
+                    resolver = Function.identity();
+                }
+                else {
+                    resolver = dataInspector.extractResolvers(dataClass).get(parseKey(keyParser, modelAnnotation
+                            .value()));
+                }
+
+                elementParameters.add(new ElementParameter(null, null, resolver));
                 continue;
             } else if (dependency == null) {
                 formatException(elementClass, "parameter missing annotation");
@@ -135,7 +149,7 @@ public class BasicFactoryResolver implements FactoryResolver {
 
             final String name = dependency.name();
             elementParameters.add(new ElementParameter(parseKey(keyParser, dependency.value()),
-                    name.equals(ElementDependency.DEFAULT_NAME) ? null : parseKey(keyParser, name)));
+                    name.equals(ElementDependency.DEFAULT_NAME) ? null : parseKey(keyParser, name), null));
         }
 
         if (dataParameterIndex == -1 && hasProcessor) {
@@ -152,18 +166,18 @@ public class BasicFactoryResolver implements FactoryResolver {
 
         final ElementSpec elementSpec = new ElementSpec(elementParameters, dataParameterIndex);
         return (data, dependencyProvider, builder) -> {
-            final Object[] args = resolveArguments(data, dependencyProvider, elementSpec);
+            final Object[] args = resolveArguments(data, dependencyProvider, elementSpec, builder);
             return ReflectionUtils.invokeConstructor(finalFactoryConstructor, args);
         };
     }
 
     private static Object[] resolveArguments(final Object data, final DependencyProvider provider,
-            final ElementSpec spec) {
+            final ElementSpec spec, final ElementBuilder builder) {
         final Object[] args;
         if (spec.dataIndex == -1) {
             args = new Object[spec.parameters.size()];
             for (int i = 0; i < spec.parameters.size(); i++) {
-                args[i] = processParameter(spec.parameters.get(i), provider);
+                args[i] = processParameter(spec.parameters.get(i), provider, builder, data);
             }
 
             return args;
@@ -172,18 +186,23 @@ public class BasicFactoryResolver implements FactoryResolver {
         args = new Object[spec.parameters.size() + 1];
         args[spec.dataIndex] = data;
         for (int i = 0; i < spec.dataIndex; i++) {
-            args[i] = processParameter(spec.parameters.get(i), provider);
+            args[i] = processParameter(spec.parameters.get(i), provider, builder, data);
         }
 
         for (int i = spec.dataIndex + 1; i < args.length; i++) {
-            args[i] = processParameter(spec.parameters.get(i - 1), provider);
+            args[i] = processParameter(spec.parameters.get(i - 1), provider, builder, data);
         }
 
         return args;
     }
 
-    private static Object processParameter(final ElementParameter parameter, final DependencyProvider provider) {
-        return provider.provide(parameter.typeKey, parameter.nameKey);
+    private static Object processParameter(final ElementParameter parameter, final DependencyProvider provider,
+            final ElementBuilder builder, final Object data) {
+        if(parameter.resolver == null) {
+            return provider.provide(parameter.typeKey, parameter.nameKey);
+        }
+
+        return builder.loadElement(parameter.resolver.apply(data), provider);
     }
 
     private static Key parseKey(final KeyParser parser, final @Subst(Constants.NAMESPACE_OR_KEY) String keyString) {

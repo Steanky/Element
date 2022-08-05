@@ -19,8 +19,8 @@ class BasicElementInspectorIntegrationTest {
 
     public BasicElementInspectorIntegrationTest() {
         final KeyParser parser = new BasicKeyParser();
-        final DataResolver dataResolver = new BasicDataResolver(parser);
-        final FactoryResolver factoryResolver = new BasicFactoryResolver(parser);
+        final DataInspector dataInspector = new BasicDataInspector(parser);
+        final FactoryResolver factoryResolver = new BasicFactoryResolver(parser, dataInspector);
         final ProcessorResolver processorResolver = new BasicProcessorResolver();
         this.inspector = new BasicElementInspector(factoryResolver, processorResolver);
     }

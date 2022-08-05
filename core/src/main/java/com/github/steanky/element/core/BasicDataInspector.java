@@ -17,26 +17,24 @@ import java.util.function.Function;
 
 import static com.github.steanky.element.core.Validate.*;
 
-public class BasicDataResolver implements DataResolver {
+public class BasicDataInspector implements DataInspector {
     private final KeyParser keyParser;
     private final Map<Class<?>, Map<Key, Function<Object, Object>>> resolverMappings;
 
-    public BasicDataResolver(@NotNull KeyParser keyParser) {
+    public BasicDataInspector(@NotNull KeyParser keyParser) {
         this.keyParser = Objects.requireNonNull(keyParser);
         this.resolverMappings = new WeakHashMap<>();
     }
 
     @Override
-    public @NotNull Map<Key, Function<Object, Object>> extractResolvers(final @NotNull Object dataObject,
-            final @NotNull Key type) {
-        Objects.requireNonNull(dataObject);
-        Objects.requireNonNull(type);
+    public @NotNull Map<Key, Function<Object, Object>> extractResolvers(final @NotNull Class<?> dataClass) {
+        Objects.requireNonNull(dataClass);
 
-        return resolverMappings.computeIfAbsent(dataObject.getClass(), dataClass -> {
+        return resolverMappings.computeIfAbsent(dataClass, data -> {
             final Map<Key, Function<Object, Object>> resolvers = new HashMap<>(2);
 
-            if (dataClass.isRecord()) {
-                final RecordComponent[] recordComponents = dataClass.getRecordComponents();
+            if (data.isRecord()) {
+                final RecordComponent[] recordComponents = data.getRecordComponents();
 
                 for (final RecordComponent component : recordComponents) {
                     final CompositeData dataAnnotation = component.getDeclaredAnnotation(CompositeData.class);
@@ -45,18 +43,18 @@ public class BasicDataResolver implements DataResolver {
                     }
                 }
             } else {
-                final Method[] declaredMethods = dataClass.getDeclaredMethods();
+                final Method[] declaredMethods = data.getDeclaredMethods();
 
                 for (final Method method : declaredMethods) {
                     final CompositeData dataAnnotation = method.getDeclaredAnnotation(CompositeData.class);
                     if (dataAnnotation != null) {
-                        validatePublic(dataClass, method, () -> "CompositeData accessor is not public");
-                        validateNotStatic(dataClass, method, () -> "CompositeData accessor is static");
-                        validateDeclaredParameterCount(dataClass, method, 0,
+                        validatePublic(data, method, () -> "CompositeData accessor is not public");
+                        validateNotStatic(data, method, () -> "CompositeData accessor is static");
+                        validateDeclaredParameterCount(data, method, 0,
                                 () -> "CompositeData accessor has" + " parameters");
 
                         if (method.getReturnType().equals(void.class)) {
-                            formatException(dataClass, "CompositeData accessor returns void");
+                            formatException(data, "CompositeData accessor returns void");
                         }
 
                         registerAccessorMethod(dataAnnotation, resolvers, method);

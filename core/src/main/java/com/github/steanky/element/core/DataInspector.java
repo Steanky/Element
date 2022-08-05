@@ -6,7 +6,6 @@ import org.jetbrains.annotations.NotNull;
 import java.util.Map;
 import java.util.function.Function;
 
-public interface DataResolver {
-    @NotNull Map<Key, Function<Object, Object>> extractResolvers(final @NotNull Object dataObject,
-            final @NotNull Key type);
+public interface DataInspector {
+    @NotNull Map<Key, Function<Object, Object>> extractResolvers(final @NotNull Class<?> dataClass);
 }

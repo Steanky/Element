@@ -1,6 +1,5 @@
 package com.github.steanky.element.core;
 
-import com.github.steanky.element.core.key.KeyParser;
 import com.github.steanky.ethylene.core.processor.ConfigProcessor;
 import org.jetbrains.annotations.NotNull;
 
@@ -17,11 +16,7 @@ public class BasicElementInspector implements ElementInspector {
     private final FactoryResolver factoryResolver;
     private final ProcessorResolver processorResolver;
 
-    /**
-     * Creates a new instance of this class using the provided {@link KeyParser}.
-     *
-     */
-    public BasicElementInspector(final @NotNull FactoryResolver factoryResolver, 
+    public BasicElementInspector(final @NotNull FactoryResolver factoryResolver,
             final @NotNull ProcessorResolver processorResolver) {
         this.factoryResolver = Objects.requireNonNull(factoryResolver);
         this.processorResolver = Objects.requireNonNull(processorResolver);
