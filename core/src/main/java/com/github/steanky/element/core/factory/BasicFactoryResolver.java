@@ -149,6 +149,9 @@ public class BasicFactoryResolver implements FactoryResolver {
                 }
                 else {
                     resolver = dataInspector.extractResolvers(dataClass).get(elementType);
+                    if(resolver == null) {
+                        throw formatException(elementClass, "no resolver found for type " + elementType);
+                    }
                 }
 
                 elementParameters.add(new ElementParameter(null, null, resolver));

@@ -44,11 +44,14 @@ public class BasicElementBuilderIntegrationTest {
 
         this.elementBuilder = new BasicElementBuilder(keyParser, keyExtractor, elementInspector, dataIdentifier,
                 configRegistry, factoryRegistry);
+
         this.elementBuilder.registerElementClass(Simple.class);
         this.elementBuilder.registerElementClass(SimpleData.class);
         this.elementBuilder.registerElementClass(Dependency.class);
         this.elementBuilder.registerElementClass(Nested.class);
         this.elementBuilder.registerElementClass(NestedChild.class);
+        this.elementBuilder.registerElementClass(NestedData.class);
+        this.elementBuilder.registerElementClass(NestedDataChild.class);
     }
 
     @Test
@@ -81,6 +84,24 @@ public class BasicElementBuilderIntegrationTest {
     void nested() {
         final Nested nested = elementBuilder.loadElement("nested");
         assertNotNull(nested.child);
+    }
+
+    @Test
+    void nestedData() {
+        final ConfigNode node = new LinkedConfigNode(2);
+        node.putString("serialKey", "nested_data");
+        node.putNumber("topLevel", 69);
+
+        final ConfigNode child = new LinkedConfigNode(2);
+        child.putNumber("lowLevel", 420);
+
+        node.put("child", child);
+
+        final NestedData.Data data = (NestedData.Data) elementBuilder.loadData(node);
+        final NestedData element = elementBuilder.loadElement(data);
+
+        assertEquals(69, element.data.topLevel);
+        assertEquals(420, element.child.data.lowLevel);
     }
 
     @ElementModel("simple")
@@ -151,5 +172,72 @@ public class BasicElementBuilderIntegrationTest {
     public static class NestedChild {
         @FactoryMethod
         public NestedChild() {}
+    }
+
+    @ElementModel("nested_data")
+    public static class NestedData {
+        @ProcessorMethod
+        public static ConfigProcessor<Data> processor() {
+            return new ConfigProcessor<>() {
+                @Override
+                public Data dataFromElement(@NotNull ConfigElement element) throws ConfigProcessException {
+                    final int topLevel = element.getNumberOrThrow("topLevel").intValue();
+                    final NestedDataChild.Data childData = NestedDataChild.processor().dataFromElement(element
+                            .getElementOrThrow("child"));
+                    return new Data(topLevel, childData);
+                }
+
+                @Override
+                public @NotNull ConfigElement elementFromData(Data data) throws ConfigProcessException {
+                    ConfigNode node = new LinkedConfigNode(2);
+                    node.putNumber("topLevel", data.topLevel);
+                    node.put("child", NestedDataChild.processor().elementFromData(data.childData));
+                    return node;
+                }
+            };
+        }
+
+        private final Data data;
+        private final NestedDataChild child;
+
+        @FactoryMethod
+        public NestedData(Data data, @Composite NestedDataChild child) {
+            this.data = data;
+            this.child = child;
+        }
+
+        @ElementData
+        public record Data(int topLevel, @CompositeData("nested_data_child") NestedDataChild.Data childData) {}
+    }
+
+    @ElementModel("nested_data_child")
+    public static class NestedDataChild {
+        @ProcessorMethod
+        public static ConfigProcessor<Data> processor() {
+            return new ConfigProcessor<>() {
+                @Override
+                public Data dataFromElement(@NotNull ConfigElement element) throws ConfigProcessException {
+                    final int lowLevel = element.getNumberOrThrow("lowLevel").intValue();
+                    return new Data(lowLevel);
+                }
+
+                @Override
+                public @NotNull ConfigElement elementFromData(Data data) {
+                    final ConfigNode node = new LinkedConfigNode(1);
+                    node.putNumber("lowLevel", data.lowLevel);
+                    return node;
+                }
+            };
+        }
+
+        private final Data data;
+
+        @FactoryMethod
+        public NestedDataChild(Data data) {
+            this.data = data;
+        }
+
+        @ElementData
+        public record Data(int lowLevel) {}
     }
 }

@@ -38,7 +38,7 @@ public class BasicDataInspector implements DataInspector {
                 final RecordComponent[] recordComponents = data.getRecordComponents();
 
                 for (final RecordComponent component : recordComponents) {
-                    final CompositeData dataAnnotation = component.getDeclaredAnnotation(CompositeData.class);
+                    final CompositeData dataAnnotation = component.getAccessor().getDeclaredAnnotation(CompositeData.class);
                     if (dataAnnotation != null) {
                         registerAccessorMethod(dataAnnotation.value(), resolvers, component.getAccessor());
                     }
