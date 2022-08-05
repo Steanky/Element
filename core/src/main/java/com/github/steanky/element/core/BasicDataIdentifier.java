@@ -35,7 +35,7 @@ public class BasicDataIdentifier implements DataIdentifier {
             return keyed.key();
         } else if (data instanceof Key key) { //necessary until adventure 4.12.0
             return key;
-        } else if (data instanceof @Subst(Constants.NAMESPACE_OR_KEY) String keyString) {
+        } else if (data instanceof @Subst(Constants.NAMESPACE_OR_KEY)String keyString) {
             return keyParser.parseKey(keyString);
         }
 

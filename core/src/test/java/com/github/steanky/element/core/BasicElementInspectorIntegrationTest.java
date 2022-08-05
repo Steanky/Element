@@ -2,6 +2,7 @@ package com.github.steanky.element.core;
 
 import com.github.steanky.element.core.annotation.*;
 import com.github.steanky.element.core.key.BasicKeyParser;
+import com.github.steanky.element.core.key.KeyParser;
 import com.github.steanky.ethylene.core.ConfigElement;
 import com.github.steanky.ethylene.core.collection.LinkedConfigNode;
 import com.github.steanky.ethylene.core.processor.ConfigProcessor;
@@ -13,10 +14,19 @@ import org.junit.jupiter.api.Test;
 import static org.junit.jupiter.api.Assertions.*;
 
 @SuppressWarnings("ALL")
-class BasicElementInspectorTest {
+class BasicElementInspectorIntegrationTest {
+    private final ElementInspector inspector;
+
+    public BasicElementInspectorIntegrationTest() {
+        final KeyParser parser = new BasicKeyParser();
+        final DataResolver dataResolver = new BasicDataResolver(parser);
+        final FactoryResolver factoryResolver = new BasicFactoryResolver(parser);
+        final ProcessorResolver processorResolver = new BasicProcessorResolver();
+        this.inspector = new BasicElementInspector(factoryResolver, processorResolver);
+    }
+
     @Test
     void simpleElementClass() {
-        ElementInspector inspector = new BasicElementInspector(new BasicKeyParser());
         ElementInspector.Information information = inspector.inspect(SimpleElementClass.class);
 
         assertEquals(SimpleElementClass.FACTORY, information.factory());
@@ -25,7 +35,6 @@ class BasicElementInspectorTest {
 
     @Test
     void dataAnnotationInConstructor() {
-        ElementInspector inspector = new BasicElementInspector(new BasicKeyParser());
         ElementInspector.Information information = inspector.inspect(DataAnnotationInConstructor.class);
 
         assertEquals(DataAnnotationInConstructor.FACTORY, information.factory());
@@ -34,43 +43,36 @@ class BasicElementInspectorTest {
 
     @Test
     void missingFactoryAnnotation() {
-        ElementInspector inspector = new BasicElementInspector(new BasicKeyParser());
         assertThrows(ElementException.class, () -> inspector.inspect(MissingFactoryAnnotation.class));
     }
 
     @Test
     void missingProcessorAnnotation() {
-        ElementInspector inspector = new BasicElementInspector(new BasicKeyParser());
         assertThrows(ElementException.class, () -> inspector.inspect(MissingProcessorAnnotation.class));
     }
 
     @Test
     void missingProcessorAndFactoryAnnotation() {
-        ElementInspector inspector = new BasicElementInspector(new BasicKeyParser());
         assertThrows(ElementException.class, () -> inspector.inspect(MissingProcessorAndFactoryAnnotation.class));
     }
 
     @Test
     void nullFactory() {
-        ElementInspector inspector = new BasicElementInspector(new BasicKeyParser());
         assertThrows(ElementException.class, () -> inspector.inspect(NullFactory.class));
     }
 
     @Test
     void nullProcessor() {
-        ElementInspector inspector = new BasicElementInspector(new BasicKeyParser());
         assertThrows(ElementException.class, () -> inspector.inspect(NullProcessor.class));
     }
 
     @Test
     void badFactoryReturnType() {
-        ElementInspector inspector = new BasicElementInspector(new BasicKeyParser());
         assertThrows(ElementException.class, () -> inspector.inspect(BadFactoryReturnType.class));
     }
 
     @Test
     void subclassFactoryReturnType() {
-        ElementInspector inspector = new BasicElementInspector(new BasicKeyParser());
         ElementInspector.Information information = inspector.inspect(SubclassFactoryReturnType.class);
 
         assertEquals(SubclassFactoryReturnType.FACTORY, information.factory());
@@ -79,7 +81,6 @@ class BasicElementInspectorTest {
 
     @Test
     void emptyConstructorFactory() {
-        ElementInspector inspector = new BasicElementInspector(new BasicKeyParser());
         ElementInspector.Information information = inspector.inspect(EmptyConstructorFactory.class);
 
         assertNotNull(information.factory());
@@ -88,7 +89,6 @@ class BasicElementInspectorTest {
 
     @Test
     void dataConstructorFactory() {
-        ElementInspector inspector = new BasicElementInspector(new BasicKeyParser());
         ElementInspector.Information information = inspector.inspect(DataConstructorFactory.class);
 
         assertNotNull(information.factory());
@@ -97,7 +97,6 @@ class BasicElementInspectorTest {
 
     @Test
     void dataAndDependenciesFactory() {
-        ElementInspector inspector = new BasicElementInspector(new BasicKeyParser());
         ElementInspector.Information information = inspector.inspect(DataAndDependenciesFactory.class);
 
         assertEquals(DataAndDependenciesFactory.FACTORY, information.factory());
@@ -106,7 +105,6 @@ class BasicElementInspectorTest {
 
     @Test
     void dataAndDependenciesConstructorFactory() {
-        ElementInspector inspector = new BasicElementInspector(new BasicKeyParser());
         ElementInspector.Information information = inspector.inspect(DataAndDependenciesConstructorFactory.class);
 
         assertNotNull(information.factory());
@@ -115,7 +113,6 @@ class BasicElementInspectorTest {
 
     @Test
     void dataAndDependenciesConstructorFactory1() {
-        ElementInspector inspector = new BasicElementInspector(new BasicKeyParser());
         ElementInspector.Information information = inspector.inspect(DataAndDependenciesConstructorFactory1.class);
 
         assertNotNull(information.factory());
@@ -124,14 +121,12 @@ class BasicElementInspectorTest {
 
     @Test
     void dataAndUnnamedDependenciesConstructorFactory() {
-        ElementInspector inspector = new BasicElementInspector(new BasicKeyParser());
         assertThrows(ElementException.class,
                 () -> inspector.inspect(DataAndUnnamedDependenciesConstructorFactory.class));
     }
 
     @Test
     void dependenciesConstructorFactory() {
-        ElementInspector inspector = new BasicElementInspector(new BasicKeyParser());
         ElementInspector.Information information = inspector.inspect(DependenciesConstructorFactory.class);
 
         assertNull(information.processor());
@@ -140,7 +135,6 @@ class BasicElementInspectorTest {
 
     @Test
     void throwsWhenNonStaticInner() {
-        ElementInspector inspector = new BasicElementInspector(new BasicKeyParser());
         assertThrows(ElementException.class, () -> inspector.inspect(NonStaticInnerClass.class));
     }
 

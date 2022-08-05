@@ -5,13 +5,11 @@
 /run/
 /out/
 
-# Directories used by Gradle
+# Gradle build and .gradle directories
 /.gradle/
+/*/.gradle/
 /build/
-/*/build
+/*/build/
 
-# .gradle in ./buildSrc
-/buildSrc/.gradle
-
-# Local gradle settings file
+# Local Gradle settings file
 local.settings.gradle.kts
