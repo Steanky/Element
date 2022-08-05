@@ -1,5 +1,6 @@
 package com.github.steanky.element.core;
 
+import com.github.steanky.element.core.element.ElementFactory;
 import org.jetbrains.annotations.NotNull;
 
 import java.lang.reflect.Method;

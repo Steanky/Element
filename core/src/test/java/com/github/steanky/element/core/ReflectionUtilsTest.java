@@ -1,5 +1,6 @@
 package com.github.steanky.element.core;
 
+import com.github.steanky.element.core.util.ReflectionUtils;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 

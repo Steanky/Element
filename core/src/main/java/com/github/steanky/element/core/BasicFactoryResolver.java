@@ -1,9 +1,14 @@
 package com.github.steanky.element.core;
 
 import com.github.steanky.element.core.annotation.*;
+import com.github.steanky.element.core.data.DataInspector;
 import com.github.steanky.element.core.dependency.DependencyProvider;
+import com.github.steanky.element.core.element.ElementBuilder;
+import com.github.steanky.element.core.element.ElementFactory;
+import com.github.steanky.element.core.element.ElementTypeIdentifier;
 import com.github.steanky.element.core.key.Constants;
 import com.github.steanky.element.core.key.KeyParser;
+import com.github.steanky.element.core.util.ReflectionUtils;
 import net.kyori.adventure.key.Key;
 import org.intellij.lang.annotations.Subst;
 import org.jetbrains.annotations.NotNull;
@@ -14,7 +19,7 @@ import java.util.List;
 import java.util.Objects;
 import java.util.function.Function;
 
-import static com.github.steanky.element.core.Validate.*;
+import static com.github.steanky.element.core.util.Validate.*;
 
 public class BasicFactoryResolver implements FactoryResolver {
     private record ElementSpec(List<ElementParameter> parameters, int dataIndex) {}

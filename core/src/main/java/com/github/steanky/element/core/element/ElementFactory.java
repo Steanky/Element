@@ -1,4 +1,4 @@
-package com.github.steanky.element.core;
+package com.github.steanky.element.core.element;
 
 import com.github.steanky.element.core.dependency.DependencyProvider;
 import org.jetbrains.annotations.NotNull;

@@ -1,6 +1,10 @@
-package com.github.steanky.element.core;
+package com.github.steanky.element.core.element;
 
+import com.github.steanky.element.core.ElementException;
+import com.github.steanky.element.core.KeyExtractor;
+import com.github.steanky.element.core.Registry;
 import com.github.steanky.element.core.annotation.ElementModel;
+import com.github.steanky.element.core.data.DataIdentifier;
 import com.github.steanky.element.core.dependency.DependencyProvider;
 import com.github.steanky.element.core.key.Constants;
 import com.github.steanky.element.core.key.KeyParser;
@@ -13,7 +17,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.Objects;
 
-import static com.github.steanky.element.core.Validate.*;
+import static com.github.steanky.element.core.util.Validate.*;
 
 /**
  * Standard implementation of {@link ElementBuilder}.

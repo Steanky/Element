@@ -1,8 +1,9 @@
-package com.github.steanky.element.core;
+package com.github.steanky.element.core.data;
 
 import com.github.steanky.element.core.annotation.CompositeData;
 import com.github.steanky.element.core.key.Constants;
 import com.github.steanky.element.core.key.KeyParser;
+import com.github.steanky.element.core.util.ReflectionUtils;
 import net.kyori.adventure.key.Key;
 import org.intellij.lang.annotations.Subst;
 import org.jetbrains.annotations.NotNull;
@@ -15,7 +16,7 @@ import java.util.Objects;
 import java.util.WeakHashMap;
 import java.util.function.Function;
 
-import static com.github.steanky.element.core.Validate.*;
+import static com.github.steanky.element.core.util.Validate.*;
 
 public class BasicDataInspector implements DataInspector {
     private final KeyParser keyParser;

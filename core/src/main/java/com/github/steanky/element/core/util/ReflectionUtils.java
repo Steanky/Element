@@ -1,5 +1,6 @@
-package com.github.steanky.element.core;
+package com.github.steanky.element.core.util;
 
+import com.github.steanky.element.core.ElementException;
 import com.github.steanky.element.core.key.Constants;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;

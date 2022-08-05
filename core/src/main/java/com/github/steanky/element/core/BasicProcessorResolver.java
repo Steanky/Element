@@ -1,13 +1,14 @@
 package com.github.steanky.element.core;
 
 import com.github.steanky.element.core.annotation.ProcessorMethod;
+import com.github.steanky.element.core.util.ReflectionUtils;
 import com.github.steanky.ethylene.core.processor.ConfigProcessor;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.lang.reflect.Method;
 
-import static com.github.steanky.element.core.Validate.*;
+import static com.github.steanky.element.core.util.Validate.*;
 
 public class BasicProcessorResolver implements ProcessorResolver {
     @Override

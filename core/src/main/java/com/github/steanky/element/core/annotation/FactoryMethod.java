@@ -1,6 +1,6 @@
 package com.github.steanky.element.core.annotation;
 
-import com.github.steanky.element.core.ElementFactory;
+import com.github.steanky.element.core.element.ElementFactory;
 import net.kyori.adventure.key.Keyed;
 
 import java.lang.annotation.*;

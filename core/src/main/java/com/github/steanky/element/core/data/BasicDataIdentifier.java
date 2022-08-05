@@ -1,5 +1,6 @@
-package com.github.steanky.element.core;
+package com.github.steanky.element.core.data;
 
+import com.github.steanky.element.core.element.ElementTypeIdentifier;
 import com.github.steanky.element.core.annotation.ElementData;
 import com.github.steanky.element.core.annotation.ElementModel;
 import com.github.steanky.element.core.key.Constants;
@@ -11,7 +12,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.Objects;
 
-import static com.github.steanky.element.core.Validate.*;
+import static com.github.steanky.element.core.util.Validate.*;
 
 /**
  * Basic implementation of {@link DataIdentifier}. Can correctly identify all subclasses of {@link Keyed}, {@link Key}

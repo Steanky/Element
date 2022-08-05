@@ -1,6 +1,9 @@
-package com.github.steanky.element.core;
+package com.github.steanky.element.core.element;
 
+import com.github.steanky.element.core.*;
 import com.github.steanky.element.core.annotation.*;
+import com.github.steanky.element.core.data.BasicDataInspector;
+import com.github.steanky.element.core.data.DataInspector;
 import com.github.steanky.element.core.key.BasicKeyParser;
 import com.github.steanky.element.core.key.KeyParser;
 import com.github.steanky.ethylene.core.ConfigElement;
@@ -14,7 +17,7 @@ import org.junit.jupiter.api.Test;
 import static org.junit.jupiter.api.Assertions.*;
 
 @SuppressWarnings("ALL")
-class BasicElementInspectorIntegrationTest {
+public class BasicElementInspectorIntegrationTest {
     private final ElementInspector inspector;
 
     public BasicElementInspectorIntegrationTest() {
@@ -140,7 +143,7 @@ class BasicElementInspectorIntegrationTest {
     }
 
     @ElementModel("test:simple_element_class")
-    static class SimpleElementClass {
+    public static class SimpleElementClass {
         private static final ElementFactory<Data, SimpleElementClass> FACTORY = (data, dependencyProvider, builder) -> new SimpleElementClass(
                 data);
 
@@ -183,7 +186,7 @@ class BasicElementInspectorIntegrationTest {
     }
 
     @ElementModel("test:data_annotation_in_constructor")
-    static class DataAnnotationInConstructor {
+    public static class DataAnnotationInConstructor {
         private static final ElementFactory<Data, DataAnnotationInConstructor> FACTORY = (data, dependencyProvider, builder) -> new DataAnnotationInConstructor(
                 data);
 
@@ -225,7 +228,7 @@ class BasicElementInspectorIntegrationTest {
     }
 
     @ElementModel("test:missing_factory_annotation")
-    static class MissingFactoryAnnotation {
+    public static class MissingFactoryAnnotation {
         private static final ElementFactory<Data, MissingFactoryAnnotation> FACTORY = (data, dependencyProvider, builder) -> new MissingFactoryAnnotation(
                 data);
 
@@ -266,7 +269,7 @@ class BasicElementInspectorIntegrationTest {
     }
 
     @ElementModel("test:missing_processor_annotation")
-    static class MissingProcessorAnnotation {
+    public static class MissingProcessorAnnotation {
         private static final ElementFactory<Data, MissingProcessorAnnotation> FACTORY = (data, dependencyProvider, builder) -> new MissingProcessorAnnotation(
                 data);
 
@@ -308,7 +311,7 @@ class BasicElementInspectorIntegrationTest {
     }
 
     @ElementModel("test:missing_processor_and_factory_annotation")
-    static class MissingProcessorAndFactoryAnnotation {
+    public static class MissingProcessorAndFactoryAnnotation {
         private static final ElementFactory<Data, MissingProcessorAndFactoryAnnotation> FACTORY = (data, dependencyProvider, builder) -> new MissingProcessorAndFactoryAnnotation(
                 data);
 
@@ -349,7 +352,7 @@ class BasicElementInspectorIntegrationTest {
     }
 
     @ElementModel("test:null_factory")
-    static class NullFactory {
+    public static class NullFactory {
         private static final ElementFactory<Data, NullFactory> FACTORY = (data, dependencyProvider, builder) -> new NullFactory(
                 data);
 
@@ -392,7 +395,7 @@ class BasicElementInspectorIntegrationTest {
     }
 
     @ElementModel("test:null_processor")
-    static class NullProcessor {
+    public static class NullProcessor {
         private static final ElementFactory<Data, NullProcessor> FACTORY = (data, dependencyProvider, builder) -> new NullProcessor(
                 data);
 
@@ -435,7 +438,7 @@ class BasicElementInspectorIntegrationTest {
     }
 
     @ElementModel("test:bad_factory_return_type")
-    static class BadFactoryReturnType {
+    public static class BadFactoryReturnType {
         private static final ElementFactory<Data, Object> FACTORY = (data, dependencyProvider, builder) -> new BadFactoryReturnType(
                 data);
 
@@ -478,7 +481,7 @@ class BasicElementInspectorIntegrationTest {
     }
 
     @ElementModel("test:subclass_factory_return_type")
-    static class SubclassFactoryReturnType {
+    public static class SubclassFactoryReturnType {
         private static final ElementFactory<Data, Subclass> FACTORY = (data, dependencyProvider, builder) -> new Subclass(
                 data);
         private static final ConfigProcessor<? extends Keyed> PROCESSOR = new ConfigProcessor<Data>() {
@@ -526,7 +529,7 @@ class BasicElementInspectorIntegrationTest {
     }
 
     @ElementModel("test:empty_constructor_factory")
-    static class EmptyConstructorFactory {
+    public static class EmptyConstructorFactory {
         private static final ConfigProcessor<? extends Keyed> PROCESSOR = new ConfigProcessor<Data>() {
             @Override
             public Data dataFromElement(@NotNull ConfigElement element) {
@@ -556,7 +559,7 @@ class BasicElementInspectorIntegrationTest {
     }
 
     @ElementModel("test:data_constructor_factory")
-    static class DataConstructorFactory {
+    public static class DataConstructorFactory {
         private static final ConfigProcessor<? extends Keyed> PROCESSOR = new ConfigProcessor<Data>() {
             @Override
             public Data dataFromElement(@NotNull ConfigElement element) {
@@ -592,7 +595,7 @@ class BasicElementInspectorIntegrationTest {
     }
 
     @ElementModel("test:data_and_dependencies_factory")
-    static class DataAndDependenciesFactory {
+    public static class DataAndDependenciesFactory {
         private static final ConfigProcessor<? extends Keyed> PROCESSOR = new ConfigProcessor<Data>() {
             @Override
             public Data dataFromElement(@NotNull ConfigElement element) {
@@ -636,7 +639,7 @@ class BasicElementInspectorIntegrationTest {
     }
 
     @ElementModel("test:data_and_dependencies_constructor_factory")
-    static class DataAndDependenciesConstructorFactory {
+    public static class DataAndDependenciesConstructorFactory {
         private static final ConfigProcessor<? extends Keyed> PROCESSOR = new ConfigProcessor<Data>() {
             @Override
             public Data dataFromElement(@NotNull ConfigElement element) {
@@ -673,7 +676,7 @@ class BasicElementInspectorIntegrationTest {
     }
 
     @ElementModel("test:data_and_dependencies_constructor_factory.1")
-    static class DataAndDependenciesConstructorFactory1 {
+    public static class DataAndDependenciesConstructorFactory1 {
         private static final ConfigProcessor<? extends Keyed> PROCESSOR = new ConfigProcessor<Data>() {
             @Override
             public Data dataFromElement(@NotNull ConfigElement element) {
@@ -710,7 +713,7 @@ class BasicElementInspectorIntegrationTest {
     }
 
     @ElementModel("test:data_and_unnamed_dependencies_constructor_factory")
-    static class DataAndUnnamedDependenciesConstructorFactory {
+    public static class DataAndUnnamedDependenciesConstructorFactory {
         private static final ConfigProcessor<? extends Keyed> PROCESSOR = new ConfigProcessor<Data>() {
             @Override
             public Data dataFromElement(@NotNull ConfigElement element) {
@@ -746,7 +749,7 @@ class BasicElementInspectorIntegrationTest {
     }
 
     @ElementModel("test:dependencies_constructor_factory")
-    static class DependenciesConstructorFactory {
+    public static class DependenciesConstructorFactory {
         private final int dependency;
 
         @FactoryMethod
@@ -756,7 +759,7 @@ class BasicElementInspectorIntegrationTest {
     }
 
     @ElementModel("test:non_static_inner_class")
-    class NonStaticInnerClass {
+    public class NonStaticInnerClass {
         @FactoryMethod
         public NonStaticInnerClass() {}
     }

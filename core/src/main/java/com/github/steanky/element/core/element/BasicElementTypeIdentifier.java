@@ -1,4 +1,4 @@
-package com.github.steanky.element.core;
+package com.github.steanky.element.core.element;
 
 import com.github.steanky.element.core.annotation.ElementModel;
 import com.github.steanky.element.core.key.Constants;
@@ -9,7 +9,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.Objects;
 
-import static com.github.steanky.element.core.Validate.*;
+import static com.github.steanky.element.core.util.Validate.*;
 
 public class BasicElementTypeIdentifier implements ElementTypeIdentifier {
     private final KeyParser keyParser;
