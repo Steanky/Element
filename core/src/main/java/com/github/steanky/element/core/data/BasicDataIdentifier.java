@@ -1,8 +1,8 @@
 package com.github.steanky.element.core.data;
 
-import com.github.steanky.element.core.element.ElementTypeIdentifier;
 import com.github.steanky.element.core.annotation.ElementData;
 import com.github.steanky.element.core.annotation.ElementModel;
+import com.github.steanky.element.core.element.ElementTypeIdentifier;
 import com.github.steanky.element.core.key.Constants;
 import com.github.steanky.element.core.key.KeyParser;
 import net.kyori.adventure.key.Key;
@@ -12,7 +12,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.Objects;
 
-import static com.github.steanky.element.core.util.Validate.*;
+import static com.github.steanky.element.core.util.Validate.formatException;
 
 /**
  * Basic implementation of {@link DataIdentifier}. Can correctly identify all subclasses of {@link Keyed}, {@link Key}
@@ -29,7 +29,8 @@ public class BasicDataIdentifier implements DataIdentifier {
      *
      * @param keyParser the parser used to parse keys from strings, when necessary
      */
-    public BasicDataIdentifier(final @NotNull KeyParser keyParser, final @NotNull ElementTypeIdentifier typeIdentifier) {
+    public BasicDataIdentifier(final @NotNull KeyParser keyParser,
+            final @NotNull ElementTypeIdentifier typeIdentifier) {
         this.keyParser = Objects.requireNonNull(keyParser);
         this.typeIdentifier = Objects.requireNonNull(typeIdentifier);
     }

@@ -8,8 +8,6 @@ import java.util.Map;
 import java.util.NoSuchElementException;
 import java.util.Objects;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.locks.Lock;
-import java.util.function.Supplier;
 
 /**
  * A {@link HashMap}-based Registry implementation. Uses a {@link ConcurrentHashMap} to ensure synchronous access.
@@ -43,15 +41,6 @@ public class HashRegistry<TRegistrant> implements Registry<TRegistrant> {
      */
     public HashRegistry() {
         this(16, 0.75F);
-    }
-
-    private static <T> T lock(final Lock lock, final Supplier<? extends T> function) {
-        try {
-            lock.lock();
-            return function.get();
-        } finally {
-            lock.unlock();
-        }
     }
 
     @Override

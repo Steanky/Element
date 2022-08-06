@@ -1,7 +1,10 @@
 package com.github.steanky.element.core.factory;
 
 import com.github.steanky.element.core.ElementException;
-import com.github.steanky.element.core.annotation.*;
+import com.github.steanky.element.core.annotation.Composite;
+import com.github.steanky.element.core.annotation.ElementData;
+import com.github.steanky.element.core.annotation.ElementDependency;
+import com.github.steanky.element.core.annotation.FactoryMethod;
 import com.github.steanky.element.core.data.DataInspector;
 import com.github.steanky.element.core.dependency.DependencyProvider;
 import com.github.steanky.element.core.element.ElementBuilder;
@@ -23,19 +26,52 @@ import java.util.function.Function;
 import static com.github.steanky.element.core.util.Validate.*;
 
 public class BasicFactoryResolver implements FactoryResolver {
-    private record ElementSpec(List<ElementParameter> parameters, int dataIndex) {}
-
-    private record ElementParameter(Key typeKey, Key nameKey, Function<Object, Object> resolver) {}
-
     private final KeyParser keyParser;
     private final DataInspector dataInspector;
     private final ElementTypeIdentifier elementTypeIdentifier;
-
     public BasicFactoryResolver(@NotNull KeyParser keyParser, final @NotNull DataInspector dataInspector,
             final @NotNull ElementTypeIdentifier elementTypeIdentifier) {
         this.keyParser = Objects.requireNonNull(keyParser);
         this.dataInspector = Objects.requireNonNull(dataInspector);
         this.elementTypeIdentifier = Objects.requireNonNull(elementTypeIdentifier);
+    }
+
+    private static Object[] resolveArguments(final Object data, final DependencyProvider provider,
+            final ElementSpec spec, final ElementBuilder builder) {
+        final Object[] args;
+        if (spec.dataIndex == -1) {
+            args = new Object[spec.parameters.size()];
+            for (int i = 0; i < spec.parameters.size(); i++) {
+                args[i] = processParameter(spec.parameters.get(i), provider, builder, data);
+            }
+
+            return args;
+        }
+
+        args = new Object[spec.parameters.size() + 1];
+        args[spec.dataIndex] = data;
+        for (int i = 0; i < spec.dataIndex; i++) {
+            args[i] = processParameter(spec.parameters.get(i), provider, builder, data);
+        }
+
+        for (int i = spec.dataIndex + 1; i < args.length; i++) {
+            args[i] = processParameter(spec.parameters.get(i - 1), provider, builder, data);
+        }
+
+        return args;
+    }
+
+    private static Object processParameter(final ElementParameter parameter, final DependencyProvider provider,
+            final ElementBuilder builder, final Object data) {
+        if (parameter.resolver == null) {
+            return provider.provide(parameter.typeKey, parameter.nameKey);
+        }
+
+        return builder.loadElement(parameter.resolver.apply(data), provider);
+    }
+
+    private static Key parseKey(final KeyParser parser, final @Subst(Constants.NAMESPACE_OR_KEY) String keyString) {
+        return parser.parseKey(keyString);
     }
 
     @Override
@@ -58,7 +94,8 @@ public class BasicFactoryResolver implements FactoryResolver {
                 final Type[] typeArguments = type.getActualTypeArguments();
                 if (typeArguments.length != 2) {
                     //this is likely unreachable, as we are guaranteed to be an instance of ElementFactory
-                    throw formatException(elementClass, "Unexpected number of type arguments on FactoryMethod return type");
+                    throw formatException(elementClass,
+                            "Unexpected number of type arguments on FactoryMethod return type");
                 }
 
                 validateGenericType(elementClass, elementClass, typeArguments[1], () -> "FactoryMethod returned a " +
@@ -132,24 +169,23 @@ public class BasicFactoryResolver implements FactoryResolver {
             final Composite composite = parameter.getDeclaredAnnotation(Composite.class);
             if (composite != null) {
                 if (dependency != null) {
-                    throw formatException(elementClass, "a parameter is annotated with both ElementDependency and Composite");
+                    throw formatException(elementClass,
+                            "a parameter is annotated with both ElementDependency and Composite");
                 }
 
                 final Key elementType;
                 try {
                     elementType = elementTypeIdentifier.identify(parameter.getType());
-                }
-                catch (ElementException ignored) {
+                } catch (ElementException ignored) {
                     throw formatException(elementClass, "Composite parameter used on a non-element class");
                 }
 
                 final Function<Object, Object> resolver;
-                if(dataClass == null) { //we have no data, so our child should not have data either
+                if (dataClass == null) { //we have no data, so our child should not have data either
                     resolver = ignored -> elementType;
-                }
-                else {
+                } else {
                     resolver = dataInspector.extractResolvers(dataClass).get(elementType);
-                    if(resolver == null) {
+                    if (resolver == null) {
                         throw formatException(elementClass, "no resolver found for type " + elementType);
                     }
                 }
@@ -184,41 +220,7 @@ public class BasicFactoryResolver implements FactoryResolver {
         };
     }
 
-    private static Object[] resolveArguments(final Object data, final DependencyProvider provider,
-            final ElementSpec spec, final ElementBuilder builder) {
-        final Object[] args;
-        if (spec.dataIndex == -1) {
-            args = new Object[spec.parameters.size()];
-            for (int i = 0; i < spec.parameters.size(); i++) {
-                args[i] = processParameter(spec.parameters.get(i), provider, builder, data);
-            }
+    private record ElementSpec(List<ElementParameter> parameters, int dataIndex) {}
 
-            return args;
-        }
-
-        args = new Object[spec.parameters.size() + 1];
-        args[spec.dataIndex] = data;
-        for (int i = 0; i < spec.dataIndex; i++) {
-            args[i] = processParameter(spec.parameters.get(i), provider, builder, data);
-        }
-
-        for (int i = spec.dataIndex + 1; i < args.length; i++) {
-            args[i] = processParameter(spec.parameters.get(i - 1), provider, builder, data);
-        }
-
-        return args;
-    }
-
-    private static Object processParameter(final ElementParameter parameter, final DependencyProvider provider,
-            final ElementBuilder builder, final Object data) {
-        if(parameter.resolver == null) {
-            return provider.provide(parameter.typeKey, parameter.nameKey);
-        }
-
-        return builder.loadElement(parameter.resolver.apply(data), provider);
-    }
-
-    private static Key parseKey(final KeyParser parser, final @Subst(Constants.NAMESPACE_OR_KEY) String keyString) {
-        return parser.parseKey(keyString);
-    }
+    private record ElementParameter(Key typeKey, Key nameKey, Function<Object, Object> resolver) {}
 }

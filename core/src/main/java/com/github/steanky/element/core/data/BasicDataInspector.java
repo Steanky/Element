@@ -38,7 +38,8 @@ public class BasicDataInspector implements DataInspector {
                 final RecordComponent[] recordComponents = data.getRecordComponents();
 
                 for (final RecordComponent component : recordComponents) {
-                    final CompositeData dataAnnotation = component.getAccessor().getDeclaredAnnotation(CompositeData.class);
+                    final CompositeData dataAnnotation = component.getAccessor()
+                            .getDeclaredAnnotation(CompositeData.class);
                     if (dataAnnotation != null) {
                         registerAccessorMethod(dataAnnotation.value(), resolvers, component.getAccessor());
                     }
@@ -53,8 +54,7 @@ public class BasicDataInspector implements DataInspector {
                 if (dataAnnotation != null) {
                     validatePublic(data, method, () -> "CompositeData accessor is not public");
                     validateNotStatic(data, method, () -> "CompositeData accessor is static");
-                    validateDeclaredParameterCount(data, method, 0,
-                            () -> "CompositeData accessor has parameters");
+                    validateDeclaredParameterCount(data, method, 0, () -> "CompositeData accessor has parameters");
 
                     if (method.getReturnType().equals(void.class)) {
                         throw formatException(data, "CompositeData accessor returns void");
@@ -71,7 +71,8 @@ public class BasicDataInspector implements DataInspector {
     private void registerAccessorMethod(@Subst(Constants.NAMESPACE_OR_KEY) String keyString,
             final Map<Key, Function<Object, Object>> resolvers, final Method accessor) {
 
-        if (resolvers.putIfAbsent(keyParser.parseKey(keyString), (data) -> ReflectionUtils.invokeMethod(accessor, data)) != null) {
+        if (resolvers.putIfAbsent(keyParser.parseKey(keyString),
+                (data) -> ReflectionUtils.invokeMethod(accessor, data)) != null) {
             throw formatException(accessor.getDeclaringClass(),
                     "CompositeData accessor already exists for composite data");
         }

@@ -55,8 +55,8 @@ public class Validate {
         }
     }
 
-    public static void validateGenericType(final Class<?> elementClass, final Class<?> requiredType, final Type actualType,
-            final Supplier<String> exceptionMessage) {
+    public static void validateGenericType(final Class<?> elementClass, final Class<?> requiredType,
+            final Type actualType, final Supplier<String> exceptionMessage) {
         if (!requiredType.isAssignableFrom(ReflectionUtils.getUnderlyingClass(actualType))) {
             throw formatException(elementClass, exceptionMessage.get());
         }
@@ -72,7 +72,8 @@ public class Validate {
         return (ParameterizedType) genericReturnType;
     }
 
-    public static ElementException formatException(final Class<?> targetClass, final String message) throws ElementException {
+    public static ElementException formatException(final Class<?> targetClass, final String message)
+            throws ElementException {
         return new ElementException(targetClass + ": " + message);
     }
 }

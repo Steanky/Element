@@ -9,7 +9,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.Objects;
 
-import static com.github.steanky.element.core.util.Validate.*;
+import static com.github.steanky.element.core.util.Validate.formatException;
 
 public class BasicElementTypeIdentifier implements ElementTypeIdentifier {
     private final KeyParser keyParser;

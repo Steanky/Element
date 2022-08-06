@@ -23,7 +23,8 @@ import com.github.steanky.ethylene.core.processor.ConfigProcessor;
 import org.jetbrains.annotations.NotNull;
 import org.junit.jupiter.api.Test;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 
 public class BasicElementBuilderIntegrationTest {
     private final KeyParser keyParser;
@@ -35,15 +36,16 @@ public class BasicElementBuilderIntegrationTest {
 
         final DataInspector dataInspector = new BasicDataInspector(keyParser);
         final ElementTypeIdentifier elementTypeIdentifier = new BasicElementTypeIdentifier(keyParser);
-        final FactoryResolver factoryResolver = new BasicFactoryResolver(keyParser, dataInspector, elementTypeIdentifier);
+        final FactoryResolver factoryResolver = new BasicFactoryResolver(keyParser, dataInspector,
+                elementTypeIdentifier);
         final ProcessorResolver processorResolver = new BasicProcessorResolver();
         final ElementInspector elementInspector = new BasicElementInspector(factoryResolver, processorResolver);
         final DataIdentifier dataIdentifier = new BasicDataIdentifier(keyParser, elementTypeIdentifier);
         final Registry<ConfigProcessor<?>> configRegistry = new HashRegistry<>();
         final Registry<ElementFactory<?, ?>> factoryRegistry = new HashRegistry<>();
 
-        this.elementBuilder = new BasicElementBuilder(keyParser, keyExtractor, elementInspector, dataIdentifier,
-                configRegistry, factoryRegistry);
+        this.elementBuilder = new BasicElementBuilder(keyExtractor, elementInspector, elementTypeIdentifier,
+                dataIdentifier, configRegistry, factoryRegistry);
 
         this.elementBuilder.registerElementClass(Simple.class);
         this.elementBuilder.registerElementClass(SimpleData.class);
@@ -74,8 +76,8 @@ public class BasicElementBuilderIntegrationTest {
 
     @Test
     void dependency() {
-        final Dependency dependency = elementBuilder.loadElement("dependency", new ModuleDependencyProvider(
-                new Dependency.Module(), keyParser));
+        final Dependency dependency = elementBuilder.loadElement("dependency",
+                new ModuleDependencyProvider(new Dependency.Module(), keyParser));
 
         assertEquals("string", dependency.dependency);
     }
@@ -112,6 +114,13 @@ public class BasicElementBuilderIntegrationTest {
 
     @ElementModel("simple_data")
     public static class SimpleData {
+        private final Data data;
+
+        @FactoryMethod
+        public SimpleData(Data data) {
+            this.data = data;
+        }
+
         @ProcessorMethod
         public static ConfigProcessor<Data> processor() {
             return new ConfigProcessor<>() {
@@ -130,31 +139,24 @@ public class BasicElementBuilderIntegrationTest {
             };
         }
 
-        private final Data data;
-
-        @FactoryMethod
-        public SimpleData(Data data) {
-            this.data = data;
-        }
-
         @ElementData
         public record Data(int data) {}
     }
 
     @ElementModel("dependency")
     public static class Dependency {
-        public static class Module implements DependencyModule {
-            @DependencySupplier("dependency")
-            public static String dependency() {
-                return "string";
-            }
-        }
-
         public final String dependency;
 
         @FactoryMethod
         public Dependency(@ElementDependency("dependency") String dependency) {
             this.dependency = dependency;
+        }
+
+        public static class Module implements DependencyModule {
+            @DependencySupplier("dependency")
+            public static String dependency() {
+                return "string";
+            }
         }
     }
 
@@ -176,14 +178,22 @@ public class BasicElementBuilderIntegrationTest {
 
     @ElementModel("nested_data")
     public static class NestedData {
+        private final Data data;
+        private final NestedDataChild child;
+        @FactoryMethod
+        public NestedData(Data data, @Composite NestedDataChild child) {
+            this.data = data;
+            this.child = child;
+        }
+
         @ProcessorMethod
         public static ConfigProcessor<Data> processor() {
             return new ConfigProcessor<>() {
                 @Override
                 public Data dataFromElement(@NotNull ConfigElement element) throws ConfigProcessException {
                     final int topLevel = element.getNumberOrThrow("topLevel").intValue();
-                    final NestedDataChild.Data childData = NestedDataChild.processor().dataFromElement(element
-                            .getElementOrThrow("child"));
+                    final NestedDataChild.Data childData = NestedDataChild.processor()
+                            .dataFromElement(element.getElementOrThrow("child"));
                     return new Data(topLevel, childData);
                 }
 
@@ -197,21 +207,19 @@ public class BasicElementBuilderIntegrationTest {
             };
         }
 
-        private final Data data;
-        private final NestedDataChild child;
-
-        @FactoryMethod
-        public NestedData(Data data, @Composite NestedDataChild child) {
-            this.data = data;
-            this.child = child;
-        }
-
         @ElementData
         public record Data(int topLevel, @CompositeData("nested_data_child") NestedDataChild.Data childData) {}
     }
 
     @ElementModel("nested_data_child")
     public static class NestedDataChild {
+        private final Data data;
+
+        @FactoryMethod
+        public NestedDataChild(Data data) {
+            this.data = data;
+        }
+
         @ProcessorMethod
         public static ConfigProcessor<Data> processor() {
             return new ConfigProcessor<>() {
@@ -228,13 +236,6 @@ public class BasicElementBuilderIntegrationTest {
                     return node;
                 }
             };
-        }
-
-        private final Data data;
-
-        @FactoryMethod
-        public NestedDataChild(Data data) {
-            this.data = data;
         }
 
         @ElementData

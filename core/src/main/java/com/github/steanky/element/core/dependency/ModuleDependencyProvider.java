@@ -1,11 +1,11 @@
 package com.github.steanky.element.core.dependency;
 
 import com.github.steanky.element.core.ElementException;
-import com.github.steanky.element.core.util.ReflectionUtils;
 import com.github.steanky.element.core.annotation.DependencySupplier;
 import com.github.steanky.element.core.annotation.Memoize;
 import com.github.steanky.element.core.key.Constants;
 import com.github.steanky.element.core.key.KeyParser;
+import com.github.steanky.element.core.util.ReflectionUtils;
 import net.kyori.adventure.key.Key;
 import org.intellij.lang.annotations.Subst;
 import org.jetbrains.annotations.NotNull;
@@ -20,7 +20,8 @@ import java.util.Objects;
 import java.util.function.BiFunction;
 import java.util.function.Function;
 
-import static com.github.steanky.element.core.util.Validate.*;
+import static com.github.steanky.element.core.util.Validate.formatException;
+import static com.github.steanky.element.core.util.Validate.validatePublic;
 
 /**
  * Implementation of DependencyProvider which has a concept of modules. Each module consists of a single object which

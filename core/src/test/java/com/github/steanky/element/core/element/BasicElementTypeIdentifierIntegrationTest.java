@@ -6,7 +6,8 @@ import com.github.steanky.element.core.key.BasicKeyParser;
 import net.kyori.adventure.key.Key;
 import org.junit.jupiter.api.Test;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
 public class BasicElementTypeIdentifierIntegrationTest {
     private final ElementTypeIdentifier identifier;

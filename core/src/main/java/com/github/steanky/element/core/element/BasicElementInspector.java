@@ -5,10 +5,10 @@ import com.github.steanky.element.core.processor.ProcessorResolver;
 import com.github.steanky.ethylene.core.processor.ConfigProcessor;
 import org.jetbrains.annotations.NotNull;
 
-import java.lang.reflect.*;
+import java.lang.reflect.Modifier;
 import java.util.Objects;
 
-import static com.github.steanky.element.core.util.Validate.*;
+import static com.github.steanky.element.core.util.Validate.formatException;
 
 /**
  * Standard implementation of {@link ElementInspector}. Uses reflection to automatically infer factories and processors
@@ -31,7 +31,7 @@ public class BasicElementInspector implements ElementInspector {
             throw formatException(elementClass, "non-static and has a declaring class");
         }
 
-        if(!Modifier.isPublic(modifiers)) {
+        if (!Modifier.isPublic(modifiers)) {
             throw formatException(elementClass, "not public");
         }
 
