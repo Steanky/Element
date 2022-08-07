@@ -29,6 +29,7 @@ public class BasicDataIdentifier implements DataIdentifier {
      * Creates a new instance of this class.
      *
      * @param keyParser the parser used to parse keys from strings, when necessary
+     * @param typeIdentifier the {@link ElementTypeIdentifier} used to extract keys from element objects
      */
     public BasicDataIdentifier(final @NotNull KeyParser keyParser,
             final @NotNull ElementTypeIdentifier typeIdentifier) {

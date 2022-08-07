@@ -25,10 +25,23 @@ import java.util.function.Function;
 
 import static com.github.steanky.element.core.util.Validate.*;
 
+/**
+ * Basic implementation of {@link FactoryResolver}. Can resolve classes with either explicit factories (a
+ * {@code public static} method annotated with {@link FactoryMethod}) or factory constructors.
+ */
 public class BasicFactoryResolver implements FactoryResolver {
     private final KeyParser keyParser;
     private final DataInspector dataInspector;
     private final ElementTypeIdentifier elementTypeIdentifier;
+
+    /**
+     * Creates a new instance of this class.
+     *
+     * @param keyParser the {@link KeyParser} implementation used to interpret strings as keys
+     * @param dataInspector the {@link DataInspector} implementation used to analyze data classes
+     * @param elementTypeIdentifier the {@link ElementTypeIdentifier} implementation used to extract keys from element
+     *                              object classes
+     */
     public BasicFactoryResolver(@NotNull KeyParser keyParser, final @NotNull DataInspector dataInspector,
             final @NotNull ElementTypeIdentifier elementTypeIdentifier) {
         this.keyParser = Objects.requireNonNull(keyParser);

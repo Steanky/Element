@@ -20,11 +20,20 @@ import java.util.function.Function;
 
 import static com.github.steanky.element.core.util.Validate.*;
 
+/**
+ * Basic implementation of {@link DataInspector}.
+ */
 public class BasicDataInspector implements DataInspector {
     private final KeyParser keyParser;
     private final ElementTypeIdentifier elementTypeIdentifier;
     private final Map<Class<?>, Map<Key, Function<Object, Object>>> resolverMappings;
 
+    /**
+     * Creates a new instance of this class.
+     *
+     * @param keyParser the {@link KeyParser} used to convert strings to keys
+     * @param elementTypeIdentifier the {@link ElementTypeIdentifier} used to identify the names of element classes
+     */
     public BasicDataInspector(final @NotNull KeyParser keyParser,
             final @NotNull ElementTypeIdentifier elementTypeIdentifier) {
         this.keyParser = Objects.requireNonNull(keyParser);

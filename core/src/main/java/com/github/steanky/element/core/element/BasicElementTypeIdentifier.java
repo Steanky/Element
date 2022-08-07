@@ -11,9 +11,17 @@ import java.util.Objects;
 
 import static com.github.steanky.element.core.util.Validate.*;
 
+/**
+ * Basic implementation of {@link ElementTypeIdentifier}.
+ */
 public class BasicElementTypeIdentifier implements ElementTypeIdentifier {
     private final KeyParser keyParser;
 
+    /**
+     * Creates a new instance of this class.
+     *
+     * @param keyParser the {@link KeyParser} implementation used to convert strings to keys
+     */
     public BasicElementTypeIdentifier(final @NotNull KeyParser keyParser) {
         this.keyParser = Objects.requireNonNull(keyParser);
     }

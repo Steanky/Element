@@ -21,8 +21,7 @@ import java.util.Objects;
 import java.util.function.BiFunction;
 import java.util.function.Function;
 
-import static com.github.steanky.element.core.util.Validate.elementException;
-import static com.github.steanky.element.core.util.Validate.validateModifiersPresent;
+import static com.github.steanky.element.core.util.Validate.*;
 
 /**
  * Implementation of DependencyProvider which has a concept of modules. Each module consists of a single object which
