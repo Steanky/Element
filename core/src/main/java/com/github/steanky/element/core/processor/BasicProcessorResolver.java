@@ -30,7 +30,6 @@ public class BasicProcessorResolver implements ProcessorResolver {
                 validateParameterCount(declaredMethod, 0, () -> "ProcessorMethod has parameters");
                 validateReturnType(declaredMethod, ConfigProcessor.class,
                         () -> "ProcessorMethod does not return a ConfigProcessor");
-                validateParameterizedReturnType(declaredMethod, () -> "ProcessorMethod returned a raw generic");
 
                 processorMethod = declaredMethod;
             }
