@@ -76,4 +76,9 @@ public class Validate {
             throws ElementException {
         return new ElementException(targetClass + ": " + message);
     }
+
+    public static ElementException formatException(final Class<?> targetClass, final String message, final Exception cause)
+            throws ElementException {
+        return new ElementException(targetClass + ": " + message, cause);
+    }
 }

@@ -173,20 +173,26 @@ public class BasicFactoryResolver implements FactoryResolver {
                             "a parameter is annotated with both ElementDependency and Composite");
                 }
 
-                final Key elementType;
-                try {
-                    elementType = elementTypeIdentifier.identify(parameter.getType());
-                } catch (ElementException ignored) {
-                    throw formatException(elementClass, "Composite parameter used on a non-element class");
+                final String compositeValue = composite.value();
+                final Key elementKey;
+                if(compositeValue.equals(Composite.DEFAULT_VALUE)) {
+                    try {
+                        elementKey = elementTypeIdentifier.identify(parameter.getType());
+                    } catch (ElementException e) {
+                        throw formatException(elementClass, "Composite parameter used on a non-element class", e);
+                    }
+                }
+                else {
+                    elementKey = parseKey(keyParser, compositeValue);
                 }
 
                 final Function<Object, Object> resolver;
                 if (dataClass == null) { //we have no data, so our child should not have data either
-                    resolver = ignored -> elementType;
+                    resolver = ignored -> elementKey;
                 } else {
-                    resolver = dataInspector.extractResolvers(dataClass).get(elementType);
+                    resolver = dataInspector.extractResolvers(dataClass).get(elementKey);
                     if (resolver == null) {
-                        throw formatException(elementClass, "no resolver found for type " + elementType);
+                        throw formatException(elementClass, "no resolver found for type " + elementKey);
                     }
                 }
 

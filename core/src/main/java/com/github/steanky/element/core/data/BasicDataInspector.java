@@ -1,6 +1,7 @@
 package com.github.steanky.element.core.data;
 
 import com.github.steanky.element.core.annotation.CompositeData;
+import com.github.steanky.element.core.element.ElementTypeIdentifier;
 import com.github.steanky.element.core.key.Constants;
 import com.github.steanky.element.core.key.KeyParser;
 import com.github.steanky.element.core.util.ReflectionUtils;
@@ -20,10 +21,13 @@ import static com.github.steanky.element.core.util.Validate.*;
 
 public class BasicDataInspector implements DataInspector {
     private final KeyParser keyParser;
+    private final ElementTypeIdentifier elementTypeIdentifier;
     private final Map<Class<?>, Map<Key, Function<Object, Object>>> resolverMappings;
 
-    public BasicDataInspector(final @NotNull KeyParser keyParser) {
+    public BasicDataInspector(final @NotNull KeyParser keyParser,
+            final @NotNull ElementTypeIdentifier elementTypeIdentifier) {
         this.keyParser = Objects.requireNonNull(keyParser);
+        this.elementTypeIdentifier = Objects.requireNonNull(elementTypeIdentifier);
         this.resolverMappings = new WeakHashMap<>();
     }
 
@@ -70,8 +74,10 @@ public class BasicDataInspector implements DataInspector {
 
     private void registerAccessorMethod(@Subst(Constants.NAMESPACE_OR_KEY) String keyString,
             final Map<Key, Function<Object, Object>> resolvers, final Method accessor) {
+        final Key key = keyString.equals(CompositeData.DEFAULT_VALUE) ? elementTypeIdentifier
+                .identify(accessor.getReturnType()) : keyParser.parseKey(keyString);
 
-        if (resolvers.putIfAbsent(keyParser.parseKey(keyString),
+        if (resolvers.putIfAbsent(key,
                 (data) -> ReflectionUtils.invokeMethod(accessor, data)) != null) {
             throw formatException(accessor.getDeclaringClass(),
                     "CompositeData accessor already exists for composite data");

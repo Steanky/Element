@@ -34,8 +34,9 @@ public class BasicElementBuilderIntegrationTest {
         this.keyParser = KeyParser.DEFAULT;
         final KeyExtractor keyExtractor = KeyExtractor.DEFAULT;
 
-        final DataInspector dataInspector = new BasicDataInspector(keyParser);
         final ElementTypeIdentifier elementTypeIdentifier = new BasicElementTypeIdentifier(keyParser);
+        final DataInspector dataInspector = new BasicDataInspector(keyParser, elementTypeIdentifier);
+
         final FactoryResolver factoryResolver = new BasicFactoryResolver(keyParser, dataInspector,
                 elementTypeIdentifier);
         final ProcessorResolver processorResolver = new BasicProcessorResolver();
