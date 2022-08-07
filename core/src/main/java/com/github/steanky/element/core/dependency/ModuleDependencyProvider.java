@@ -6,6 +6,7 @@ import com.github.steanky.element.core.annotation.Memoize;
 import com.github.steanky.element.core.key.Constants;
 import com.github.steanky.element.core.key.KeyParser;
 import com.github.steanky.element.core.util.ReflectionUtils;
+import com.github.steanky.element.core.util.Validate;
 import net.kyori.adventure.key.Key;
 import org.intellij.lang.annotations.Subst;
 import org.jetbrains.annotations.NotNull;
@@ -20,8 +21,8 @@ import java.util.Objects;
 import java.util.function.BiFunction;
 import java.util.function.Function;
 
-import static com.github.steanky.element.core.util.Validate.formatException;
-import static com.github.steanky.element.core.util.Validate.validatePublic;
+import static com.github.steanky.element.core.util.Validate.elementException;
+import static com.github.steanky.element.core.util.Validate.validateModifiersPresent;
 
 /**
  * Implementation of DependencyProvider which has a concept of modules. Each module consists of a single object which
@@ -62,18 +63,18 @@ public class ModuleDependencyProvider implements DependencyProvider {
                 continue;
             }
 
-            validatePublic(moduleClass, declaredMethod, () -> "DependencySupplier method is not public");
+            validateModifiersPresent(declaredMethod, () -> "DependencySupplier method is not public", Modifier.PUBLIC);
 
             final Class<?> returnType = declaredMethod.getReturnType();
             if (returnType.equals(void.class)) {
-                throw formatException(moduleClass, "DependencySupplier method returns void");
+                throw Validate.elementException(moduleClass, "DependencySupplier method returns void");
             }
 
             @Subst(Constants.NAMESPACE_OR_KEY) final String dependencyString = supplierAnnotation.value();
             final Key dependencyName = keyParser.parseKey(dependencyString);
             final Parameter[] supplierParameters = declaredMethod.getParameters();
             if (supplierParameters.length > 1) {
-                throw formatException(moduleClass, "Supplier has too many parameters");
+                throw Validate.elementException(moduleClass, "Supplier has too many parameters");
             }
 
             final boolean memoize;
@@ -102,7 +103,7 @@ public class ModuleDependencyProvider implements DependencyProvider {
 
             final Class<?> parameterType = supplierParameters[0].getType();
             if (!Key.class.isAssignableFrom(parameterType)) {
-                throw formatException(moduleClass, "Parameter type was not assignable to Key");
+                throw Validate.elementException(moduleClass, "Parameter type was not assignable to Key");
             }
 
             memoize = declaredMethod.isAnnotationPresent(Memoize.class);

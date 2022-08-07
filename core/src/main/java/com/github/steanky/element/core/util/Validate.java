@@ -1,84 +1,140 @@
 package com.github.steanky.element.core.util;
 
 import com.github.steanky.element.core.ElementException;
+import org.jetbrains.annotations.NotNull;
 
 import java.lang.reflect.*;
 import java.util.function.Supplier;
 
-public class Validate {
+/**
+ * Contains utility methods designed to validate various conditions, usually in a reflection-related context.
+ */
+public final class Validate {
     private Validate() {
         throw new UnsupportedOperationException();
     }
 
-    public static void validateDeclaredParameterCount(final Class<?> elementClass, final Method method, int count,
-            final Supplier<String> exceptionMessage) {
-        final int modifiers = method.getModifiers();
-        if ((Modifier.isStatic(modifiers) ? method.getParameterCount() : method.getParameterCount() - 1) != count) {
-            throw formatException(elementClass, exceptionMessage.get());
+    /**
+     * Validates that the given {@link Executable} contains exactly {@code count} declared parameters.
+     *
+     * @param executable the Executable to validate
+     * @param count the number of parameters it must have
+     * @param exceptionMessage the message supplier which provides the error message
+     */
+    public static void validateParameterCount(final @NotNull Executable executable, final int count,
+            final @NotNull Supplier<String> exceptionMessage) {
+        if (executable.getParameterCount() != count) {
+            throw elementException(executable.getDeclaringClass(), exceptionMessage.get());
         }
     }
 
-    public static void validateNoDeclaredParameters(final Class<?> elementClass, final Method method,
-            final Supplier<String> exceptionMessage) {
-        validateDeclaredParameterCount(elementClass, method, 0, exceptionMessage);
-    }
+    /**
+     * Validates that all the given modifiers are present on the provided {@link Member}.
+     * 
+     * @param member the member to validate
+     * @param exceptionMessage the message supplier which provides the error message
+     * @param requiredModifiers the modifiers which must be present on the member
+     */
+    public static void validateModifiersPresent(final @NotNull Member member, 
+            final @NotNull Supplier<String> exceptionMessage, int... requiredModifiers) {
+        final int actualModifiers = member.getModifiers();
 
-    public static void validatePublicStatic(final Class<?> elementClass, final Member member,
-            final Supplier<String> exceptionMessage) {
-        final int modifiers = member.getModifiers();
-        if (!Modifier.isPublic(modifiers) || !Modifier.isStatic(modifiers)) {
-            throw formatException(elementClass, exceptionMessage.get());
+        for (final int requiredModifier : requiredModifiers) {
+            if ((actualModifiers & requiredModifier) == 0) {
+                throw elementException(member.getDeclaringClass(), exceptionMessage.get());
+            }
         }
     }
 
-    public static void validatePublic(final Class<?> elementClass, final Member member,
-            final Supplier<String> exceptionMessage) {
-        final int modifiers = member.getModifiers();
-        if (!Modifier.isPublic(modifiers)) {
-            throw formatException(elementClass, exceptionMessage.get());
+    /**
+     * Validates that all the given modifiers are not present on the provided {@link Member}.
+     *
+     * @param member the member to validate
+     * @param exceptionMessage the message supplier which provides the error message
+     * @param absentModifiers the modifiers which must not be present on the member
+     */
+    public static void validateModifiersAbsent(final @NotNull Member member,
+            final @NotNull Supplier<String> exceptionMessage, final int... absentModifiers) {
+        final int actualModifiers = member.getModifiers();
+
+        for (final int absentModifier : absentModifiers) {
+            if ((actualModifiers & absentModifier) != 0) {
+                throw elementException(member.getDeclaringClass(), exceptionMessage.get());
+            }
         }
     }
 
-    public static void validateNotStatic(final Class<?> elementClass, final Member member,
-            final Supplier<String> exceptionMessage) {
-        final int modifiers = member.getModifiers();
-        if (Modifier.isStatic(modifiers)) {
-            throw formatException(elementClass, exceptionMessage.get());
-        }
-    }
-
-    public static void validateReturnType(final Class<?> elementClass, final Method method, final Class<?> requiredType,
-            final Supplier<String> exceptionMessage) {
+    /**
+     * Validates that the given method returns a type that is assignable to the {@code requiredType}.
+     *
+     * @param method the method to validate
+     * @param requiredType the upper bound of the required type
+     * @param exceptionMessage the message supplier which provides the error message
+     */
+    public static void validateReturnType(final @NotNull Method method, final @NotNull Class<?> requiredType, 
+            final @NotNull Supplier<String> exceptionMessage) {
         final Class<?> returnType = method.getReturnType();
         if (!requiredType.isAssignableFrom(returnType)) {
-            throw formatException(elementClass, exceptionMessage.get());
+            throw elementException(method.getDeclaringClass(), exceptionMessage.get());
         }
     }
 
-    public static void validateGenericType(final Class<?> elementClass, final Class<?> requiredType,
-            final Type actualType, final Supplier<String> exceptionMessage) {
+    /**
+     * Validates that the given Type object is assignable to the given class. Uses
+     * {@link ReflectionUtils#getUnderlyingClass(Type)} to convert the Type to a {@link Class} object.
+     *
+     * @param owner the owner class, displayed in the error message (if any)
+     * @param requiredType the upper bound of the required type
+     * @param actualType the actual type object
+     * @param exceptionMessage the message supplier which provides the error message
+     */
+    public static void validateGenericType(final @NotNull Class<?> owner, final @NotNull Class<?> requiredType,
+            final @NotNull Type actualType, final @NotNull Supplier<String> exceptionMessage) {
         if (!requiredType.isAssignableFrom(ReflectionUtils.getUnderlyingClass(actualType))) {
-            throw formatException(elementClass, exceptionMessage.get());
+            throw elementException(owner, exceptionMessage.get());
         }
     }
 
-    public static ParameterizedType validateParameterizedReturnType(final Class<?> elementClass, final Method method,
-            final Supplier<String> exceptionMessage) {
+    /**
+     * Validates that the given {@link Method} returns a parameterized type, and returns it.
+     *
+     * @param method the method to validate
+     * @param exceptionMessage the message supplier which provides the error message
+     * @return the {@link ParameterizedType} this method returns
+     */
+    public static @NotNull ParameterizedType validateParameterizedReturnType(final @NotNull Method method, 
+            final @NotNull Supplier<String> exceptionMessage) {
         final Type genericReturnType = method.getGenericReturnType();
         if (!(genericReturnType instanceof ParameterizedType)) {
-            throw formatException(elementClass, exceptionMessage.get());
+            throw elementException(method.getDeclaringClass(), exceptionMessage.get());
         }
 
         return (ParameterizedType) genericReturnType;
     }
 
-    public static ElementException formatException(final Class<?> targetClass, final String message)
-            throws ElementException {
-        return new ElementException(targetClass + ": " + message);
+    /**
+     * Creates a new {@link ElementException} instance in the context of the provided "owner" class and message.
+     * 
+     * @param owner the owner class
+     * @param message the message
+     * @return a new ElementException
+     */
+    public static @NotNull ElementException elementException(final @NotNull Class<?> owner, 
+            final @NotNull String message) {
+        return new ElementException(owner + ": " + message);
     }
 
-    public static ElementException formatException(final Class<?> targetClass, final String message, final Exception cause)
-            throws ElementException {
-        return new ElementException(targetClass + ": " + message, cause);
+    /**
+     * Creates a new {@link ElementException} instance in the context of the provided "owner" class, with the given
+     * message, and the provided cause.
+     *
+     * @param owner the owner class
+     * @param message the message
+     * @param cause the exception cause
+     * @return a new ElementException
+     */
+    public static @NotNull ElementException elementException(final @NotNull Class<?> owner, final @NotNull String message,
+            final @NotNull Exception cause) {
+        return new ElementException(owner + ": " + message, cause);
     }
 }

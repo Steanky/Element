@@ -4,5 +4,5 @@ import net.kyori.adventure.key.Key;
 import org.jetbrains.annotations.NotNull;
 
 public interface ElementTypeIdentifier {
-    @NotNull Key identify(@NotNull Class<?> elementType);
+    @NotNull Key identify(final @NotNull Class<?> elementType);
 }

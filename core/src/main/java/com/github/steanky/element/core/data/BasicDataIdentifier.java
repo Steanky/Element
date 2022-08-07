@@ -5,6 +5,7 @@ import com.github.steanky.element.core.annotation.ElementModel;
 import com.github.steanky.element.core.element.ElementTypeIdentifier;
 import com.github.steanky.element.core.key.Constants;
 import com.github.steanky.element.core.key.KeyParser;
+import com.github.steanky.element.core.util.Validate;
 import net.kyori.adventure.key.Key;
 import net.kyori.adventure.key.Keyed;
 import org.intellij.lang.annotations.Subst;
@@ -12,7 +13,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.Objects;
 
-import static com.github.steanky.element.core.util.Validate.formatException;
+import static com.github.steanky.element.core.util.Validate.*;
 
 /**
  * Basic implementation of {@link DataIdentifier}. Can correctly identify all subclasses of {@link Keyed}, {@link Key}
@@ -48,7 +49,7 @@ public class BasicDataIdentifier implements DataIdentifier {
         final Class<?> dataClass = data.getClass();
         final ElementData elementData = dataClass.getDeclaredAnnotation(ElementData.class);
         if (elementData == null) {
-            throw formatException(dataClass, "must supply an ElementData annotation");
+            throw elementException(dataClass, "must supply an ElementData annotation");
         }
 
         if (!elementData.value().equals(ElementData.DEFAULT_VALUE)) {
@@ -61,6 +62,6 @@ public class BasicDataIdentifier implements DataIdentifier {
             return typeIdentifier.identify(declaring);
         }
 
-        throw formatException(dataClass, "must specify a key");
+        throw elementException(dataClass, "must specify a key");
     }
 }

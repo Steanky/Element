@@ -81,20 +81,21 @@ public class BasicFactoryResolver implements FactoryResolver {
         for (final Method declaredMethod : declaredMethods) {
             if (declaredMethod.isAnnotationPresent(FactoryMethod.class)) {
                 if (factoryMethod != null) {
-                    throw formatException(elementClass, "more than one FactoryMethod");
+                    throw elementException(elementClass, "more than one FactoryMethod");
                 }
 
-                validatePublicStatic(elementClass, declaredMethod, () -> "FactoryMethod not declared public static");
-                validateReturnType(elementClass, declaredMethod, ElementFactory.class,
+                validateModifiersPresent(declaredMethod, () -> "FactoryMethod not declared public static", 
+                        Modifier.PUBLIC, Modifier.STATIC);
+                validateReturnType(declaredMethod, ElementFactory.class,
                         () -> "FactoryMethod does not return an ElementFactory");
-                validateNoDeclaredParameters(elementClass, declaredMethod, () -> "FactoryMethod has parameters");
+                validateParameterCount(declaredMethod, 0, () -> "FactoryMethod has parameters");
 
-                final ParameterizedType type = validateParameterizedReturnType(elementClass, declaredMethod,
+                final ParameterizedType type = validateParameterizedReturnType(declaredMethod,
                         () -> "FactoryMethod returned raw parameterized class");
                 final Type[] typeArguments = type.getActualTypeArguments();
                 if (typeArguments.length != 2) {
                     //this is likely unreachable, as we are guaranteed to be an instance of ElementFactory
-                    throw formatException(elementClass,
+                    throw elementException(elementClass,
                             "Unexpected number of type arguments on FactoryMethod return type");
                 }
 
@@ -108,7 +109,7 @@ public class BasicFactoryResolver implements FactoryResolver {
         if (factoryMethod != null) {
             final ElementFactory<?, ?> factory = ReflectionUtils.invokeMethod(factoryMethod, null);
             if (factory == null) {
-                throw formatException(elementClass, "FactoryMethod returned null");
+                throw elementException(elementClass, "FactoryMethod returned null");
             }
 
             return factory;
@@ -119,7 +120,7 @@ public class BasicFactoryResolver implements FactoryResolver {
         for (final Constructor<?> declaredConstructor : declaredConstructors) {
             if (declaredConstructor.isAnnotationPresent(FactoryMethod.class)) {
                 if (factoryConstructor != null) {
-                    throw formatException(elementClass, "more than one factory constructor");
+                    throw elementException(elementClass, "more than one factory constructor");
                 }
 
                 factoryConstructor = declaredConstructor;
@@ -127,7 +128,7 @@ public class BasicFactoryResolver implements FactoryResolver {
         }
 
         if (factoryConstructor == null) {
-            throw formatException(elementClass, "no suitable factory method or constructor");
+            throw elementException(elementClass, "no suitable factory method or constructor");
         }
 
         final Constructor<?> finalFactoryConstructor = factoryConstructor;
@@ -145,15 +146,15 @@ public class BasicFactoryResolver implements FactoryResolver {
             if (parameter.isAnnotationPresent(ElementData.class) ||
                     parameter.getType().isAnnotationPresent(ElementData.class)) {
                 if (dataParameterIndex != -1) {
-                    throw formatException(elementClass, "more than one ElementData on constructor factory");
+                    throw elementException(elementClass, "more than one ElementData on constructor factory");
                 }
 
                 if (parameter.isAnnotationPresent(ElementDependency.class)) {
-                    throw formatException(elementClass, "ElementDependency present on data parameter");
+                    throw elementException(elementClass, "ElementDependency present on data parameter");
                 }
 
                 if (parameter.isAnnotationPresent(Composite.class)) {
-                    throw formatException(elementClass, "Composite present on data parameter");
+                    throw elementException(elementClass, "Composite present on data parameter");
                 }
 
                 dataParameterIndex = i;
@@ -169,7 +170,7 @@ public class BasicFactoryResolver implements FactoryResolver {
             final Composite composite = parameter.getDeclaredAnnotation(Composite.class);
             if (composite != null) {
                 if (dependency != null) {
-                    throw formatException(elementClass,
+                    throw elementException(elementClass,
                             "a parameter is annotated with both ElementDependency and Composite");
                 }
 
@@ -179,7 +180,7 @@ public class BasicFactoryResolver implements FactoryResolver {
                     try {
                         elementKey = elementTypeIdentifier.identify(parameter.getType());
                     } catch (ElementException e) {
-                        throw formatException(elementClass, "Composite parameter used on a non-element class", e);
+                        throw elementException(elementClass, "Composite parameter used on a non-element class", e);
                     }
                 }
                 else {
@@ -192,14 +193,14 @@ public class BasicFactoryResolver implements FactoryResolver {
                 } else {
                     resolver = dataInspector.extractResolvers(dataClass).get(elementKey);
                     if (resolver == null) {
-                        throw formatException(elementClass, "no resolver found for type " + elementKey);
+                        throw elementException(elementClass, "no resolver found for type " + elementKey);
                     }
                 }
 
                 elementParameters.add(new ElementParameter(null, null, resolver));
                 continue;
             } else if (dependency == null) {
-                throw formatException(elementClass, "parameter missing annotation");
+                throw elementException(elementClass, "parameter missing annotation");
             }
 
             final String name = dependency.name();
@@ -208,12 +209,12 @@ public class BasicFactoryResolver implements FactoryResolver {
         }
 
         if (dataParameterIndex == -1 && hasProcessor) {
-            throw formatException(elementClass,
+            throw elementException(elementClass,
                     "no data parameter found on constructor factory, but class specifies a processor");
         }
 
         if (dataParameterIndex != -1 && !hasProcessor) {
-            throw formatException(elementClass,
+            throw elementException(elementClass,
                     "found data parameter on constructor factory, but class does not specify a processor");
         }
 

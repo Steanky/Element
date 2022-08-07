@@ -10,6 +10,7 @@ import org.intellij.lang.annotations.Subst;
 import org.jetbrains.annotations.NotNull;
 
 import java.lang.reflect.Method;
+import java.lang.reflect.Modifier;
 import java.lang.reflect.RecordComponent;
 import java.util.HashMap;
 import java.util.Map;
@@ -56,12 +57,12 @@ public class BasicDataInspector implements DataInspector {
             for (final Method method : declaredMethods) {
                 final CompositeData dataAnnotation = method.getDeclaredAnnotation(CompositeData.class);
                 if (dataAnnotation != null) {
-                    validatePublic(data, method, () -> "CompositeData accessor is not public");
-                    validateNotStatic(data, method, () -> "CompositeData accessor is static");
-                    validateDeclaredParameterCount(data, method, 0, () -> "CompositeData accessor has parameters");
+                    validateModifiersPresent(method, () -> "CompositeData accessor is not public", Modifier.PUBLIC);
+                    validateModifiersAbsent(method, () -> "CompositeData accessor is static", Modifier.STATIC);
+                    validateParameterCount(method, 0, () -> "CompositeData accessor has parameters");
 
                     if (method.getReturnType().equals(void.class)) {
-                        throw formatException(data, "CompositeData accessor returns void");
+                        throw elementException(data, "CompositeData accessor returns void");
                     }
 
                     registerAccessorMethod(dataAnnotation.value(), resolvers, method);
@@ -79,7 +80,7 @@ public class BasicDataInspector implements DataInspector {
 
         if (resolvers.putIfAbsent(key,
                 (data) -> ReflectionUtils.invokeMethod(accessor, data)) != null) {
-            throw formatException(accessor.getDeclaringClass(),
+            throw elementException(accessor.getDeclaringClass(),
                     "CompositeData accessor already exists for composite data");
         }
     }

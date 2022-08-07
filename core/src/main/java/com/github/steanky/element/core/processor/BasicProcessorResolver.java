@@ -7,9 +7,13 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.lang.reflect.Method;
+import java.lang.reflect.Modifier;
 
 import static com.github.steanky.element.core.util.Validate.*;
 
+/**
+ * Basic implementation of {@link ProcessorResolver}.
+ */
 public class BasicProcessorResolver implements ProcessorResolver {
     @Override
     public @Nullable ConfigProcessor<?> resolveProcessor(@NotNull Class<?> elementClass) {
@@ -18,15 +22,15 @@ public class BasicProcessorResolver implements ProcessorResolver {
         for (final Method declaredMethod : declaredMethods) {
             if (declaredMethod.isAnnotationPresent(ProcessorMethod.class)) {
                 if (processorMethod != null) {
-                    throw formatException(elementClass, "more than one ProcessorMethod");
+                    throw elementException(elementClass, "more than one ProcessorMethod");
                 }
 
-                validatePublicStatic(elementClass, declaredMethod, () -> "ProcessorMethod is not public static");
-                validateNoDeclaredParameters(elementClass, declaredMethod, () -> "ProcessorMethod has parameters");
-                validateReturnType(elementClass, declaredMethod, ConfigProcessor.class,
+                validateModifiersPresent(declaredMethod, () -> "ProcessorMethod is not public static", Modifier.PUBLIC,
+                        Modifier.STATIC);
+                validateParameterCount(declaredMethod, 0, () -> "ProcessorMethod has parameters");
+                validateReturnType(declaredMethod, ConfigProcessor.class,
                         () -> "ProcessorMethod does not return a ConfigProcessor");
-                validateParameterizedReturnType(elementClass, declaredMethod,
-                        () -> "ProcessorMethod returned a raw generic");
+                validateParameterizedReturnType(declaredMethod, () -> "ProcessorMethod returned a raw generic");
 
                 processorMethod = declaredMethod;
             }
@@ -35,7 +39,7 @@ public class BasicProcessorResolver implements ProcessorResolver {
         if (processorMethod != null) {
             final ConfigProcessor<?> processor = ReflectionUtils.invokeMethod(processorMethod, null);
             if (processor == null) {
-                throw formatException(elementClass, "ProcessorMethod returned null");
+                throw elementException(elementClass, "ProcessorMethod returned null");
             }
 
             return processor;

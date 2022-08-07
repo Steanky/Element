@@ -9,23 +9,23 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.Objects;
 
-import static com.github.steanky.element.core.util.Validate.formatException;
+import static com.github.steanky.element.core.util.Validate.*;
 
 public class BasicElementTypeIdentifier implements ElementTypeIdentifier {
     private final KeyParser keyParser;
 
-    public BasicElementTypeIdentifier(@NotNull KeyParser keyParser) {
+    public BasicElementTypeIdentifier(final @NotNull KeyParser keyParser) {
         this.keyParser = Objects.requireNonNull(keyParser);
     }
 
     @Override
-    public @NotNull Key identify(@NotNull Class<?> elementType) {
+    public @NotNull Key identify(final @NotNull Class<?> elementType) {
         final ElementModel model = elementType.getDeclaredAnnotation(ElementModel.class);
         if (model != null) {
             @Subst(Constants.NAMESPACE_OR_KEY) final String value = model.value();
             return keyParser.parseKey(value);
         }
 
-        throw formatException(elementType, "no ElementModel annotation");
+        throw elementException(elementType, "no ElementModel annotation");
     }
 }
