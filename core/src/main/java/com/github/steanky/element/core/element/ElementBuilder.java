@@ -140,6 +140,30 @@ public interface ElementBuilder {
     }
 
     /**
+     * Loads an element object directly from some data, using an empty {@link DependencyProvider}.
+     *
+     * @param node the data node
+     * @return the element object
+     * @param <TElement> the type of element object
+     */
+    default <TElement> @NotNull TElement loadElementFromNode(final @NotNull ConfigNode node) {
+        return loadElement(loadData(node));
+    }
+
+    /**
+     * Loads an element object directly from some data, using the provided {@link DependencyProvider}.
+     *
+     * @param node the data node
+     * @param dependencyProvider the {@link DependencyProvider} used to supply dependencies
+     * @return the element object
+     * @param <TElement> the type of element object
+     */
+    default <TElement> @NotNull TElement loadElementFromNode(final @NotNull ConfigNode node,
+            final @NotNull DependencyProvider dependencyProvider) {
+        return loadElement(loadData(node), dependencyProvider);
+    }
+
+    /**
      * Loads an element object from the given data object, and potentially uses the given {@link DependencyProvider} to
      * supply dependencies, if necessary.
      *

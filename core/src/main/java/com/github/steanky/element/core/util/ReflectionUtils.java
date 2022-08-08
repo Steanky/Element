@@ -17,7 +17,7 @@ public final class ReflectionUtils {
     }
 
     /**
-     * Uses reflection to invoke the given {@link Constants}. Any exceptions related to reflection are wrapped in an
+     * Uses reflection to invoke the given {@link Constructor}. Any exceptions related to reflection are wrapped in an
      * {@link ElementException}.
      *
      * @param constructor the constructor to invoke
