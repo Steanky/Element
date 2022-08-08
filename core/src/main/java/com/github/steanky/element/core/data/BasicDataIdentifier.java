@@ -5,7 +5,6 @@ import com.github.steanky.element.core.annotation.ElementModel;
 import com.github.steanky.element.core.element.ElementTypeIdentifier;
 import com.github.steanky.element.core.key.Constants;
 import com.github.steanky.element.core.key.KeyParser;
-import com.github.steanky.element.core.util.Validate;
 import net.kyori.adventure.key.Key;
 import net.kyori.adventure.key.Keyed;
 import org.intellij.lang.annotations.Subst;

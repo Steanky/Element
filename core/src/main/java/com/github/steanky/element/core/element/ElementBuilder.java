@@ -140,7 +140,7 @@ public interface ElementBuilder {
     }
 
     /**
-     * Loads an element object directly from some data, using an empty {@link DependencyProvider}.
+     * Loads an element object directly from some configuration  data, using an empty {@link DependencyProvider}.
      *
      * @param node the data node
      * @return the element object
@@ -151,7 +151,7 @@ public interface ElementBuilder {
     }
 
     /**
-     * Loads an element object directly from some data, using the provided {@link DependencyProvider}.
+     * Loads an element object directly from some configuration data, using the provided {@link DependencyProvider}.
      *
      * @param node the data node
      * @param dependencyProvider the {@link DependencyProvider} used to supply dependencies

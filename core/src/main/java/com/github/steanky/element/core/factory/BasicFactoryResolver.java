@@ -136,6 +136,8 @@ public class BasicFactoryResolver implements FactoryResolver {
                     throw elementException(elementClass, "more than one factory constructor");
                 }
 
+                validateModifiersPresent(declaredConstructor, () -> "factory constructor must be public", Modifier.PUBLIC);
+
                 factoryConstructor = declaredConstructor;
             }
         }
