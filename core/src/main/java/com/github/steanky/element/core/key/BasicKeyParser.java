@@ -70,25 +70,47 @@ public class BasicKeyParser implements KeyParser {
         return validNamespaceChar(value) || value == '/';
     }
 
+    private String extractNamespace(String keyString, int separatorIndex) {
+        return separatorIndex >= 0 ? keyString.substring(0, separatorIndex) : defaultNamespace;
+    }
+
+    private String extractValue(String keyString, int separatorIndex) {
+        return separatorIndex >= 0 ? keyString.substring(separatorIndex + 1) : keyString;
+    }
+
     @Override
     public @NotNull Key parseKey(final @NotNull @KeyString String keyString) {
         final int separatorIndex = keyString.indexOf(Constants.NAMESPACE_SEPARATOR);
-        final boolean hasSeparator = separatorIndex >= 0;
 
         //resolve default namespaces differently than in adventure: leading : means empty namespace, no : means default
-        @Subst(Constants.NAMESPACE_OR_KEY) final String namespace =
-                hasSeparator ? keyString.substring(0, separatorIndex) : defaultNamespace;
+        @Subst(Constants.NAMESPACE_OR_KEY) final String namespace = extractNamespace(keyString, separatorIndex);
         if (!namespaceValid(namespace)) {
             throw new ElementException("Invalid namespace: " + keyString);
         }
 
-        @Subst(Constants.NAMESPACE_OR_KEY) final String value =
-                hasSeparator ? keyString.substring(separatorIndex + 1) : keyString;
+        @Subst(Constants.NAMESPACE_OR_KEY) final String value = extractValue(keyString, separatorIndex);
         if (!valueValid(value)) {
             throw new ElementException("Invalid value: " + value);
         }
 
         return Key.key(namespace, value);
+    }
+
+    @Override
+    public boolean isValidKey(@NotNull String keyString) {
+        final int separatorIndex = keyString.indexOf(Constants.NAMESPACE_SEPARATOR);
+
+        final String namespace = extractNamespace(keyString, separatorIndex);
+        if (!namespaceValid(namespace)) {
+            return false;
+        }
+
+        final String value = extractValue(keyString, separatorIndex);
+        if (!valueValid(value)) {
+            return false;
+        }
+
+        return true;
     }
 
     @Override

@@ -11,6 +11,8 @@ import com.github.steanky.element.core.dependency.DependencyModule;
 import com.github.steanky.element.core.dependency.ModuleDependencyProvider;
 import com.github.steanky.element.core.factory.BasicFactoryResolver;
 import com.github.steanky.element.core.factory.FactoryResolver;
+import com.github.steanky.element.core.key.BasicKeyExtractor;
+import com.github.steanky.element.core.key.BasicKeyParser;
 import com.github.steanky.element.core.key.KeyExtractor;
 import com.github.steanky.element.core.key.KeyParser;
 import com.github.steanky.element.core.processor.BasicProcessorResolver;
@@ -31,8 +33,8 @@ public class BasicElementBuilderIntegrationTest {
     private final ElementBuilder elementBuilder;
 
     public BasicElementBuilderIntegrationTest() {
-        this.keyParser = KeyParser.DEFAULT;
-        final KeyExtractor keyExtractor = KeyExtractor.DEFAULT;
+        this.keyParser = new BasicKeyParser("default");
+        final KeyExtractor keyExtractor = new BasicKeyExtractor("serialKey", keyParser);
 
         final ElementTypeIdentifier elementTypeIdentifier = new BasicElementTypeIdentifier(keyParser);
         final DataInspector dataInspector = new BasicDataInspector(keyParser, elementTypeIdentifier);

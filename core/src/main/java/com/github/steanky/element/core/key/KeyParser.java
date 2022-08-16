@@ -9,11 +9,6 @@ import org.jetbrains.annotations.NotNull;
  */
 public interface KeyParser {
     /**
-     * Default KeyParser implementation. Uses the default namespace "default".
-     */
-    KeyParser DEFAULT = new BasicKeyParser();
-
-    /**
      * Converts the given String into a {@link Key}.
      *
      * @param key the key string
@@ -21,6 +16,8 @@ public interface KeyParser {
      * @throws ElementException if the given string is invalid
      */
     @NotNull Key parseKey(final @NotNull @KeyString String key);
+
+    boolean isValidKey(final @NotNull String keyString);
 
     /**
      * Returns the default namespace used by this KeyParser.

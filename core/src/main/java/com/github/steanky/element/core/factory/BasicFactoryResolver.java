@@ -109,7 +109,7 @@ public class BasicFactoryResolver implements FactoryResolver {
                 if (typeArguments.length != 2) {
                     //this is likely unreachable, as we are guaranteed to be an instance of ElementFactory
                     throw elementException(elementClass,
-                            "Unexpected number of type arguments on FactoryMethod return type");
+                            "unexpected number of type arguments on FactoryMethod return type");
                 }
 
                 validateGenericType(elementClass, elementClass, typeArguments[1], () -> "FactoryMethod returned a " +

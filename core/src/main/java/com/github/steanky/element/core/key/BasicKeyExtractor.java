@@ -29,12 +29,25 @@ public class BasicKeyExtractor implements KeyExtractor {
     }
 
     @Override
-    public @NotNull Key extract(final @NotNull ConfigNode node) {
+    public @NotNull Key extractKey(final @NotNull ConfigNode node) {
         try {
             @Subst(Constants.NAMESPACE_OR_KEY) final String keyString = node.getStringOrThrow(keyName);
             return keyParser.parseKey(keyString);
         } catch (ConfigProcessException e) {
             throw new ElementException("Failed to extract key", e);
         }
+    }
+
+    @Override
+    public boolean hasKey(final @NotNull ConfigNode node) {
+        if (node.containsKey(keyName)) {
+            final ConfigElement element = node.getElement(keyName);
+
+            if (element.isString()) {
+                return keyParser.isValidKey(element.asString());
+            }
+        }
+
+        return false;
     }
 }

@@ -65,7 +65,7 @@ public class BasicElementBuilder implements ElementBuilder {
     @Override
     public @NotNull Object loadData(final @NotNull ConfigNode node) {
         try {
-            return processorRegistry.lookup(keyExtractor.extract(node)).dataFromElement(node);
+            return processorRegistry.lookup(keyExtractor.extractKey(node)).dataFromElement(node);
         } catch (ConfigProcessException e) {
             throw new ElementException("Could not process node", e);
         } catch (Exception e) {

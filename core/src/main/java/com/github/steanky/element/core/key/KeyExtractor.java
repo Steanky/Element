@@ -6,15 +6,9 @@ import net.kyori.adventure.key.Key;
 import org.jetbrains.annotations.NotNull;
 
 /**
- * Represents a simple function which can extract a {@link Key} from a {@link ConfigNode}.
+ * An object which may extract keys from {@link ConfigNode} objects.
  */
-@FunctionalInterface
 public interface KeyExtractor {
-    /**
-     * The default KeyExtractor. Uses "serialKey" as its keyName, and {@link KeyParser#DEFAULT} for its key parser.
-     */
-    KeyExtractor DEFAULT = new BasicKeyExtractor("serialKey", KeyParser.DEFAULT);
-
     /**
      * Extracts a {@link Key} from a {@link ConfigNode}. If no key can be found, throws an {@link ElementException}.
      *
@@ -22,5 +16,7 @@ public interface KeyExtractor {
      * @return the extracted key
      * @throws ElementException if no valid key may be extracted
      */
-    @NotNull Key extract(final @NotNull ConfigNode node);
+    @NotNull Key extractKey(final @NotNull ConfigNode node);
+
+    boolean hasKey(final @NotNull ConfigNode node);
 }
