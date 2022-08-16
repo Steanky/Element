@@ -7,19 +7,13 @@ import net.kyori.adventure.key.Key;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-/**
- * A source of named data objects.
- */
-@FunctionalInterface
+
 public interface ElementData {
-    @NotNull Object provide(final @NotNull Key type, final @Nullable Key id);
+    <TData> @NotNull TData provide(final @NotNull Key type, final @Nullable Key path);
+
+    <TData> @NotNull TData provideRoot();
 
     interface Source {
-        static @NotNull Source basic(final @NotNull Registry<ConfigProcessor<?>> processorRegistry,
-                final @NotNull DataLocator dataLocator) {
-            return new BasicElementData.Source(processorRegistry, dataLocator);
-        }
-
         @NotNull ElementData make(@NotNull ConfigNode node);
 
         @NotNull Registry<ConfigProcessor<?>> registry();

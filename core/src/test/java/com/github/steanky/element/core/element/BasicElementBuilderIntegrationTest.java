@@ -20,7 +20,7 @@ public class BasicElementBuilderIntegrationTest {
     public BasicElementBuilderIntegrationTest() {
         this.keyParser = new BasicKeyParser("test");
 
-        final KeyExtractor typeKeyExtractor = new BasicKeyExtractor("type", keyParser);
+        final KeyExtractor typeExtractor = new BasicKeyExtractor("type", keyParser);
         final ElementTypeIdentifier elementTypeIdentifier = new BasicElementTypeIdentifier(keyParser);
 
         final FactoryResolver factoryResolver = new BasicFactoryResolver(keyParser);
@@ -29,8 +29,8 @@ public class BasicElementBuilderIntegrationTest {
         final Registry<ConfigProcessor<?>> configRegistry = new HashRegistry<>();
         final KeyExtractor idExtractor = new BasicKeyExtractor("id", keyParser);
         final PathKeySplitter pathKeySplitter = new BasicPathKeySplitter();
-        final DataLocator dataLocator = new BasicDataLocator(typeKeyExtractor, idExtractor, pathKeySplitter);
-        final ElementData.Source source = new BasicElementData.Source(configRegistry, dataLocator);
+        final DataLocator dataLocator = new BasicDataLocator(typeExtractor, idExtractor, pathKeySplitter);
+        final ElementData.Source source = new BasicElementData.Source(configRegistry, dataLocator, typeExtractor);
 
         final Registry<ElementFactory<?, ?>> factoryRegistry = new HashRegistry<>();
 
