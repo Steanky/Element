@@ -19,6 +19,7 @@ public class BasicElementData implements ElementData {
     private final DataLocator dataLocator;
     private final KeyExtractor keyExtractor;
     private final ConfigNode rootNode;
+
     private final Map<Key, Map<Key, Object>> dataObjects;
 
     public BasicElementData(final @NotNull Registry<ConfigProcessor<?>> processorRegistry,

@@ -3,6 +3,7 @@ package com.github.steanky.element.core.factory;
 import com.github.steanky.element.core.annotation.ElementData;
 import com.github.steanky.element.core.annotation.ElementDependency;
 import com.github.steanky.element.core.annotation.FactoryMethod;
+import com.github.steanky.element.core.data.DataInspector;
 import com.github.steanky.element.core.dependency.DependencyProvider;
 import com.github.steanky.element.core.element.ElementFactory;
 import com.github.steanky.element.core.key.Constants;
@@ -25,14 +26,16 @@ import static com.github.steanky.element.core.util.Validate.*;
  */
 public class BasicFactoryResolver implements FactoryResolver {
     private final KeyParser keyParser;
+    private final DataInspector dataInspector;
 
     /**
      * Creates a new instance of this class.
      *
      * @param keyParser the {@link KeyParser} implementation used to interpret strings as keys
      */
-    public BasicFactoryResolver(@NotNull KeyParser keyParser) {
+    public BasicFactoryResolver(final @NotNull KeyParser keyParser, final @NotNull DataInspector dataInspector) {
         this.keyParser = Objects.requireNonNull(keyParser);
+        this.dataInspector = Objects.requireNonNull(dataInspector);
     }
 
     private static Object[] resolveArguments(final com.github.steanky.element.core.data.ElementData data,
@@ -48,9 +51,7 @@ public class BasicFactoryResolver implements FactoryResolver {
         }
 
         args = new Object[spec.parameters.size() + 1];
-
-        ElementParameter dataParameter = spec.parameters.get(spec.dataIndex);
-        args[spec.dataIndex] = data.provide(dataParameter.typeKey, dataParameter.nameKey);
+        args[spec.dataIndex] = data.provideRoot();
 
         for (int i = 0; i < spec.dataIndex; i++) {
             args[i] = processParameter(spec.parameters.get(i), provider);

@@ -2,10 +2,7 @@ package com.github.steanky.element.core.element;
 
 import com.github.steanky.element.core.HashRegistry;
 import com.github.steanky.element.core.Registry;
-import com.github.steanky.element.core.data.BasicDataLocator;
-import com.github.steanky.element.core.data.BasicElementData;
-import com.github.steanky.element.core.data.DataLocator;
-import com.github.steanky.element.core.data.ElementData;
+import com.github.steanky.element.core.data.*;
 import com.github.steanky.element.core.factory.BasicFactoryResolver;
 import com.github.steanky.element.core.factory.FactoryResolver;
 import com.github.steanky.element.core.key.*;
@@ -23,7 +20,8 @@ public class BasicElementBuilderIntegrationTest {
         final KeyExtractor typeExtractor = new BasicKeyExtractor("type", keyParser);
         final ElementTypeIdentifier elementTypeIdentifier = new BasicElementTypeIdentifier(keyParser);
 
-        final FactoryResolver factoryResolver = new BasicFactoryResolver(keyParser);
+        final DataInspector dataInspector = new BasicDataInspector(keyParser);
+        final FactoryResolver factoryResolver = new BasicFactoryResolver(keyParser, dataInspector);
         final ProcessorResolver processorResolver = new BasicProcessorResolver();
         final ElementInspector elementInspector = new BasicElementInspector(factoryResolver, processorResolver);
         final Registry<ConfigProcessor<?>> configRegistry = new HashRegistry<>();
