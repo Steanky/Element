@@ -60,9 +60,9 @@ public class BasicElementBuilder implements ElementBuilder {
 
     @Override
     public <TElement> @NotNull TElement build(final @NotNull Key type, final @Nullable Key id,
-            final @NotNull ElementData data, final @NotNull DependencyProvider dependencyProvider) {
+            final ElementData data, final @NotNull DependencyProvider dependencyProvider) {
         //noinspection unchecked
-        return (TElement) ((ElementFactory<Object, ?>) factoryRegistry.lookup(type)).make(data.provide(type, id),
-                dependencyProvider, this);
+        return (TElement) ((ElementFactory<Object, ?>) factoryRegistry.lookup(type)).make(data == null ? null : data
+                        .provide(type, id), dependencyProvider, this);
     }
 }
