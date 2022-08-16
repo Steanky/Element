@@ -34,7 +34,7 @@ public class BasicElementInspector implements ElementInspector {
     public @NotNull Information inspect(final @NotNull Class<?> elementClass) {
         final int modifiers = elementClass.getModifiers();
         if (!Modifier.isStatic(elementClass.getModifiers()) && elementClass.getDeclaringClass() != null) {
-            throw elementException(elementClass, "non-static and has a declaring class");
+            throw elementException(elementClass, "non-static with declaring class");
         }
 
         if (!Modifier.isPublic(modifiers)) {

@@ -35,8 +35,8 @@ public class BasicFactoryResolver implements FactoryResolver {
         this.keyParser = Objects.requireNonNull(keyParser);
     }
 
-    private static Object[] resolveArguments(final Object data, final DependencyProvider provider,
-            final ElementSpec spec) {
+    private static Object[] resolveArguments(final com.github.steanky.element.core.data.ElementData data,
+            final DependencyProvider provider, final ElementSpec spec) {
         final Object[] args;
         if (spec.dataIndex == -1) {
             args = new Object[spec.parameters.size()];
@@ -48,7 +48,10 @@ public class BasicFactoryResolver implements FactoryResolver {
         }
 
         args = new Object[spec.parameters.size() + 1];
-        args[spec.dataIndex] = data;
+
+        ElementParameter dataParameter = spec.parameters.get(spec.dataIndex);
+        args[spec.dataIndex] = data.provide(dataParameter.typeKey, dataParameter.nameKey);
+
         for (int i = 0; i < spec.dataIndex; i++) {
             args[i] = processParameter(spec.parameters.get(i), provider);
         }

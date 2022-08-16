@@ -29,9 +29,9 @@ public class BasicElementData implements ElementData {
     }
 
     @Override
-    public @NotNull Object provide(@NotNull Key type, @Nullable Key id) {
+    public @NotNull Object provide(@NotNull Key type, @Nullable Key path) {
         final Map<Key, Object> map = dataObjects.computeIfAbsent(type, key -> new HashMap<>(4));
-        return map.computeIfAbsent(id, key -> {
+        return map.computeIfAbsent(path, key -> {
             //noinspection unchecked
             final ConfigProcessor<Object> dataProcessor = (ConfigProcessor<Object>) processorRegistry.lookup(type);
             try {

@@ -1,5 +1,6 @@
 package com.github.steanky.element.core.element;
 
+import com.github.steanky.element.core.data.ElementData;
 import com.github.steanky.element.core.dependency.DependencyProvider;
 import org.jetbrains.annotations.NotNull;
 
@@ -19,6 +20,6 @@ public interface ElementFactory<TData, TElement> {
      * @param builder            the builder which may be used to create necessary sub-objects
      * @return the element object
      */
-    @NotNull TElement make(final TData data, final @NotNull DependencyProvider dependencyProvider,
+    @NotNull TElement make(final ElementData data, final @NotNull DependencyProvider dependencyProvider,
             final @NotNull ElementBuilder builder);
 }

@@ -99,18 +99,11 @@ public class BasicKeyParser implements KeyParser {
     @Override
     public boolean isValidKey(@NotNull String keyString) {
         final int separatorIndex = keyString.indexOf(Constants.NAMESPACE_SEPARATOR);
-
-        final String namespace = extractNamespace(keyString, separatorIndex);
-        if (!namespaceValid(namespace)) {
+        if (!namespaceValid(extractNamespace(keyString, separatorIndex))) {
             return false;
         }
 
-        final String value = extractValue(keyString, separatorIndex);
-        if (!valueValid(value)) {
-            return false;
-        }
-
-        return true;
+        return valueValid(extractValue(keyString, separatorIndex));
     }
 
     @Override
