@@ -9,9 +9,9 @@ import java.util.NoSuchElementException;
  * Represents a store of some kind of persistent value associated with a {@link Key}.
  *
  * @param <TRegistrant> the type of object registered by this class
- * @implSpec Registry implementations must:
+ * @implSpec Registry implementations must:<br>
  * <ul>
- *     <li>Be fully thread-safe</li>
+ *     <li>Safely support concurrent lookups (reads) and registrations (writes)</li>
  *     <li>Be "append-only" (objects may be registered but not unregistered)</li>
  *     <li>Not support null keys or values</li>
  *     <li>Throw exceptions when looking up registrants that don't exist, rather than returning null</li>

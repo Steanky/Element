@@ -1,15 +1,10 @@
 package com.github.steanky.element.core.factory;
 
-import com.github.steanky.element.core.ElementException;
-import com.github.steanky.element.core.annotation.Composite;
 import com.github.steanky.element.core.annotation.ElementData;
 import com.github.steanky.element.core.annotation.ElementDependency;
 import com.github.steanky.element.core.annotation.FactoryMethod;
-import com.github.steanky.element.core.data.DataInspector;
 import com.github.steanky.element.core.dependency.DependencyProvider;
-import com.github.steanky.element.core.element.ElementBuilder;
 import com.github.steanky.element.core.element.ElementFactory;
-import com.github.steanky.element.core.element.ElementTypeIdentifier;
 import com.github.steanky.element.core.key.Constants;
 import com.github.steanky.element.core.key.KeyParser;
 import com.github.steanky.element.core.util.ReflectionUtils;
@@ -21,7 +16,6 @@ import java.lang.reflect.*;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
-import java.util.function.Function;
 
 import static com.github.steanky.element.core.util.Validate.*;
 
@@ -31,31 +25,23 @@ import static com.github.steanky.element.core.util.Validate.*;
  */
 public class BasicFactoryResolver implements FactoryResolver {
     private final KeyParser keyParser;
-    private final DataInspector dataInspector;
-    private final ElementTypeIdentifier elementTypeIdentifier;
 
     /**
      * Creates a new instance of this class.
      *
      * @param keyParser the {@link KeyParser} implementation used to interpret strings as keys
-     * @param dataInspector the {@link DataInspector} implementation used to analyze data classes
-     * @param elementTypeIdentifier the {@link ElementTypeIdentifier} implementation used to extract keys from element
-     *                              object classes
      */
-    public BasicFactoryResolver(@NotNull KeyParser keyParser, final @NotNull DataInspector dataInspector,
-            final @NotNull ElementTypeIdentifier elementTypeIdentifier) {
+    public BasicFactoryResolver(@NotNull KeyParser keyParser) {
         this.keyParser = Objects.requireNonNull(keyParser);
-        this.dataInspector = Objects.requireNonNull(dataInspector);
-        this.elementTypeIdentifier = Objects.requireNonNull(elementTypeIdentifier);
     }
 
     private static Object[] resolveArguments(final Object data, final DependencyProvider provider,
-            final ElementSpec spec, final ElementBuilder builder) {
+            final ElementSpec spec) {
         final Object[] args;
         if (spec.dataIndex == -1) {
             args = new Object[spec.parameters.size()];
             for (int i = 0; i < spec.parameters.size(); i++) {
-                args[i] = processParameter(spec.parameters.get(i), provider, builder, data);
+                args[i] = processParameter(spec.parameters.get(i), provider);
             }
 
             return args;
@@ -64,23 +50,18 @@ public class BasicFactoryResolver implements FactoryResolver {
         args = new Object[spec.parameters.size() + 1];
         args[spec.dataIndex] = data;
         for (int i = 0; i < spec.dataIndex; i++) {
-            args[i] = processParameter(spec.parameters.get(i), provider, builder, data);
+            args[i] = processParameter(spec.parameters.get(i), provider);
         }
 
         for (int i = spec.dataIndex + 1; i < args.length; i++) {
-            args[i] = processParameter(spec.parameters.get(i - 1), provider, builder, data);
+            args[i] = processParameter(spec.parameters.get(i - 1), provider);
         }
 
         return args;
     }
 
-    private static Object processParameter(final ElementParameter parameter, final DependencyProvider provider,
-            final ElementBuilder builder, final Object data) {
-        if (parameter.resolver == null) {
-            return provider.provide(parameter.typeKey, parameter.nameKey);
-        }
-
-        return builder.loadElement(parameter.resolver.apply(data), provider);
+    private static Object processParameter(final ElementParameter parameter, final DependencyProvider provider) {
+        return provider.provide(parameter.typeKey, parameter.nameKey);
     }
 
     private static Key parseKey(final KeyParser parser, final @Subst(Constants.NAMESPACE_OR_KEY) String keyString) {
@@ -97,7 +78,7 @@ public class BasicFactoryResolver implements FactoryResolver {
                     throw elementException(elementClass, "more than one FactoryMethod");
                 }
 
-                validateModifiersPresent(declaredMethod, () -> "FactoryMethod not declared public static", 
+                validateModifiersPresent(declaredMethod, () -> "FactoryMethod not declared public static",
                         Modifier.PUBLIC, Modifier.STATIC);
                 validateReturnType(declaredMethod, ElementFactory.class,
                         () -> "FactoryMethod does not return an ElementFactory");
@@ -136,7 +117,8 @@ public class BasicFactoryResolver implements FactoryResolver {
                     throw elementException(elementClass, "more than one factory constructor");
                 }
 
-                validateModifiersPresent(declaredConstructor, () -> "factory constructor must be public", Modifier.PUBLIC);
+                validateModifiersPresent(declaredConstructor, () -> "factory constructor must be public",
+                        Modifier.PUBLIC);
 
                 factoryConstructor = declaredConstructor;
             }
@@ -154,7 +136,6 @@ public class BasicFactoryResolver implements FactoryResolver {
 
         final ArrayList<ElementParameter> elementParameters = new ArrayList<>(parameters.length);
         int dataParameterIndex = -1;
-        Class<?> dataClass = null;
         for (int i = 0; i < parameters.length; i++) {
             final Parameter parameter = parameters[i];
 
@@ -168,12 +149,7 @@ public class BasicFactoryResolver implements FactoryResolver {
                     throw elementException(elementClass, "ElementDependency present on data parameter");
                 }
 
-                if (parameter.isAnnotationPresent(Composite.class)) {
-                    throw elementException(elementClass, "Composite present on data parameter");
-                }
-
                 dataParameterIndex = i;
-                dataClass = parameter.getType();
                 continue;
             }
 
@@ -182,45 +158,13 @@ public class BasicFactoryResolver implements FactoryResolver {
                 dependency = parameter.getType().getDeclaredAnnotation(ElementDependency.class);
             }
 
-            final Composite composite = parameter.getDeclaredAnnotation(Composite.class);
-            if (composite != null) {
-                if (dependency != null) {
-                    throw elementException(elementClass,
-                            "a parameter is annotated with both ElementDependency and Composite");
-                }
-
-                final String compositeValue = composite.value();
-                final Key elementKey;
-                if(compositeValue.equals(Composite.DEFAULT_VALUE)) {
-                    try {
-                        elementKey = elementTypeIdentifier.identify(parameter.getType());
-                    } catch (ElementException e) {
-                        throw elementException(elementClass, "Composite parameter used on a non-element class", e);
-                    }
-                }
-                else {
-                    elementKey = parseKey(keyParser, compositeValue);
-                }
-
-                final Function<Object, Object> resolver;
-                if (dataClass == null) { //we have no data, so our child should not have data either
-                    resolver = ignored -> elementKey;
-                } else {
-                    resolver = dataInspector.extractResolvers(dataClass).get(elementKey);
-                    if (resolver == null) {
-                        throw elementException(elementClass, "no resolver found for type " + elementKey);
-                    }
-                }
-
-                elementParameters.add(new ElementParameter(null, null, resolver));
-                continue;
-            } else if (dependency == null) {
+            if (dependency == null) {
                 throw elementException(elementClass, "parameter missing annotation");
             }
 
             final String name = dependency.name();
             elementParameters.add(new ElementParameter(parseKey(keyParser, dependency.value()),
-                    name.equals(ElementDependency.DEFAULT_NAME) ? null : parseKey(keyParser, name), null));
+                    name.equals(ElementDependency.DEFAULT_NAME) ? null : parseKey(keyParser, name)));
         }
 
         if (dataParameterIndex == -1 && hasProcessor) {
@@ -236,13 +180,11 @@ public class BasicFactoryResolver implements FactoryResolver {
         elementParameters.trimToSize();
 
         final ElementSpec elementSpec = new ElementSpec(elementParameters, dataParameterIndex);
-        return (data, dependencyProvider, builder) -> {
-            final Object[] args = resolveArguments(data, dependencyProvider, elementSpec, builder);
-            return ReflectionUtils.invokeConstructor(finalFactoryConstructor, args);
-        };
+        return (data, dependencyProvider, builder) -> ReflectionUtils.invokeConstructor(finalFactoryConstructor,
+                resolveArguments(data, dependencyProvider, elementSpec));
     }
 
     private record ElementSpec(List<ElementParameter> parameters, int dataIndex) {}
 
-    private record ElementParameter(Key typeKey, Key nameKey, Function<Object, Object> resolver) {}
+    private record ElementParameter(Key typeKey, Key nameKey) {}
 }

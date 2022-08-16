@@ -13,17 +13,14 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
 
-public class BasicDataProvider implements DataProvider {
+public class BasicElementData implements ElementData {
     private final Registry<ConfigProcessor<?>> processorRegistry;
     private final DataLocator dataLocator;
     private final ConfigNode rootNode;
-
     private final Map<Key, Map<Key, Object>> dataObjects;
 
-
-    public BasicDataProvider(final @NotNull Registry<ConfigProcessor<?>> processorRegistry,
-            final @NotNull DataLocator dataLocator,
-            final @NotNull ConfigNode rootNode) {
+    public BasicElementData(final @NotNull Registry<ConfigProcessor<?>> processorRegistry,
+            final @NotNull DataLocator dataLocator, final @NotNull ConfigNode rootNode) {
         this.processorRegistry = Objects.requireNonNull(processorRegistry);
         this.dataLocator = Objects.requireNonNull(dataLocator);
         this.rootNode = Objects.requireNonNull(rootNode);
@@ -32,9 +29,9 @@ public class BasicDataProvider implements DataProvider {
     }
 
     @Override
-    public @NotNull Object provide(@NotNull Key type, @Nullable Key name) {
+    public @NotNull Object provide(@NotNull Key type, @Nullable Key id) {
         final Map<Key, Object> map = dataObjects.computeIfAbsent(type, key -> new HashMap<>(4));
-        return map.computeIfAbsent(name, key -> {
+        return map.computeIfAbsent(id, key -> {
             //noinspection unchecked
             final ConfigProcessor<Object> dataProcessor = (ConfigProcessor<Object>) processorRegistry.lookup(type);
             try {
@@ -43,5 +40,26 @@ public class BasicDataProvider implements DataProvider {
                 throw new ElementException(e);
             }
         });
+    }
+
+    public static class Source implements ElementData.Source {
+        private final Registry<ConfigProcessor<?>> processorRegistry;
+        private final DataLocator dataLocator;
+
+        public Source(final @NotNull Registry<ConfigProcessor<?>> processorRegistry,
+                final @NotNull DataLocator dataLocator) {
+            this.processorRegistry = Objects.requireNonNull(processorRegistry);
+            this.dataLocator = Objects.requireNonNull(dataLocator);
+        }
+
+        @Override
+        public @NotNull BasicElementData make(final @NotNull ConfigNode node) {
+            return new BasicElementData(processorRegistry, dataLocator, node);
+        }
+
+        @Override
+        public @NotNull Registry<ConfigProcessor<?>> registry() {
+            return processorRegistry;
+        }
     }
 }

@@ -2,8 +2,6 @@ package com.github.steanky.element.core.element;
 
 import com.github.steanky.element.core.ElementException;
 import com.github.steanky.element.core.annotation.*;
-import com.github.steanky.element.core.data.BasicDataInspector;
-import com.github.steanky.element.core.data.DataInspector;
 import com.github.steanky.element.core.factory.BasicFactoryResolver;
 import com.github.steanky.element.core.factory.FactoryResolver;
 import com.github.steanky.element.core.key.BasicKeyParser;
@@ -27,8 +25,7 @@ public class BasicElementInspectorIntegrationTest {
     public BasicElementInspectorIntegrationTest() {
         final KeyParser parser = new BasicKeyParser();
         final ElementTypeIdentifier elementTypeIdentifier = new BasicElementTypeIdentifier(parser);
-        final DataInspector dataInspector = new BasicDataInspector(parser, elementTypeIdentifier);
-        final FactoryResolver factoryResolver = new BasicFactoryResolver(parser, dataInspector, elementTypeIdentifier);
+        final FactoryResolver factoryResolver = new BasicFactoryResolver(parser);
         final ProcessorResolver processorResolver = new BasicProcessorResolver();
         this.inspector = new BasicElementInspector(factoryResolver, processorResolver);
     }
