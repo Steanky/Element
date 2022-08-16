@@ -12,7 +12,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.Objects;
 
-import static com.github.steanky.element.core.util.Validate.*;
+import static com.github.steanky.element.core.util.Validate.elementException;
 
 /**
  * Basic implementation of {@link DataIdentifier}. Can correctly identify all subclasses of {@link Keyed}, {@link Key}
@@ -27,7 +27,7 @@ public class BasicDataIdentifier implements DataIdentifier {
     /**
      * Creates a new instance of this class.
      *
-     * @param keyParser the parser used to parse keys from strings, when necessary
+     * @param keyParser      the parser used to parse keys from strings, when necessary
      * @param typeIdentifier the {@link ElementTypeIdentifier} used to extract keys from element objects
      */
     public BasicDataIdentifier(final @NotNull KeyParser keyParser,

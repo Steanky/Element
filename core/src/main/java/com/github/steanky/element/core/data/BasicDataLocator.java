@@ -30,7 +30,7 @@ public class BasicDataLocator implements DataLocator {
             return rootNode;
         }
 
-        if(dataPath == null) {
+        if (dataPath == null) {
             throw new ElementException("dataPath required to locate nested data node, but none was provided");
         }
 
@@ -53,9 +53,10 @@ public class BasicDataLocator implements DataLocator {
                 }
             }
 
-            if(!foundNode) {
-                throw new ElementException("couldn't find node named " + name + " in node " + current +
-                        " under namespace " + dataNamespace);
+            if (!foundNode) {
+                throw new ElementException(
+                        "couldn't find node named " + name + " in node " + current + " under namespace " +
+                                dataNamespace);
             }
         }
 

@@ -7,5 +7,6 @@ import org.jetbrains.annotations.Nullable;
 
 @FunctionalInterface
 public interface DataLocator {
-    @NotNull ConfigNode locate(final @NotNull ConfigNode rootNode, final @NotNull Key type, final @Nullable Key dataPath);
+    @NotNull ConfigNode locate(final @NotNull ConfigNode rootNode, final @NotNull Key type,
+            final @Nullable Key dataPath);
 }

@@ -1,9 +1,9 @@
 package com.github.steanky.element.core.processor;
 
+import com.github.steanky.element.core.annotation.ProcessorMethod;
 import com.github.steanky.ethylene.core.processor.ConfigProcessor;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import com.github.steanky.element.core.annotation.ProcessorMethod;
 
 /**
  * Extracts a {@link ConfigProcessor} implementation from the given class. There must be a {@code public static} method
