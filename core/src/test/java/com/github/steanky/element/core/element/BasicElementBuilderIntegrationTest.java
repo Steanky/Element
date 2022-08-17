@@ -20,8 +20,7 @@ public class BasicElementBuilderIntegrationTest {
         final KeyExtractor typeExtractor = new BasicKeyExtractor("type", keyParser);
         final ElementTypeIdentifier elementTypeIdentifier = new BasicElementTypeIdentifier(keyParser);
 
-        final DataInspector dataInspector = new BasicDataInspector(keyParser);
-        final FactoryResolver factoryResolver = new BasicFactoryResolver(keyParser, dataInspector, elementTypeIdentifier);
+        final FactoryResolver factoryResolver = new BasicFactoryResolver(keyParser, elementTypeIdentifier);
         final ProcessorResolver processorResolver = new BasicProcessorResolver();
         final ElementInspector elementInspector = new BasicElementInspector(factoryResolver, processorResolver);
         final Registry<ConfigProcessor<?>> configRegistry = new HashRegistry<>();

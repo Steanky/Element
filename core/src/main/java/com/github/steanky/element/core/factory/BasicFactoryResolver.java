@@ -30,7 +30,6 @@ import static com.github.steanky.element.core.util.Validate.*;
  */
 public class BasicFactoryResolver implements FactoryResolver {
     private final KeyParser keyParser;
-    private final DataInspector dataInspector;
     private final ElementTypeIdentifier elementTypeIdentifier;
 
     /**
@@ -38,10 +37,9 @@ public class BasicFactoryResolver implements FactoryResolver {
      *
      * @param keyParser the {@link KeyParser} implementation used to interpret strings as keys
      */
-    public BasicFactoryResolver(final @NotNull KeyParser keyParser, final @NotNull DataInspector dataInspector,
+    public BasicFactoryResolver(final @NotNull KeyParser keyParser,
             final @NotNull ElementTypeIdentifier elementTypeIdentifier) {
         this.keyParser = Objects.requireNonNull(keyParser);
-        this.dataInspector = Objects.requireNonNull(dataInspector);
         this.elementTypeIdentifier = Objects.requireNonNull(elementTypeIdentifier);
     }
 
