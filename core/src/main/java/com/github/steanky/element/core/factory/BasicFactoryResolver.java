@@ -4,6 +4,7 @@ import com.github.steanky.element.core.annotation.DataName;
 import com.github.steanky.element.core.annotation.Data;
 import com.github.steanky.element.core.annotation.Dependency;
 import com.github.steanky.element.core.annotation.FactoryMethod;
+import com.github.steanky.element.core.data.ElementData;
 import com.github.steanky.element.core.dependency.DependencyProvider;
 import com.github.steanky.element.core.element.ElementBuilder;
 import com.github.steanky.element.core.element.ElementFactory;
@@ -41,8 +42,8 @@ public class BasicFactoryResolver implements FactoryResolver {
         this.elementTypeIdentifier = Objects.requireNonNull(elementTypeIdentifier);
     }
 
-    private static Object[] resolveArguments(final Key type, final Key id, final com.github.steanky.element.core.data.ElementData data, final ElementBuilder builder,
-            final DependencyProvider provider, final ElementSpec spec) {
+    private static Object[] resolveArguments(final Key type, final Key id, final ElementData data,
+            final ElementBuilder builder, final DependencyProvider provider, final ElementSpec spec) {
         final Object[] args;
         if (spec.dataIndex == -1) {
             args = new Object[spec.parameters.size()];

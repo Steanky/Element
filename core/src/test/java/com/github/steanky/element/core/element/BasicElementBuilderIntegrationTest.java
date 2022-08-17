@@ -91,9 +91,7 @@ public class BasicElementBuilderIntegrationTest {
 
                 @Override
                 public @NotNull ConfigElement elementFromData(Data data) {
-                    final ConfigNode node = new LinkedConfigNode(1);
-                    node.putNumber("value", data.value);
-                    return node;
+                    return ConfigNode.of("value", data.value);
                 }
             };
         }
