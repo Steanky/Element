@@ -1,7 +1,7 @@
 package com.github.steanky.element.core.data;
 
-import com.github.steanky.element.core.annotation.ElementData;
-import com.github.steanky.element.core.annotation.ElementModel;
+import com.github.steanky.element.core.annotation.Data;
+import com.github.steanky.element.core.annotation.Model;
 import com.github.steanky.element.core.element.ElementTypeIdentifier;
 import com.github.steanky.element.core.key.Constants;
 import com.github.steanky.element.core.key.KeyParser;
@@ -17,8 +17,8 @@ import static com.github.steanky.element.core.util.Validate.elementException;
 /**
  * Basic implementation of {@link DataIdentifier}. Can correctly identify all subclasses of {@link Keyed}, {@link Key}
  * objects themselves, {@link String} objects (if they can be parsed into a valid key), objects whose type has the
- * {@link ElementData} annotation which itself provides a valid key, or types whose classes which are nested in an
- * {@link ElementModel} class which provides a valid key, and are also annotated with ElementData.
+ * {@link Data} annotation which itself provides a valid key, or types whose classes which are nested in an
+ * {@link Model} class which provides a valid key, and are also annotated with ElementData.
  */
 public class BasicDataIdentifier implements DataIdentifier {
     private final KeyParser keyParser;
@@ -47,12 +47,12 @@ public class BasicDataIdentifier implements DataIdentifier {
         }
 
         final Class<?> dataClass = data.getClass();
-        final ElementData elementData = dataClass.getDeclaredAnnotation(ElementData.class);
+        final Data elementData = dataClass.getDeclaredAnnotation(Data.class);
         if (elementData == null) {
             throw elementException(dataClass, "must supply an ElementData annotation");
         }
 
-        if (!elementData.value().equals(ElementData.DEFAULT_VALUE)) {
+        if (!elementData.value().equals(Data.DEFAULT_VALUE)) {
             @Subst(Constants.NAMESPACE_OR_KEY) final String value = elementData.value();
             return keyParser.parseKey(value);
         }

@@ -13,7 +13,7 @@ import java.lang.annotation.*;
 @Documented
 @Retention(RetentionPolicy.RUNTIME)
 @Target({ElementType.PARAMETER, ElementType.TYPE})
-public @interface ElementData {
+public @interface Data {
     /**
      * The default value. This is invalid as a key string, by design.
      */

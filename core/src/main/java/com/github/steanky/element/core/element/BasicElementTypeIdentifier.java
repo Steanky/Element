@@ -1,6 +1,6 @@
 package com.github.steanky.element.core.element;
 
-import com.github.steanky.element.core.annotation.ElementModel;
+import com.github.steanky.element.core.annotation.Model;
 import com.github.steanky.element.core.key.Constants;
 import com.github.steanky.element.core.key.KeyParser;
 import net.kyori.adventure.key.Key;
@@ -28,7 +28,7 @@ public class BasicElementTypeIdentifier implements ElementTypeIdentifier {
 
     @Override
     public @NotNull Key identify(final @NotNull Class<?> elementType) {
-        final ElementModel model = elementType.getDeclaredAnnotation(ElementModel.class);
+        final Model model = elementType.getDeclaredAnnotation(Model.class);
         if (model != null) {
             @Subst(Constants.NAMESPACE_OR_KEY) final String value = model.value();
             return keyParser.parseKey(value);

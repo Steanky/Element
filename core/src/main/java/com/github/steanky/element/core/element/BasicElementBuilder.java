@@ -62,6 +62,6 @@ public class BasicElementBuilder implements ElementBuilder {
     public <TElement> @NotNull TElement build(final @NotNull Key type, final @Nullable Key id,
             final ElementData data, final @NotNull DependencyProvider dependencyProvider) {
         //noinspection unchecked
-        return (TElement) (factoryRegistry.lookup(type)).make(data, dependencyProvider, this);
+        return (TElement) (factoryRegistry.lookup(type)).make(type, id, data, dependencyProvider, this);
     }
 }

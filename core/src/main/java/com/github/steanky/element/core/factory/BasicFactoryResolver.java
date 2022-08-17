@@ -1,11 +1,15 @@
 package com.github.steanky.element.core.factory;
 
-import com.github.steanky.element.core.annotation.ElementData;
-import com.github.steanky.element.core.annotation.ElementDependency;
+import com.github.steanky.element.core.annotation.DataName;
+import com.github.steanky.element.core.annotation.Data;
+import com.github.steanky.element.core.annotation.Dependency;
 import com.github.steanky.element.core.annotation.FactoryMethod;
 import com.github.steanky.element.core.data.DataInspector;
+import com.github.steanky.element.core.data.ElementData;
 import com.github.steanky.element.core.dependency.DependencyProvider;
+import com.github.steanky.element.core.element.ElementBuilder;
 import com.github.steanky.element.core.element.ElementFactory;
+import com.github.steanky.element.core.element.ElementTypeIdentifier;
 import com.github.steanky.element.core.key.Constants;
 import com.github.steanky.element.core.key.KeyParser;
 import com.github.steanky.element.core.util.ReflectionUtils;
@@ -27,45 +31,53 @@ import static com.github.steanky.element.core.util.Validate.*;
 public class BasicFactoryResolver implements FactoryResolver {
     private final KeyParser keyParser;
     private final DataInspector dataInspector;
+    private final ElementTypeIdentifier elementTypeIdentifier;
 
     /**
      * Creates a new instance of this class.
      *
      * @param keyParser the {@link KeyParser} implementation used to interpret strings as keys
      */
-    public BasicFactoryResolver(final @NotNull KeyParser keyParser, final @NotNull DataInspector dataInspector) {
+    public BasicFactoryResolver(final @NotNull KeyParser keyParser, final @NotNull DataInspector dataInspector,
+            final @NotNull ElementTypeIdentifier elementTypeIdentifier) {
         this.keyParser = Objects.requireNonNull(keyParser);
         this.dataInspector = Objects.requireNonNull(dataInspector);
+        this.elementTypeIdentifier = Objects.requireNonNull(elementTypeIdentifier);
     }
 
-    private static Object[] resolveArguments(final com.github.steanky.element.core.data.ElementData data,
+    private static Object[] resolveArguments(final Key type, final Key id, final ElementData data, final ElementBuilder builder,
             final DependencyProvider provider, final ElementSpec spec) {
         final Object[] args;
         if (spec.dataIndex == -1) {
             args = new Object[spec.parameters.size()];
             for (int i = 0; i < spec.parameters.size(); i++) {
-                args[i] = processParameter(spec.parameters.get(i), provider);
+                args[i] = processParameter(spec.parameters.get(i), data, builder, provider);
             }
 
             return args;
         }
 
         args = new Object[spec.parameters.size() + 1];
-        args[spec.dataIndex] = data.provideRoot();
+        args[spec.dataIndex] = data.provide(type, id);
 
         for (int i = 0; i < spec.dataIndex; i++) {
-            args[i] = processParameter(spec.parameters.get(i), provider);
+            args[i] = processParameter(spec.parameters.get(i), data, builder, provider);
         }
 
         for (int i = spec.dataIndex + 1; i < args.length; i++) {
-            args[i] = processParameter(spec.parameters.get(i - 1), provider);
+            args[i] = processParameter(spec.parameters.get(i - 1), data, builder, provider);
         }
 
         return args;
     }
 
-    private static Object processParameter(final ElementParameter parameter, final DependencyProvider provider) {
-        return provider.provide(parameter.typeKey, parameter.nameKey);
+    private static Object processParameter(final ElementParameter parameter, final ElementData data,
+            final ElementBuilder builder, final DependencyProvider provider) {
+        if (parameter.isDependency) {
+            return provider.provide(parameter.typeKey, parameter.nameKey);
+        }
+
+        return builder.build(parameter.typeKey, parameter.nameKey, data, provider);
     }
 
     private static Key parseKey(final KeyParser parser, final @Subst(Constants.NAMESPACE_OR_KEY) String keyString) {
@@ -135,7 +147,8 @@ public class BasicFactoryResolver implements FactoryResolver {
         final Constructor<?> finalFactoryConstructor = factoryConstructor;
         final Parameter[] parameters = factoryConstructor.getParameters();
         if (parameters.length == 0) {
-            return (data, dependencyProvider, builder) -> ReflectionUtils.invokeConstructor(finalFactoryConstructor);
+            return (type, id, data, dependencyProvider, builder) ->
+                    ReflectionUtils.invokeConstructor(finalFactoryConstructor);
         }
 
         final ArrayList<ElementParameter> elementParameters = new ArrayList<>(parameters.length);
@@ -143,32 +156,41 @@ public class BasicFactoryResolver implements FactoryResolver {
         for (int i = 0; i < parameters.length; i++) {
             final Parameter parameter = parameters[i];
 
-            if (parameter.isAnnotationPresent(ElementData.class) ||
-                    parameter.getType().isAnnotationPresent(ElementData.class)) {
+            if (parameter.isAnnotationPresent(Data.class) ||
+                    parameter.getType().isAnnotationPresent(Data.class)) {
                 if (dataParameterIndex != -1) {
                     throw elementException(elementClass, "more than one ElementData on constructor factory");
                 }
 
-                if (parameter.isAnnotationPresent(ElementDependency.class)) {
+                if (parameter.isAnnotationPresent(Dependency.class)) {
                     throw elementException(elementClass, "ElementDependency present on data parameter");
+                }
+
+                if(parameter.isAnnotationPresent(DataName.class)) {
+                    throw elementException(elementClass, "DataName present on data parameter");
                 }
 
                 dataParameterIndex = i;
                 continue;
             }
 
-            ElementDependency dependency = parameter.getDeclaredAnnotation(ElementDependency.class);
+            Dependency dependency = parameter.getDeclaredAnnotation(Dependency.class);
             if (dependency == null) {
-                dependency = parameter.getType().getDeclaredAnnotation(ElementDependency.class);
+                dependency = parameter.getType().getDeclaredAnnotation(Dependency.class);
             }
 
             if (dependency == null) {
-                throw elementException(elementClass, "parameter missing annotation");
+                final Key typeKey = elementTypeIdentifier.identify(parameter.getType());
+                final DataName nameAnnotation = parameter.getDeclaredAnnotation(DataName.class);
+
+                elementParameters.add(new ElementParameter(typeKey, nameAnnotation == null ? null : parseKey(keyParser,
+                        nameAnnotation.value()), false));
+                continue;
             }
 
             final String name = dependency.name();
             elementParameters.add(new ElementParameter(parseKey(keyParser, dependency.value()),
-                    name.equals(ElementDependency.DEFAULT_NAME) ? null : parseKey(keyParser, name)));
+                    name.equals(Dependency.DEFAULT_NAME) ? null : parseKey(keyParser, name), true));
         }
 
         if (dataParameterIndex == -1 && hasProcessor) {
@@ -184,11 +206,11 @@ public class BasicFactoryResolver implements FactoryResolver {
         elementParameters.trimToSize();
 
         final ElementSpec elementSpec = new ElementSpec(elementParameters, dataParameterIndex);
-        return (data, dependencyProvider, builder) -> ReflectionUtils.invokeConstructor(finalFactoryConstructor,
-                resolveArguments(data, dependencyProvider, elementSpec));
+        return (type, id, data, dependencyProvider, builder) -> ReflectionUtils.invokeConstructor(
+                finalFactoryConstructor, resolveArguments(type, id, data, builder, dependencyProvider, elementSpec));
     }
 
     private record ElementSpec(List<ElementParameter> parameters, int dataIndex) {}
 
-    private record ElementParameter(Key typeKey, Key nameKey) {}
+    private record ElementParameter(Key typeKey, Key nameKey, boolean isDependency) {}
 }

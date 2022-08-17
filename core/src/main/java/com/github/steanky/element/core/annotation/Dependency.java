@@ -12,7 +12,7 @@ import java.lang.annotation.*;
 @Documented
 @Retention(RetentionPolicy.RUNTIME)
 @Target({ElementType.PARAMETER, ElementType.TYPE})
-public @interface ElementDependency {
+public @interface Dependency {
     /**
      * The default name. This is invalid as a key string, by design.
      */
@@ -26,10 +26,10 @@ public @interface ElementDependency {
     @NotNull @KeyString String value();
 
     /**
-     * The name of this dependency, which must be a valid key string OR equal to {@link ElementDependency#DEFAULT_NAME}
+     * The name of this dependency, which must be a valid key string OR equal to {@link Dependency#DEFAULT_NAME}
      *
      * @return the name of this dependency, which must be a valid key string OR equal to
-     * {@link ElementDependency#DEFAULT_NAME}
+     * {@link Dependency#DEFAULT_NAME}
      */
     @NotNull @KeyString String name() default DEFAULT_NAME;
 }

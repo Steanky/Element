@@ -2,7 +2,9 @@ package com.github.steanky.element.core.element;
 
 import com.github.steanky.element.core.data.ElementData;
 import com.github.steanky.element.core.dependency.DependencyProvider;
+import net.kyori.adventure.key.Key;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * Creates an element from some data.
@@ -12,14 +14,6 @@ import org.jetbrains.annotations.NotNull;
  */
 @FunctionalInterface
 public interface ElementFactory<TData, TElement> {
-    /**
-     * Creates an element from the given data.
-     *
-     * @param data               the data used to create the element
-     * @param dependencyProvider the {@link DependencyProvider} implementation used to provide necessary dependencies
-     * @param builder            the builder which may be used to create necessary sub-objects
-     * @return the element object
-     */
-    @NotNull TElement make(final ElementData data, final @NotNull DependencyProvider dependencyProvider,
-            final @NotNull ElementBuilder builder);
+    @NotNull TElement make(final @NotNull Key type, final @Nullable Key id, final ElementData data,
+            final @NotNull DependencyProvider dependencyProvider, final @NotNull ElementBuilder builder);
 }

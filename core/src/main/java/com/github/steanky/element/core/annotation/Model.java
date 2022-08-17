@@ -11,7 +11,7 @@ import java.lang.annotation.*;
 @Documented
 @Retention(RetentionPolicy.RUNTIME)
 @Target(ElementType.TYPE)
-public @interface ElementModel {
+public @interface Model {
     /**
      * The name of this element, which must be a valid key string.
      *

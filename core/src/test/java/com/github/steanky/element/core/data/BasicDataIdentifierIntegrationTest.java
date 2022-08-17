@@ -1,8 +1,8 @@
 package com.github.steanky.element.core.data;
 
 import com.github.steanky.element.core.ElementException;
-import com.github.steanky.element.core.annotation.ElementData;
-import com.github.steanky.element.core.annotation.ElementModel;
+import com.github.steanky.element.core.annotation.Data;
+import com.github.steanky.element.core.annotation.Model;
 import com.github.steanky.element.core.element.BasicElementTypeIdentifier;
 import com.github.steanky.element.core.element.ElementTypeIdentifier;
 import com.github.steanky.element.core.key.BasicKeyParser;
@@ -64,15 +64,15 @@ class BasicDataIdentifierIntegrationTest {
 
     static class NonElementDataClass {}
 
-    @ElementData
+    @Data
     static class ElementDataClass {}
 
-    @ElementData("test:test")
+    @Data("test:test")
     static class SpecificElementDataClass {}
 
-    @ElementModel("test:inferred")
+    @Model("test:inferred")
     static class HostInference {
-        @ElementData
+        @Data
         static class HostInferenceSub {}
     }
 }
