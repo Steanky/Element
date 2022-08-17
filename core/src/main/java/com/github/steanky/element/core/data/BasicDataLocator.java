@@ -12,26 +12,18 @@ import org.jetbrains.annotations.Nullable;
 import java.util.Objects;
 
 public class BasicDataLocator implements DataLocator {
-    private final KeyExtractor keyExtractor;
     private final KeyExtractor idExtractor;
     private final PathKeySplitter pathKeySplitter;
 
-    public BasicDataLocator(final @NotNull KeyExtractor typeExtractor, final @NotNull KeyExtractor idExtractor,
-            final @NotNull PathKeySplitter pathKeySplitter) {
-        this.keyExtractor = Objects.requireNonNull(typeExtractor);
+    public BasicDataLocator(final @NotNull KeyExtractor idExtractor, final @NotNull PathKeySplitter pathKeySplitter) {
         this.idExtractor = Objects.requireNonNull(idExtractor);
         this.pathKeySplitter = Objects.requireNonNull(pathKeySplitter);
     }
 
     @Override
-    public @NotNull ConfigNode locate(final @NotNull ConfigNode rootNode, final @NotNull Key type,
-            final @Nullable Key dataPath) {
-        if (type.equals(keyExtractor.hasKey(rootNode) ? keyExtractor.extractKey(rootNode) : null)) {
-            return rootNode;
-        }
-
+    public @NotNull ConfigNode locate(final @NotNull ConfigNode rootNode, final @Nullable Key dataPath) {
         if (dataPath == null) {
-            throw new ElementException("dataPath required to locate nested data node, but none was provided");
+            return rootNode;
         }
 
         final String dataNamespace = dataPath.namespace();

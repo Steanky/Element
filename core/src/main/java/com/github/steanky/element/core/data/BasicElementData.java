@@ -40,7 +40,7 @@ public class BasicElementData implements ElementData {
         return map.computeIfAbsent(path, key -> {
             final ConfigProcessor<Object> dataProcessor = (ConfigProcessor<Object>) processorRegistry.lookup(type);
             try {
-                return (TData) dataProcessor.dataFromElement(dataLocator.locate(rootNode, type, key));
+                return (TData) dataProcessor.dataFromElement(dataLocator.locate(rootNode, key));
             } catch (ConfigProcessException e) {
                 throw new ElementException(e);
             }

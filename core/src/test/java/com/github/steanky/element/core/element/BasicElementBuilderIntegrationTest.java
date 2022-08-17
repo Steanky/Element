@@ -23,14 +23,16 @@ public class BasicElementBuilderIntegrationTest {
         final FactoryResolver factoryResolver = new BasicFactoryResolver(keyParser, elementTypeIdentifier);
         final ProcessorResolver processorResolver = new BasicProcessorResolver();
         final ElementInspector elementInspector = new BasicElementInspector(factoryResolver, processorResolver);
+        final DataIdentifier dataIdentifier = new BasicDataIdentifier(keyParser, elementTypeIdentifier);
         final Registry<ConfigProcessor<?>> configRegistry = new HashRegistry<>();
         final KeyExtractor idExtractor = new BasicKeyExtractor("id", keyParser);
         final PathKeySplitter pathKeySplitter = new BasicPathKeySplitter();
-        final DataLocator dataLocator = new BasicDataLocator(typeExtractor, idExtractor, pathKeySplitter);
+        final DataLocator dataLocator = new BasicDataLocator(idExtractor, pathKeySplitter);
         final ElementData.Source source = new BasicElementData.Source(configRegistry, dataLocator, typeExtractor);
 
         final Registry<ElementFactory<?, ?>> factoryRegistry = new HashRegistry<>();
 
-        this.elementBuilder = new BasicElementBuilder(elementInspector, elementTypeIdentifier, source, factoryRegistry);
+        this.elementBuilder = new BasicElementBuilder(elementInspector, dataIdentifier, elementTypeIdentifier, source,
+                factoryRegistry);
     }
 }

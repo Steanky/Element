@@ -33,6 +33,11 @@ public interface ElementBuilder {
 
     @NotNull ElementData makeData(final @NotNull ConfigNode node);
 
-    <TElement> @NotNull TElement build(final @NotNull Key type, final @Nullable Key id, final ElementData data,
-            final @NotNull DependencyProvider dependencyProvider);
+    <TElement> @NotNull TElement build(final @Nullable Key type, final @Nullable Key id,
+            final @Nullable ElementData data, final @NotNull DependencyProvider dependencyProvider);
+
+    default <TElement> @NotNull TElement build(final @Nullable ElementData data,
+            final @NotNull DependencyProvider dependencyProvider) {
+        return build(null, null, data, dependencyProvider);
+    }
 }

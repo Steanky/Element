@@ -1,6 +1,9 @@
 package com.github.steanky.element.core.element;
 
+import com.github.steanky.element.core.ElementException;
 import com.github.steanky.element.core.Registry;
+import com.github.steanky.element.core.data.DataIdentifier;
+import com.github.steanky.element.core.data.DataInspector;
 import com.github.steanky.element.core.data.ElementData;
 import com.github.steanky.element.core.dependency.DependencyProvider;
 import com.github.steanky.ethylene.core.collection.ConfigNode;
@@ -16,6 +19,7 @@ import java.util.Objects;
  */
 public class BasicElementBuilder implements ElementBuilder {
     private final ElementInspector elementInspector;
+    private final DataIdentifier dataIdentifier;
     private final ElementTypeIdentifier elementTypeIdentifier;
     private final ElementData.Source elementDataSource;
     private final Registry<ElementFactory<?, ?>> factoryRegistry;
@@ -32,10 +36,12 @@ public class BasicElementBuilder implements ElementBuilder {
      *                              data keys
      */
     public BasicElementBuilder(final @NotNull ElementInspector elementInspector,
+            final @NotNull DataIdentifier dataIdentifier,
             final @NotNull ElementTypeIdentifier elementTypeIdentifier,
             final @NotNull ElementData.Source elementDataSource,
             final @NotNull Registry<ElementFactory<?, ?>> factoryRegistry) {
         this.elementInspector = Objects.requireNonNull(elementInspector);
+        this.dataIdentifier = Objects.requireNonNull(dataIdentifier);
         this.elementTypeIdentifier = Objects.requireNonNull(elementTypeIdentifier);
         this.elementDataSource = Objects.requireNonNull(elementDataSource);
         this.factoryRegistry = Objects.requireNonNull(factoryRegistry);
@@ -59,9 +65,30 @@ public class BasicElementBuilder implements ElementBuilder {
     }
 
     @Override
-    public <TElement> @NotNull TElement build(final @NotNull Key type, final @Nullable Key id,
-            final ElementData data, final @NotNull DependencyProvider dependencyProvider) {
-        //noinspection unchecked
-        return (TElement) (factoryRegistry.lookup(type)).make(type, id, data, dependencyProvider, this);
+    public <TElement> @NotNull TElement build(final @Nullable Key type, final @Nullable Key id,
+            final @Nullable ElementData data, final @NotNull DependencyProvider dependencyProvider) {
+        if (type != null) {
+            return buildElement(type, id, data, dependencyProvider);
+        }
+
+        if(data == null) {
+            throw new ElementException("cannot infer root data type from null ElementData");
+        }
+
+        final Key rootType;
+        try {
+            rootType = dataIdentifier.identifyKey(data.provideRoot());
+        }
+        catch (ElementException e) {
+            throw new ElementException("failure to resolve root data type", e);
+        }
+
+        return buildElement(rootType, id, data, dependencyProvider);
+    }
+
+    @SuppressWarnings("unchecked")
+    private <TElement> TElement buildElement(final Key type, final Key id, final ElementData data,
+            final DependencyProvider dependencyProvider) {
+        return (TElement) factoryRegistry.lookup(type).make(type, id, data, dependencyProvider, this);
     }
 }

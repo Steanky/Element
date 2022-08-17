@@ -4,7 +4,6 @@ import com.github.steanky.element.core.annotation.DataName;
 import com.github.steanky.element.core.annotation.Data;
 import com.github.steanky.element.core.annotation.Dependency;
 import com.github.steanky.element.core.annotation.FactoryMethod;
-import com.github.steanky.element.core.data.DataInspector;
 import com.github.steanky.element.core.data.ElementData;
 import com.github.steanky.element.core.dependency.DependencyProvider;
 import com.github.steanky.element.core.element.ElementBuilder;
@@ -72,10 +71,10 @@ public class BasicFactoryResolver implements FactoryResolver {
     private static Object processParameter(final ElementParameter parameter, final ElementData data,
             final ElementBuilder builder, final DependencyProvider provider) {
         if (parameter.isDependency) {
-            return provider.provide(parameter.typeKey, parameter.nameKey);
+            return provider.provide(parameter.type, parameter.id);
         }
 
-        return builder.build(parameter.typeKey, parameter.nameKey, data, provider);
+        return builder.build(parameter.type, parameter.id, data, provider);
     }
 
     private static Key parseKey(final KeyParser parser, final @Subst(Constants.NAMESPACE_OR_KEY) String keyString) {
@@ -210,5 +209,5 @@ public class BasicFactoryResolver implements FactoryResolver {
 
     private record ElementSpec(List<ElementParameter> parameters, int dataIndex) {}
 
-    private record ElementParameter(Key typeKey, Key nameKey, boolean isDependency) {}
+    private record ElementParameter(Key type, Key id, boolean isDependency) {}
 }
