@@ -4,7 +4,6 @@ import com.github.steanky.element.core.annotation.DataName;
 import com.github.steanky.element.core.annotation.Data;
 import com.github.steanky.element.core.annotation.Dependency;
 import com.github.steanky.element.core.annotation.FactoryMethod;
-import com.github.steanky.element.core.data.ElementData;
 import com.github.steanky.element.core.dependency.DependencyProvider;
 import com.github.steanky.element.core.element.ElementBuilder;
 import com.github.steanky.element.core.element.ElementFactory;
@@ -42,7 +41,7 @@ public class BasicFactoryResolver implements FactoryResolver {
         this.elementTypeIdentifier = Objects.requireNonNull(elementTypeIdentifier);
     }
 
-    private static Object[] resolveArguments(final Key type, final Key id, final ElementData data, final ElementBuilder builder,
+    private static Object[] resolveArguments(final Key type, final Key id, final com.github.steanky.element.core.data.ElementData data, final ElementBuilder builder,
             final DependencyProvider provider, final ElementSpec spec) {
         final Object[] args;
         if (spec.dataIndex == -1) {
@@ -68,7 +67,7 @@ public class BasicFactoryResolver implements FactoryResolver {
         return args;
     }
 
-    private static Object processParameter(final ElementParameter parameter, final ElementData data,
+    private static Object processParameter(final ElementParameter parameter, final com.github.steanky.element.core.data.ElementData data,
             final ElementBuilder builder, final DependencyProvider provider) {
         if (parameter.isDependency) {
             return provider.provide(parameter.type, parameter.id);
@@ -82,7 +81,8 @@ public class BasicFactoryResolver implements FactoryResolver {
     }
 
     @Override
-    public @NotNull ElementFactory<?, ?> resolveFactory(@NotNull Class<?> elementClass, boolean hasProcessor) {
+    public @NotNull ElementFactory<?, ?> resolveFactory(final @NotNull Class<?> elementClass,
+            final boolean hasProcessor) {
         final Method[] declaredMethods = elementClass.getDeclaredMethods();
         Method factoryMethod = null;
         for (final Method declaredMethod : declaredMethods) {

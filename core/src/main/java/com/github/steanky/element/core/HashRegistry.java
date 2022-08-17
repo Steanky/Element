@@ -48,7 +48,7 @@ public class HashRegistry<TRegistrant> implements Registry<TRegistrant> {
         Objects.requireNonNull(key);
         Objects.requireNonNull(registrant);
         if (map.putIfAbsent(key, registrant) != null) {
-            throw new IllegalArgumentException("A registrant already exists under key " + key);
+            throw new IllegalArgumentException("a registrant already exists under key " + key);
         }
     }
 
@@ -57,7 +57,7 @@ public class HashRegistry<TRegistrant> implements Registry<TRegistrant> {
         Objects.requireNonNull(key);
         final TRegistrant registrant = map.get(key);
         if (registrant == null) {
-            throw new NoSuchElementException("No registrant under key " + key);
+            throw new NoSuchElementException("no registrant under key " + key);
         }
 
         return registrant;
