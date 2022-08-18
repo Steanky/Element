@@ -2,7 +2,9 @@ package com.github.steanky.element.core.element;
 
 import com.github.steanky.element.core.ElementException;
 import com.github.steanky.element.core.annotation.*;
+import com.github.steanky.element.core.data.BasicDataIdentifier;
 import com.github.steanky.element.core.data.BasicDataInspector;
+import com.github.steanky.element.core.data.DataIdentifier;
 import com.github.steanky.element.core.data.DataInspector;
 import com.github.steanky.element.core.factory.BasicFactoryResolver;
 import com.github.steanky.element.core.factory.FactoryResolver;
@@ -27,8 +29,10 @@ public class BasicElementInspectorIntegrationTest {
     public BasicElementInspectorIntegrationTest() {
         final KeyParser parser = new BasicKeyParser();
         final ElementTypeIdentifier elementTypeIdentifier = new BasicElementTypeIdentifier(parser);
+        final DataIdentifier dataIdentifier = new BasicDataIdentifier(parser, elementTypeIdentifier);
         final DataInspector dataInspector = new BasicDataInspector(parser);
-        final FactoryResolver factoryResolver = new BasicFactoryResolver(parser, elementTypeIdentifier);
+        final FactoryResolver factoryResolver = new BasicFactoryResolver(parser, dataIdentifier, elementTypeIdentifier,
+                dataInspector);
         final ProcessorResolver processorResolver = new BasicProcessorResolver();
         this.inspector = new BasicElementInspector(factoryResolver, processorResolver);
     }
@@ -148,8 +152,8 @@ public class BasicElementInspectorIntegrationTest {
 
     @Model("test:simple_element_class")
     public static class SimpleElementClass {
-        private static final ElementFactory<Data, SimpleElementClass> FACTORY = (type, id, data, dependencyProvider, builder) ->
-                new SimpleElementClass(data.provideRoot());
+        private static final ElementFactory<Data, SimpleElementClass> FACTORY = (objectData, data, dependencyProvider, builder) ->
+                new SimpleElementClass(objectData);
 
         private static final ConfigProcessor<? extends Keyed> PROCESSOR = new ConfigProcessor<Data>() {
             @Override
@@ -178,7 +182,7 @@ public class BasicElementInspectorIntegrationTest {
             return PROCESSOR;
         }
 
-        @com.github.steanky.element.core.annotation.Data
+        @DataObject
         public record Data() implements Keyed {
             public static final Key KEY = Key.key("test:simple_element_class");
 
@@ -192,7 +196,7 @@ public class BasicElementInspectorIntegrationTest {
     @Model("test:data_annotation_in_constructor")
     public static class DataAnnotationInConstructor {
         private static final ElementFactory<Data, DataAnnotationInConstructor> FACTORY =
-                (type, id, data, dependencyProvider, builder) -> new DataAnnotationInConstructor(data.provideRoot());
+                (objectData, data, dependencyProvider, builder) -> new DataAnnotationInConstructor(objectData);
 
         private static final ConfigProcessor<? extends Keyed> PROCESSOR = new ConfigProcessor<Data>() {
             @Override
@@ -207,7 +211,7 @@ public class BasicElementInspectorIntegrationTest {
         };
         private final Data data;
 
-        public DataAnnotationInConstructor(@com.github.steanky.element.core.annotation.Data @NotNull Data data) {
+        public DataAnnotationInConstructor(@DataObject @NotNull Data data) {
             this.data = data;
         }
 
@@ -234,7 +238,7 @@ public class BasicElementInspectorIntegrationTest {
     @Model("test:missing_factory_annotation")
     public static class MissingFactoryAnnotation {
         private static final ElementFactory<Data, MissingFactoryAnnotation> FACTORY =
-                (type, id, data, dependencyProvider, builder) -> new MissingFactoryAnnotation(data.provideRoot());
+                (objectData, data, dependencyProvider, builder) -> new MissingFactoryAnnotation(objectData);
 
         private static final ConfigProcessor<? extends Keyed> PROCESSOR = new ConfigProcessor<Data>() {
             @Override
@@ -275,7 +279,7 @@ public class BasicElementInspectorIntegrationTest {
     @Model("test:missing_processor_annotation")
     public static class MissingProcessorAnnotation {
         private static final ElementFactory<Data, MissingProcessorAnnotation> FACTORY =
-                (type, id, data, dependencyProvider, builder) -> new MissingProcessorAnnotation(data.provideRoot());
+                (objectData, data, dependencyProvider, builder) -> new MissingProcessorAnnotation(objectData);
 
         private static final ConfigProcessor<? extends Keyed> PROCESSOR = new ConfigProcessor<Data>() {
             @Override
@@ -303,7 +307,7 @@ public class BasicElementInspectorIntegrationTest {
             return PROCESSOR;
         }
 
-        @com.github.steanky.element.core.annotation.Data
+        @DataObject
         public record Data() implements Keyed {
             public static final Key KEY = Key.key("test:missing_processor_annotation");
 
@@ -317,7 +321,7 @@ public class BasicElementInspectorIntegrationTest {
     @Model("test:missing_processor_and_factory_annotation")
     public static class MissingProcessorAndFactoryAnnotation {
         private static final ElementFactory<Data, MissingProcessorAndFactoryAnnotation> FACTORY =
-                (type, id, data, dependencyProvider, builder) -> new MissingProcessorAndFactoryAnnotation(data.provideRoot());
+                (objectData, data, dependencyProvider, builder) -> new MissingProcessorAndFactoryAnnotation(objectData);
 
         private static final ConfigProcessor<? extends Keyed> PROCESSOR = new ConfigProcessor<Data>() {
             @Override
@@ -344,7 +348,7 @@ public class BasicElementInspectorIntegrationTest {
             return PROCESSOR;
         }
 
-        @com.github.steanky.element.core.annotation.Data
+        @DataObject
         public record Data() implements Keyed {
             public static final Key KEY = Key.key("test:missing_processor_and_factory_annotation");
 
@@ -357,8 +361,8 @@ public class BasicElementInspectorIntegrationTest {
 
     @Model("test:null_factory")
     public static class NullFactory {
-        private static final ElementFactory<Data, NullFactory> FACTORY = (type, id, data, dependencyProvider, builder) ->
-                new NullFactory(data.provideRoot());
+        private static final ElementFactory<Data, NullFactory> FACTORY = (objectData, data, dependencyProvider, builder) ->
+                new NullFactory(objectData);
 
         private static final ConfigProcessor<? extends Keyed> PROCESSOR = new ConfigProcessor<Data>() {
             @Override
@@ -387,7 +391,7 @@ public class BasicElementInspectorIntegrationTest {
             return PROCESSOR;
         }
 
-        @com.github.steanky.element.core.annotation.Data
+        @DataObject
         public record Data() implements Keyed {
             public static final Key KEY = Key.key("test:null_factory");
 
@@ -401,7 +405,7 @@ public class BasicElementInspectorIntegrationTest {
     @Model("test:null_processor")
     public static class NullProcessor {
         private static final ElementFactory<Data, NullProcessor> FACTORY =
-                (type, id, data, dependencyProvider, builder) -> new NullProcessor(data.provideRoot());
+                (objectData, data, dependencyProvider, builder) -> new NullProcessor(objectData);
 
         private static final ConfigProcessor<? extends Keyed> PROCESSOR = new ConfigProcessor<Data>() {
             @Override
@@ -430,7 +434,7 @@ public class BasicElementInspectorIntegrationTest {
             return null;
         }
 
-        @com.github.steanky.element.core.annotation.Data
+        @DataObject
         public record Data() implements Keyed {
             public static final Key KEY = Key.key("test:null_processor");
 
@@ -444,7 +448,7 @@ public class BasicElementInspectorIntegrationTest {
     @Model("test:bad_factory_return_type")
     public static class BadFactoryReturnType {
         private static final ElementFactory<Data, Object> FACTORY =
-                (type, id, data, dependencyProvider, builder) -> new BadFactoryReturnType(data.provideRoot());
+                (objectData, data, dependencyProvider, builder) -> new BadFactoryReturnType(objectData);
 
         private static final ConfigProcessor<? extends Keyed> PROCESSOR = new ConfigProcessor<Data>() {
             @Override
@@ -473,7 +477,7 @@ public class BasicElementInspectorIntegrationTest {
             return PROCESSOR;
         }
 
-        @com.github.steanky.element.core.annotation.Data
+        @DataObject
         public record Data() implements Keyed {
             public static final Key KEY = Key.key("test:bad_factory_return_type");
 
@@ -486,8 +490,8 @@ public class BasicElementInspectorIntegrationTest {
 
     @Model("test:subclass_factory_return_type")
     public static class SubclassFactoryReturnType {
-        private static final ElementFactory<Data, Subclass> FACTORY = (type, id, data, dependencyProvider, builder) -> new Subclass(
-                data.provideRoot());
+        private static final ElementFactory<Data, Subclass> FACTORY = (objectData, data, dependencyProvider, builder) ->
+                new Subclass(objectData);
         private static final ConfigProcessor<? extends Keyed> PROCESSOR = new ConfigProcessor<Data>() {
             @Override
             public Data dataFromElement(@NotNull ConfigElement element) {
@@ -521,7 +525,7 @@ public class BasicElementInspectorIntegrationTest {
             }
         }
 
-        @com.github.steanky.element.core.annotation.Data
+        @DataObject
         public record Data() implements Keyed {
             public static final Key KEY = Key.key("test:subclass_factory_return_type");
 
@@ -551,7 +555,7 @@ public class BasicElementInspectorIntegrationTest {
 
         }
 
-        @com.github.steanky.element.core.annotation.Data
+        @DataObject
         public record Data() implements Keyed {
             public static final Key KEY = Key.key("test:empty_constructor_factory");
 
@@ -587,7 +591,7 @@ public class BasicElementInspectorIntegrationTest {
             return PROCESSOR;
         }
 
-        @com.github.steanky.element.core.annotation.Data
+        @DataObject
         public record Data() implements Keyed {
             public static final Key KEY = Key.key("test:data_constructor_factory");
 
@@ -613,7 +617,7 @@ public class BasicElementInspectorIntegrationTest {
         };
 
         public static ElementFactory<Data, DataAndDependenciesFactory> FACTORY =
-                (type, id, data, dependencyProvider, builder) -> new DataAndDependenciesFactory(data.provideRoot(),
+                (objectData, data, dependencyProvider, builder) -> new DataAndDependenciesFactory(objectData,
                         dependencyProvider.provide(Key.key("test:dependency"), null));
         private final Data data;
 
@@ -632,7 +636,7 @@ public class BasicElementInspectorIntegrationTest {
             return PROCESSOR;
         }
 
-        @com.github.steanky.element.core.annotation.Data
+        @DataObject
         public record Data() implements Keyed {
             public static final Key KEY = Key.key("test:data_and_dependencies_factory");
 
@@ -669,7 +673,7 @@ public class BasicElementInspectorIntegrationTest {
             return PROCESSOR;
         }
 
-        @com.github.steanky.element.core.annotation.Data
+        @DataObject
         public record Data() implements Keyed {
             public static final Key KEY = Key.key("test:data_and_dependencies_constructor_factory");
 
@@ -706,7 +710,7 @@ public class BasicElementInspectorIntegrationTest {
             return PROCESSOR;
         }
 
-        @com.github.steanky.element.core.annotation.Data
+        @DataObject
         public record Data() implements Keyed {
             public static final Key KEY = Key.key("test:data_and_dependencies_constructor_factory.1");
 
@@ -742,7 +746,7 @@ public class BasicElementInspectorIntegrationTest {
             return PROCESSOR;
         }
 
-        @com.github.steanky.element.core.annotation.Data
+        @DataObject
         public record Data() implements Keyed {
             public static final Key KEY = Key.key("test:data_and_unnamed_dependencies_constructor_factory");
 

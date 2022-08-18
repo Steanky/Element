@@ -2,9 +2,7 @@ package com.github.steanky.element.core.element;
 
 import com.github.steanky.element.core.HashRegistry;
 import com.github.steanky.element.core.Registry;
-import com.github.steanky.element.core.annotation.FactoryMethod;
-import com.github.steanky.element.core.annotation.Model;
-import com.github.steanky.element.core.annotation.ProcessorMethod;
+import com.github.steanky.element.core.annotation.*;
 import com.github.steanky.element.core.data.*;
 import com.github.steanky.element.core.factory.BasicFactoryResolver;
 import com.github.steanky.element.core.factory.FactoryResolver;
@@ -16,6 +14,7 @@ import com.github.steanky.ethylene.core.collection.ConfigNode;
 import com.github.steanky.ethylene.core.collection.LinkedConfigNode;
 import com.github.steanky.ethylene.core.processor.ConfigProcessException;
 import com.github.steanky.ethylene.core.processor.ConfigProcessor;
+import net.kyori.adventure.key.Key;
 import org.jetbrains.annotations.NotNull;
 import org.junit.jupiter.api.Test;
 
@@ -30,11 +29,14 @@ public class BasicElementBuilderIntegrationTest {
 
         final KeyExtractor typeExtractor = new BasicKeyExtractor("type", keyParser);
         final ElementTypeIdentifier elementTypeIdentifier = new BasicElementTypeIdentifier(keyParser);
+        final DataIdentifier dataIdentifier = new BasicDataIdentifier(keyParser, elementTypeIdentifier);
+        final DataInspector dataInspector = new BasicDataInspector(keyParser);
 
-        final FactoryResolver factoryResolver = new BasicFactoryResolver(keyParser, elementTypeIdentifier);
+        final FactoryResolver factoryResolver = new BasicFactoryResolver(keyParser, dataIdentifier,
+                elementTypeIdentifier,  dataInspector);
         final ProcessorResolver processorResolver = new BasicProcessorResolver();
         final ElementInspector elementInspector = new BasicElementInspector(factoryResolver, processorResolver);
-        final DataIdentifier dataIdentifier = new BasicDataIdentifier(keyParser, elementTypeIdentifier);
+
         final Registry<ConfigProcessor<?>> configRegistry = new HashRegistry<>();
         final KeyExtractor idExtractor = new BasicKeyExtractor("id", keyParser);
         final PathKeySplitter pathKeySplitter = new BasicPathKeySplitter();
@@ -68,12 +70,15 @@ public class BasicElementBuilderIntegrationTest {
         assertEquals(10, element.data.value);
     }
 
+    @Test
+    void nested() {
+
+    }
+
     @Model("simple_element")
     public static class SimpleElement {
         @FactoryMethod
-        public SimpleElement() {
-
-        }
+        public SimpleElement() {}
     }
 
     @Model("simple_data")
@@ -101,9 +106,17 @@ public class BasicElementBuilderIntegrationTest {
             this.data = data;
         }
 
-        @com.github.steanky.element.core.annotation.Data
-        public record Data(int value) {
+        @DataObject
+        public record Data(int value) {}
+    }
+
+    @Model("nested")
+    public static class Nested {
+        @FactoryMethod
+        public Nested(SimpleElement simpleElement) {
 
         }
+
+        public record Data(@DataPath("simple_element") Key simpleElementKey) {}
     }
 }

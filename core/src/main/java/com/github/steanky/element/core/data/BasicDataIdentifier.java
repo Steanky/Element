@@ -1,6 +1,6 @@
 package com.github.steanky.element.core.data;
 
-import com.github.steanky.element.core.annotation.Data;
+import com.github.steanky.element.core.annotation.DataObject;
 import com.github.steanky.element.core.annotation.Model;
 import com.github.steanky.element.core.element.ElementTypeIdentifier;
 import com.github.steanky.element.core.key.Constants;
@@ -17,7 +17,7 @@ import static com.github.steanky.element.core.util.Validate.elementException;
 /**
  * Basic implementation of {@link DataIdentifier}. Can correctly identify all subclasses of {@link Keyed}, {@link Key}
  * objects themselves, {@link String} objects (if they can be parsed into a valid key), objects whose type has the
- * {@link Data} annotation which itself provides a valid key, or types whose classes which are nested in an
+ * {@link DataObject} annotation which itself provides a valid key, or types whose classes which are nested in an
  * {@link Model} class which provides a valid key, and are also annotated with ElementData.
  */
 public class BasicDataIdentifier implements DataIdentifier {
@@ -47,12 +47,12 @@ public class BasicDataIdentifier implements DataIdentifier {
         }
 
         final Class<?> dataClass = data.getClass();
-        final Data elementData = dataClass.getDeclaredAnnotation(Data.class);
+        final DataObject elementData = dataClass.getDeclaredAnnotation(DataObject.class);
         if (elementData == null) {
             throw elementException(dataClass, "must supply an ElementData annotation");
         }
 
-        if (!elementData.value().equals(Data.DEFAULT_VALUE)) {
+        if (!elementData.value().equals(DataObject.DEFAULT_VALUE)) {
             @Subst(Constants.NAMESPACE_OR_KEY) final String value = elementData.value();
             return keyParser.parseKey(value);
         }

@@ -3,7 +3,6 @@ package com.github.steanky.element.core.element;
 import com.github.steanky.element.core.ElementException;
 import com.github.steanky.element.core.Registry;
 import com.github.steanky.element.core.data.DataIdentifier;
-import com.github.steanky.element.core.data.DataInspector;
 import com.github.steanky.element.core.data.ElementData;
 import com.github.steanky.element.core.dependency.DependencyProvider;
 import com.github.steanky.ethylene.core.collection.ConfigNode;
@@ -87,8 +86,10 @@ public class BasicElementBuilder implements ElementBuilder {
     }
 
     @SuppressWarnings("unchecked")
-    private <TElement> TElement buildElement(final Key type, final Key id, final ElementData data,
+    private <TElement> TElement buildElement(final Key type, final Key path, final ElementData data,
             final DependencyProvider dependencyProvider) {
-        return (TElement) factoryRegistry.lookup(type).make(type, id, data, dependencyProvider, this);
+        final Object dataObject = data == null ? null : data.provide(type, path);
+        return (TElement) ((ElementFactory<Object, Object>)factoryRegistry.lookup(type)).make(dataObject, data,
+                dependencyProvider, this);
     }
 }

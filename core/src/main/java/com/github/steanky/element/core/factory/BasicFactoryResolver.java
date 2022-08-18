@@ -1,9 +1,8 @@
 package com.github.steanky.element.core.factory;
 
-import com.github.steanky.element.core.annotation.DataName;
-import com.github.steanky.element.core.annotation.Data;
-import com.github.steanky.element.core.annotation.Dependency;
-import com.github.steanky.element.core.annotation.FactoryMethod;
+import com.github.steanky.element.core.annotation.*;
+import com.github.steanky.element.core.data.DataIdentifier;
+import com.github.steanky.element.core.data.DataInspector;
 import com.github.steanky.element.core.data.ElementData;
 import com.github.steanky.element.core.dependency.DependencyProvider;
 import com.github.steanky.element.core.element.ElementBuilder;
@@ -29,7 +28,9 @@ import static com.github.steanky.element.core.util.Validate.*;
  */
 public class BasicFactoryResolver implements FactoryResolver {
     private final KeyParser keyParser;
+    private final DataIdentifier dataIdentifier;
     private final ElementTypeIdentifier elementTypeIdentifier;
+    private final DataInspector dataInspector;
 
     /**
      * Creates a new instance of this class.
@@ -37,44 +38,52 @@ public class BasicFactoryResolver implements FactoryResolver {
      * @param keyParser the {@link KeyParser} implementation used to interpret strings as keys
      */
     public BasicFactoryResolver(final @NotNull KeyParser keyParser,
-            final @NotNull ElementTypeIdentifier elementTypeIdentifier) {
+            final @NotNull DataIdentifier typeIdentifier,
+            final @NotNull ElementTypeIdentifier elementTypeIdentifier,
+            final @NotNull DataInspector dataInspector) {
         this.keyParser = Objects.requireNonNull(keyParser);
+        this.dataIdentifier = Objects.requireNonNull(typeIdentifier);
         this.elementTypeIdentifier = Objects.requireNonNull(elementTypeIdentifier);
+        this.dataInspector = Objects.requireNonNull(dataInspector);
     }
 
-    private static Object[] resolveArguments(final Key type, final Key id, final ElementData data,
-            final ElementBuilder builder, final DependencyProvider provider, final ElementSpec spec) {
+    private Object[] resolveArguments(final DataInspector.PathFunction pathFunction, final Object objectData,
+            final ElementData data, final ElementBuilder builder, final DependencyProvider provider,
+            final ElementSpec spec) {
         final Object[] args;
         if (spec.dataIndex == -1) {
             args = new Object[spec.parameters.size()];
             for (int i = 0; i < spec.parameters.size(); i++) {
-                args[i] = processParameter(spec.parameters.get(i), data, builder, provider);
+                args[i] = processParameter(pathFunction, spec.parameters.get(i), objectData, data, builder, provider);
             }
 
             return args;
         }
 
         args = new Object[spec.parameters.size() + 1];
-        args[spec.dataIndex] = data.provide(type, id);
+        args[spec.dataIndex] = objectData;
 
         for (int i = 0; i < spec.dataIndex; i++) {
-            args[i] = processParameter(spec.parameters.get(i), data, builder, provider);
+            args[i] = processParameter(pathFunction, spec.parameters.get(i), objectData, data, builder, provider);
         }
 
         for (int i = spec.dataIndex + 1; i < args.length; i++) {
-            args[i] = processParameter(spec.parameters.get(i - 1), data, builder, provider);
+            args[i] = processParameter(pathFunction, spec.parameters.get(i - 1), objectData, data, builder, provider);
         }
 
         return args;
     }
 
-    private static Object processParameter(final ElementParameter parameter, final com.github.steanky.element.core.data.ElementData data,
-            final ElementBuilder builder, final DependencyProvider provider) {
+    private Object processParameter(final DataInspector.PathFunction pathFunction, final ElementParameter parameter,
+            final Object objectData, final ElementData data, final ElementBuilder builder,
+            final DependencyProvider provider) {
         if (parameter.isDependency) {
             return provider.provide(parameter.type, parameter.id);
         }
 
-        return builder.build(parameter.type, parameter.id, data, provider);
+        final Key type = dataIdentifier.identifyKey(objectData);
+        final Key id = pathFunction.apply(objectData, parameter.id);
+        return builder.build(type, id, data, provider);
     }
 
     private static Key parseKey(final KeyParser parser, final @Subst(Constants.NAMESPACE_OR_KEY) String keyString) {
@@ -145,17 +154,19 @@ public class BasicFactoryResolver implements FactoryResolver {
         final Constructor<?> finalFactoryConstructor = factoryConstructor;
         final Parameter[] parameters = factoryConstructor.getParameters();
         if (parameters.length == 0) {
-            return (type, id, data, dependencyProvider, builder) ->
+            return (objectData, data, dependencyProvider, builder) ->
                     ReflectionUtils.invokeConstructor(finalFactoryConstructor);
         }
 
         final ArrayList<ElementParameter> elementParameters = new ArrayList<>(parameters.length);
         int dataParameterIndex = -1;
+        Class<?> dataClass = null;
+        boolean hasComposite = false;
         for (int i = 0; i < parameters.length; i++) {
             final Parameter parameter = parameters[i];
 
-            if (parameter.isAnnotationPresent(Data.class) ||
-                    parameter.getType().isAnnotationPresent(Data.class)) {
+            if (parameter.isAnnotationPresent(DataObject.class) ||
+                    parameter.getType().isAnnotationPresent(DataObject.class)) {
                 if (dataParameterIndex != -1) {
                     throw elementException(elementClass, "more than one ElementData on constructor factory");
                 }
@@ -169,6 +180,7 @@ public class BasicFactoryResolver implements FactoryResolver {
                 }
 
                 dataParameterIndex = i;
+                dataClass = parameter.getType();
                 continue;
             }
 
@@ -178,17 +190,24 @@ public class BasicFactoryResolver implements FactoryResolver {
             }
 
             if (dependency == null) {
-                final Key typeKey = elementTypeIdentifier.identify(parameter.getType());
-                final DataName nameAnnotation = parameter.getDeclaredAnnotation(DataName.class);
+                if (!parameter.getType().isAnnotationPresent(Model.class)) {
+                    throw elementException(elementClass, "dependency parameter missing annotation");
+                }
 
-                elementParameters.add(new ElementParameter(typeKey, nameAnnotation == null ? null : parseKey(keyParser,
+                final DataName nameAnnotation = parameter.getDeclaredAnnotation(DataName.class);
+                elementParameters.add(new ElementParameter(null, nameAnnotation == null ? null : parseKey(keyParser,
                         nameAnnotation.value()), false));
+                hasComposite = true;
                 continue;
             }
 
             final String name = dependency.name();
             elementParameters.add(new ElementParameter(parseKey(keyParser, dependency.value()),
                     name.equals(Dependency.DEFAULT_NAME) ? null : parseKey(keyParser, name), true));
+        }
+
+        if (hasComposite && dataClass == null) {
+            throw elementException(elementClass, "found composite dependency, but no data class");
         }
 
         if (dataParameterIndex == -1 && hasProcessor) {
@@ -203,9 +222,12 @@ public class BasicFactoryResolver implements FactoryResolver {
 
         elementParameters.trimToSize();
 
+        final DataInspector.PathFunction pathFunction = dataClass == null ? null : dataInspector
+                .pathFunction(dataClass);
         final ElementSpec elementSpec = new ElementSpec(elementParameters, dataParameterIndex);
-        return (type, id, data, dependencyProvider, builder) -> ReflectionUtils.invokeConstructor(
-                finalFactoryConstructor, resolveArguments(type, id, data, builder, dependencyProvider, elementSpec));
+        return (objectData, data, dependencyProvider, builder) -> ReflectionUtils.invokeConstructor(
+                finalFactoryConstructor, resolveArguments(pathFunction, objectData, data, builder, dependencyProvider,
+                        elementSpec));
     }
 
     private record ElementSpec(List<ElementParameter> parameters, int dataIndex) {}

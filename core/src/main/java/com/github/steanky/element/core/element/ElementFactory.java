@@ -14,6 +14,6 @@ import org.jetbrains.annotations.Nullable;
  */
 @FunctionalInterface
 public interface ElementFactory<TData, TElement> {
-    @NotNull TElement make(final @NotNull Key type, final @Nullable Key id, final @Nullable ElementData data,
+    @NotNull TElement make(final TData objectData, final @Nullable ElementData data,
             final @NotNull DependencyProvider dependencyProvider, final @NotNull ElementBuilder builder);
 }

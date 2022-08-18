@@ -26,7 +26,7 @@ public class BasicDataInspector implements DataInspector {
     @Override
     public @NotNull PathFunction pathFunction(final @NotNull Class<?> dataClass) {
         final Method[] accessorMethods = dataClass.getDeclaredMethods();
-        final Map<Key, Map<Key, Method>> typeMap = new HashMap<>(2);
+        final Map<Key, Method> typeMap = new HashMap<>(2);
 
         for (final Method method : accessorMethods) {
             final DataPath dataPathAnnotation = method.getDeclaredAnnotation(DataPath.class);
@@ -37,30 +37,22 @@ public class BasicDataInspector implements DataInspector {
                 validateParameterCount(method, 0, () -> "DataPath accessor must have no parameters");
 
                 @Subst(Constants.NAMESPACE_OR_KEY)
-                final String valueString = dataPathAnnotation.value();
-                final Key valueKey = keyParser.parseKey(valueString);
+                final String idString = dataPathAnnotation.value();
+                final Key idKey = keyParser.parseKey(idString);
 
-                @Subst(Constants.NAMESPACE_OR_KEY)
-                final String nameString = dataPathAnnotation.name();
-                final Key nameKey = nameString.equals(DataPath.DEFAULT_NAME) ? null : keyParser.parseKey(nameString);
-
-                if(typeMap.computeIfAbsent(valueKey, key -> new HashMap<>(1))
-                        .putIfAbsent(nameKey, method) != null) {
-                    throw elementException(dataClass, "multiple DataPath accessors for name " + nameKey);
+                if(typeMap.putIfAbsent(idKey, method) != null) {
+                    throw elementException(dataClass, "multiple DataPath accessors for name " + idKey);
                 }
             }
         }
 
-        return (data, type, id) -> {
-            final Map<Key, Method> forType = typeMap.get(type);
-            if(forType != null) {
-                final Method method = forType.get(id);
-                if(method != null) {
-                    return ReflectionUtils.invokeMethod(method, data);
-                }
+        return (data, id) -> {
+            final Method method = typeMap.get(id);
+            if(method == null) {
+                throw elementException(dataClass, "no DataPath accessor for " + id);
             }
 
-            throw elementException(dataClass, "no path resolver for type " + type + " and id " + id);
+            return ReflectionUtils.invokeMethod(method, data);
         };
     }
 }
