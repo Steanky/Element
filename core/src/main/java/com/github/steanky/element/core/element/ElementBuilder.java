@@ -35,4 +35,12 @@ public interface ElementBuilder {
 
     <TElement> @NotNull TElement build(final @NotNull Object dataObject, final @Nullable ElementData data,
             final @NotNull DependencyProvider dependencyProvider);
+
+    default <TElement> @NotNull TElement build(final @NotNull Object dataObject, final @Nullable ElementData data) {
+        return build(dataObject, data, DependencyProvider.EMPTY);
+    }
+
+    default <TElement> @NotNull TElement build(final @NotNull Object dataObject) {
+        return build(dataObject, null, DependencyProvider.EMPTY);
+    }
 }
