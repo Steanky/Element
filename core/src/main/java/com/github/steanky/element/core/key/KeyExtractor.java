@@ -18,5 +18,12 @@ public interface KeyExtractor {
      */
     @NotNull Key extractKey(final @NotNull ConfigNode node);
 
+    /**
+     * Determines if the given node has a key to extract.
+     *
+     * @param node the node to inspect
+     * @return true if the node has a key to extract ({@link KeyExtractor#extractKey(ConfigNode)} will not throw an
+     * exception), false otherwise
+     */
     boolean hasKey(final @NotNull ConfigNode node);
 }

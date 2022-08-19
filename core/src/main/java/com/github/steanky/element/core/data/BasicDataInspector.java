@@ -16,11 +16,19 @@ import java.util.Objects;
 
 import static com.github.steanky.element.core.util.Validate.*;
 
+/**
+ * Basic implementation of {@link DataInspector}.
+ */
 public class BasicDataInspector implements DataInspector {
     private final KeyParser keyParser;
 
-    public BasicDataInspector(final @NotNull KeyParser keyParser) {
-        this.keyParser = Objects.requireNonNull(keyParser);
+    /**
+     * Creates a new instance of this class.
+     *
+     * @param idParser the {@link KeyParser} implementation used to parse path key strings
+     */
+    public BasicDataInspector(final @NotNull KeyParser idParser) {
+        this.keyParser = Objects.requireNonNull(idParser);
     }
 
     @Override
@@ -36,11 +44,10 @@ public class BasicDataInspector implements DataInspector {
                 validateReturnType(method, Key.class, () -> "DataPath accessor return value must be assignable to Key");
                 validateParameterCount(method, 0, () -> "DataPath accessor must have no parameters");
 
-                @Subst(Constants.NAMESPACE_OR_KEY)
-                final String idString = dataPathAnnotation.value();
+                @Subst(Constants.NAMESPACE_OR_KEY) final String idString = dataPathAnnotation.value();
                 final Key idKey = keyParser.parseKey(idString);
 
-                if(typeMap.putIfAbsent(idKey, method) != null) {
+                if (typeMap.putIfAbsent(idKey, method) != null) {
                     throw elementException(dataClass, "multiple DataPath accessors for name " + idKey);
                 }
             }
@@ -48,7 +55,7 @@ public class BasicDataInspector implements DataInspector {
 
         return (data, id) -> {
             final Method method = typeMap.get(id);
-            if(method == null) {
+            if (method == null) {
                 throw elementException(dataClass, "no DataPath accessor for " + id);
             }
 

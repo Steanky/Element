@@ -19,7 +19,8 @@ import net.kyori.adventure.key.Key;
 import org.jetbrains.annotations.NotNull;
 import org.junit.jupiter.api.Test;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 
 public class BasicElementBuilderIntegrationTest {
     private final KeyParser keyParser;
@@ -33,8 +34,8 @@ public class BasicElementBuilderIntegrationTest {
         final DataIdentifier dataIdentifier = new BasicDataIdentifier(keyParser, elementTypeIdentifier);
         final DataInspector dataInspector = new BasicDataInspector(keyParser);
 
-        final FactoryResolver factoryResolver = new BasicFactoryResolver(keyParser, dataIdentifier,
-                elementTypeIdentifier,  dataInspector);
+        final FactoryResolver factoryResolver = new BasicFactoryResolver(keyParser, elementTypeIdentifier,
+                dataInspector);
         final ProcessorResolver processorResolver = new BasicProcessorResolver();
         final ElementInspector elementInspector = new BasicElementInspector(factoryResolver, processorResolver);
 
@@ -42,7 +43,7 @@ public class BasicElementBuilderIntegrationTest {
         final KeyExtractor idExtractor = new BasicKeyExtractor("id", keyParser);
         final PathKeySplitter pathKeySplitter = new BasicPathKeySplitter();
         final DataLocator dataLocator = new BasicDataLocator(idExtractor, pathKeySplitter);
-        final ElementData.Source source = new BasicElementData.Source(configRegistry, dataLocator, typeExtractor);
+        final DataContext.Source source = new BasicDataContext.Source(configRegistry, dataLocator, typeExtractor);
 
         final Registry<ElementFactory<?, ?>> factoryRegistry = new HashRegistry<>();
 
@@ -55,7 +56,8 @@ public class BasicElementBuilderIntegrationTest {
 
     @Test
     void simpleElement() {
-        final SimpleElement simple = elementBuilder.build(keyParser.parseKey("simple_element"), null, DependencyProvider.EMPTY);
+        final SimpleElement simple = elementBuilder.build(keyParser.parseKey("simple_element"), null,
+                DependencyProvider.EMPTY);
         assertNotNull(simple);
     }
 
@@ -65,7 +67,7 @@ public class BasicElementBuilderIntegrationTest {
         node.putString("type", "simple_data");
         node.putNumber("value", 10);
 
-        final ElementData data = elementBuilder.makeData(node);
+        final DataContext data = elementBuilder.makeContext(node);
         final SimpleData element = elementBuilder.build(data.provide(null), null, DependencyProvider.EMPTY);
 
         assertNotNull(element);
@@ -85,7 +87,7 @@ public class BasicElementBuilderIntegrationTest {
 
         node.put("sub", nested);
 
-        final ElementData data = elementBuilder.makeData(node);
+        final DataContext data = elementBuilder.makeContext(node);
         final Nested nestedElement = elementBuilder.build(data.provide(null), data, DependencyProvider.EMPTY);
 
         assertNotNull(nestedElement);
@@ -101,6 +103,11 @@ public class BasicElementBuilderIntegrationTest {
     @Model("simple_data")
     public static class SimpleData {
         private final Data data;
+
+        @FactoryMethod
+        public SimpleData(@NotNull Data data) {
+            this.data = data;
+        }
 
         @ProcessorMethod
         public static ConfigProcessor<Data> processor() {
@@ -118,11 +125,6 @@ public class BasicElementBuilderIntegrationTest {
             };
         }
 
-        @FactoryMethod
-        public SimpleData(@NotNull Data data) {
-            this.data = data;
-        }
-
         @DataObject
         public record Data(int value) {}
     }
@@ -131,6 +133,12 @@ public class BasicElementBuilderIntegrationTest {
     public static class Nested {
         private final Data data;
         private final SimpleData simpleElement;
+
+        @FactoryMethod
+        public Nested(Data data, SimpleData simpleElement) {
+            this.data = data;
+            this.simpleElement = simpleElement;
+        }
 
         @ProcessorMethod
         public static ConfigProcessor<Data> processor() {
@@ -146,12 +154,6 @@ public class BasicElementBuilderIntegrationTest {
                     return ConfigNode.of("key", data.key.asString());
                 }
             };
-        }
-
-        @FactoryMethod
-        public Nested(Data data, SimpleData simpleElement) {
-            this.data = data;
-            this.simpleElement = simpleElement;
         }
 
         @DataObject

@@ -1,9 +1,8 @@
 package com.github.steanky.element.core.element;
 
-import com.github.steanky.element.core.ElementException;
 import com.github.steanky.element.core.Registry;
+import com.github.steanky.element.core.data.DataContext;
 import com.github.steanky.element.core.data.DataIdentifier;
-import com.github.steanky.element.core.data.ElementData;
 import com.github.steanky.element.core.dependency.DependencyProvider;
 import com.github.steanky.ethylene.core.collection.ConfigNode;
 import com.github.steanky.ethylene.core.processor.ConfigProcessor;
@@ -20,7 +19,7 @@ public class BasicElementBuilder implements ElementBuilder {
     private final ElementInspector elementInspector;
     private final DataIdentifier dataIdentifier;
     private final ElementTypeIdentifier elementTypeIdentifier;
-    private final ElementData.Source elementDataSource;
+    private final DataContext.Source elementDataSource;
     private final Registry<ElementFactory<?, ?>> factoryRegistry;
 
     /**
@@ -28,16 +27,16 @@ public class BasicElementBuilder implements ElementBuilder {
      *
      * @param elementInspector      the {@link ElementInspector} used to extract a factory and processor from an element
      *                              object class
+     * @param dataIdentifier        the {@link DataIdentifier} used to extract type keys from data objects
      * @param elementTypeIdentifier the {@link ElementTypeIdentifier} used to identify the key of element objects
-     * @param elementDataSource     the {@link ElementData.Source} instance used to create {@link ElementData} instances
+     * @param elementDataSource     the {@link DataContext.Source} instance used to create {@link DataContext} instances
      *                              from {@link ConfigNode}s
      * @param factoryRegistry       a Registry of {@link ElementFactory} used to derive ElementFactory instances from
      *                              data keys
      */
     public BasicElementBuilder(final @NotNull ElementInspector elementInspector,
-            final @NotNull DataIdentifier dataIdentifier,
-            final @NotNull ElementTypeIdentifier elementTypeIdentifier,
-            final @NotNull ElementData.Source elementDataSource,
+            final @NotNull DataIdentifier dataIdentifier, final @NotNull ElementTypeIdentifier elementTypeIdentifier,
+            final @NotNull DataContext.Source elementDataSource,
             final @NotNull Registry<ElementFactory<?, ?>> factoryRegistry) {
         this.elementInspector = Objects.requireNonNull(elementInspector);
         this.dataIdentifier = Objects.requireNonNull(dataIdentifier);
@@ -59,16 +58,16 @@ public class BasicElementBuilder implements ElementBuilder {
     }
 
     @Override
-    public @NotNull ElementData makeData(final @NotNull ConfigNode node) {
+    public @NotNull DataContext makeContext(final @NotNull ConfigNode node) {
         return elementDataSource.make(node);
     }
 
     @Override
     @SuppressWarnings("unchecked")
-    public <TElement> @NotNull TElement build(final @NotNull Object dataObject,
-            final @Nullable ElementData data, final @NotNull DependencyProvider dependencyProvider) {
+    public <TElement> @NotNull TElement build(final @NotNull Object dataObject, final @Nullable DataContext context,
+            final @NotNull DependencyProvider dependencyProvider) {
         final Key type = dataIdentifier.identifyKey(dataObject);
-        return (TElement) ((ElementFactory<Object, Object>)factoryRegistry.lookup(type)).make(dataObject, data,
+        return (TElement) ((ElementFactory<Object, Object>) factoryRegistry.lookup(type)).make(dataObject, context,
                 dependencyProvider, this);
     }
 }

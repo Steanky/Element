@@ -11,10 +11,19 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.Objects;
 
+/**
+ * Basic implementation of {@link DataLocator}.
+ */
 public class BasicDataLocator implements DataLocator {
     private final KeyExtractor idExtractor;
     private final PathKeySplitter pathKeySplitter;
 
+    /**
+     * Creates a new instance of this class.
+     *
+     * @param idExtractor     the {@link KeyExtractor} used to extract identifier keys
+     * @param pathKeySplitter the {@link PathKeySplitter} used to split path keys
+     */
     public BasicDataLocator(final @NotNull KeyExtractor idExtractor, final @NotNull PathKeySplitter pathKeySplitter) {
         this.idExtractor = Objects.requireNonNull(idExtractor);
         this.pathKeySplitter = Objects.requireNonNull(pathKeySplitter);

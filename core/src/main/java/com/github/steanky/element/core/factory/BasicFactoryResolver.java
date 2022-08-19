@@ -1,11 +1,13 @@
 package com.github.steanky.element.core.factory;
 
 import com.github.steanky.element.core.ElementException;
-import com.github.steanky.element.core.annotation.*;
-import com.github.steanky.element.core.data.DataIdentifier;
+import com.github.steanky.element.core.annotation.DataName;
+import com.github.steanky.element.core.annotation.DataObject;
+import com.github.steanky.element.core.annotation.Dependency;
+import com.github.steanky.element.core.annotation.FactoryMethod;
+import com.github.steanky.element.core.data.DataContext;
 import com.github.steanky.element.core.data.DataInspector;
-import com.github.steanky.element.core.data.DataLocator;
-import com.github.steanky.element.core.data.ElementData;
+import com.github.steanky.element.core.data.DataInspector.PathFunction;
 import com.github.steanky.element.core.dependency.DependencyProvider;
 import com.github.steanky.element.core.element.ElementBuilder;
 import com.github.steanky.element.core.element.ElementFactory;
@@ -30,27 +32,30 @@ import static com.github.steanky.element.core.util.Validate.*;
  */
 public class BasicFactoryResolver implements FactoryResolver {
     private final KeyParser keyParser;
-    private final DataIdentifier dataIdentifier;
     private final ElementTypeIdentifier elementTypeIdentifier;
     private final DataInspector dataInspector;
 
     /**
      * Creates a new instance of this class.
      *
-     * @param keyParser the {@link KeyParser} implementation used to interpret strings as keys
+     * @param keyParser             the {@link KeyParser} implementation used to interpret strings as keys
+     * @param elementTypeIdentifier the {@link ElementTypeIdentifier} used to extract type keys from element classes
+     * @param dataInspector         the {@link DataInspector} object used to extract {@link PathFunction}s from data
+     *                              classes
      */
     public BasicFactoryResolver(final @NotNull KeyParser keyParser,
-            final @NotNull DataIdentifier typeIdentifier,
-            final @NotNull ElementTypeIdentifier elementTypeIdentifier,
-            final @NotNull DataInspector dataInspector) {
+            final @NotNull ElementTypeIdentifier elementTypeIdentifier, final @NotNull DataInspector dataInspector) {
         this.keyParser = Objects.requireNonNull(keyParser);
-        this.dataIdentifier = Objects.requireNonNull(typeIdentifier);
         this.elementTypeIdentifier = Objects.requireNonNull(elementTypeIdentifier);
         this.dataInspector = Objects.requireNonNull(dataInspector);
     }
 
+    private static Key parseKey(final KeyParser parser, final @Subst(Constants.NAMESPACE_OR_KEY) String keyString) {
+        return parser.parseKey(keyString);
+    }
+
     private Object[] resolveArguments(final DataInspector.PathFunction pathFunction, final Object objectData,
-            final ElementData data, final ElementBuilder builder, final DependencyProvider provider,
+            final DataContext data, final ElementBuilder builder, final DependencyProvider provider,
             final ElementSpec spec) {
         final Object[] args;
         if (spec.dataIndex == -1) {
@@ -77,7 +82,7 @@ public class BasicFactoryResolver implements FactoryResolver {
     }
 
     private Object processParameter(final DataInspector.PathFunction pathFunction, final ElementParameter parameter,
-            final Object objectData, final ElementData data, final ElementBuilder builder,
+            final Object objectData, final DataContext data, final ElementBuilder builder,
             final DependencyProvider provider) {
         if (parameter.isDependency) {
             return provider.provide(parameter.type, parameter.id);
@@ -86,10 +91,6 @@ public class BasicFactoryResolver implements FactoryResolver {
         final Key dataPath = pathFunction.apply(objectData, parameter.id);
         final Object dataObject = data.provide(dataPath);
         return builder.build(dataObject, data, provider);
-    }
-
-    private static Key parseKey(final KeyParser parser, final @Subst(Constants.NAMESPACE_OR_KEY) String keyString) {
-        return parser.parseKey(keyString);
     }
 
     @Override
@@ -156,8 +157,8 @@ public class BasicFactoryResolver implements FactoryResolver {
         final Constructor<?> finalFactoryConstructor = factoryConstructor;
         final Parameter[] parameters = factoryConstructor.getParameters();
         if (parameters.length == 0) {
-            return (objectData, data, dependencyProvider, builder) ->
-                    ReflectionUtils.invokeConstructor(finalFactoryConstructor);
+            return (objectData, data, dependencyProvider, builder) -> ReflectionUtils.invokeConstructor(
+                    finalFactoryConstructor);
         }
 
         final ArrayList<ElementParameter> elementParameters = new ArrayList<>(parameters.length);
@@ -177,7 +178,7 @@ public class BasicFactoryResolver implements FactoryResolver {
                     throw elementException(elementClass, "ElementDependency present on data parameter");
                 }
 
-                if(parameter.isAnnotationPresent(DataName.class)) {
+                if (parameter.isAnnotationPresent(DataName.class)) {
                     throw elementException(elementClass, "DataName present on data parameter");
                 }
 
@@ -197,13 +198,11 @@ public class BasicFactoryResolver implements FactoryResolver {
                 if (nameAnnotation == null) {
                     try {
                         name = elementTypeIdentifier.identify(parameter.getType());
+                    } catch (ElementException e) {
+                        throw elementException(elementClass,
+                                "unnamed composite dependency or missing dependency " + "annotation", e);
                     }
-                    catch (ElementException e) {
-                        throw elementException(elementClass, "unnamed composite dependency or missing dependency " +
-                                "annotation", e);
-                    }
-                }
-                else {
+                } else {
                     name = parseKey(keyParser, nameAnnotation.value());
                 }
 
@@ -233,12 +232,12 @@ public class BasicFactoryResolver implements FactoryResolver {
 
         elementParameters.trimToSize();
 
-        final DataInspector.PathFunction pathFunction = dataClass == null ? null : dataInspector
-                .pathFunction(dataClass);
+        final DataInspector.PathFunction pathFunction =
+                dataClass == null ? null : dataInspector.pathFunction(dataClass);
         final ElementSpec elementSpec = new ElementSpec(elementParameters, dataParameterIndex);
         return (objectData, data, dependencyProvider, builder) -> ReflectionUtils.invokeConstructor(
-                finalFactoryConstructor, resolveArguments(pathFunction, objectData, data, builder, dependencyProvider,
-                        elementSpec));
+                finalFactoryConstructor,
+                resolveArguments(pathFunction, objectData, data, builder, dependencyProvider, elementSpec));
     }
 
     private record ElementSpec(List<ElementParameter> parameters, int dataIndex) {}

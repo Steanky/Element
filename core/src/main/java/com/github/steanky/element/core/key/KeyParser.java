@@ -17,6 +17,12 @@ public interface KeyParser {
      */
     @NotNull Key parseKey(final @NotNull @KeyString String key);
 
+    /**
+     * Determines if the given key string is valid.
+     *
+     * @param keyString the string to check for validity
+     * @return true if the string is a valid key, false otherwise
+     */
     boolean isValidKey(final @NotNull String keyString);
 
     /**

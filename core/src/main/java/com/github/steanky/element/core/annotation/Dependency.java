@@ -28,8 +28,7 @@ public @interface Dependency {
     /**
      * The name of this dependency, which must be a valid key string OR equal to {@link Dependency#DEFAULT_NAME}
      *
-     * @return the name of this dependency, which must be a valid key string OR equal to
-     * {@link Dependency#DEFAULT_NAME}
+     * @return the name of this dependency, which must be a valid key string OR equal to {@link Dependency#DEFAULT_NAME}
      */
     @NotNull @KeyString String name() default DEFAULT_NAME;
 }
