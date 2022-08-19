@@ -12,7 +12,7 @@ import org.jetbrains.annotations.Nullable;
  */
 public interface DataContext {
     /**
-     * Provides a contextual data object given a path key.
+     * Provides a contextual data object given a path key. If null, will attempt to serialize the root node.
      *
      * @param path    the path key
      * @param <TData> the type of the data object

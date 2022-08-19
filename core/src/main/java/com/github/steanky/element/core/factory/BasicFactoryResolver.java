@@ -54,14 +54,14 @@ public class BasicFactoryResolver implements FactoryResolver {
         return parser.parseKey(keyString);
     }
 
-    private Object[] resolveArguments(final DataInspector.PathFunction pathFunction, final Object objectData,
-            final DataContext data, final ElementBuilder builder, final DependencyProvider provider,
-            final ElementSpec spec) {
+    private Object[] resolveArguments(final Object objectData, final DataContext data, final ElementBuilder builder,
+            final DependencyProvider provider, final ElementSpec spec) {
         final Object[] args;
         if (spec.dataIndex == -1) {
             args = new Object[spec.parameters.size()];
             for (int i = 0; i < spec.parameters.size(); i++) {
-                args[i] = processParameter(pathFunction, spec.parameters.get(i), objectData, data, builder, provider);
+                args[i] = processParameter(spec.pathFunction, spec.parameters.get(i), objectData, data, builder,
+                        provider);
             }
 
             return args;
@@ -71,11 +71,12 @@ public class BasicFactoryResolver implements FactoryResolver {
         args[spec.dataIndex] = objectData;
 
         for (int i = 0; i < spec.dataIndex; i++) {
-            args[i] = processParameter(pathFunction, spec.parameters.get(i), objectData, data, builder, provider);
+            args[i] = processParameter(spec.pathFunction, spec.parameters.get(i), objectData, data, builder, provider);
         }
 
         for (int i = spec.dataIndex + 1; i < args.length; i++) {
-            args[i] = processParameter(pathFunction, spec.parameters.get(i - 1), objectData, data, builder, provider);
+            args[i] = processParameter(spec.pathFunction, spec.parameters.get(i - 1), objectData, data, builder,
+                    provider);
         }
 
         return args;
@@ -126,6 +127,7 @@ public class BasicFactoryResolver implements FactoryResolver {
             }
         }
 
+        //if an explicit factory method is provided, use that and don't try to infer one from the constructor
         if (factoryMethod != null) {
             final ElementFactory<?, ?> factory = ReflectionUtils.invokeMethod(factoryMethod, null);
             if (factory == null) {
@@ -175,7 +177,7 @@ public class BasicFactoryResolver implements FactoryResolver {
                 }
 
                 if (parameter.isAnnotationPresent(Dependency.class)) {
-                    throw elementException(elementClass, "ElementDependency present on data parameter");
+                    throw elementException(elementClass, "Dependency present on data parameter");
                 }
 
                 if (parameter.isAnnotationPresent(DataName.class)) {
@@ -234,13 +236,13 @@ public class BasicFactoryResolver implements FactoryResolver {
 
         final DataInspector.PathFunction pathFunction =
                 dataClass == null ? null : dataInspector.pathFunction(dataClass);
-        final ElementSpec elementSpec = new ElementSpec(elementParameters, dataParameterIndex);
+        final ElementSpec elementSpec = new ElementSpec(elementParameters, dataParameterIndex, pathFunction);
         return (objectData, data, dependencyProvider, builder) -> ReflectionUtils.invokeConstructor(
-                finalFactoryConstructor,
-                resolveArguments(pathFunction, objectData, data, builder, dependencyProvider, elementSpec));
+                finalFactoryConstructor, resolveArguments(objectData, data, builder, dependencyProvider, elementSpec));
     }
 
-    private record ElementSpec(List<ElementParameter> parameters, int dataIndex) {}
+    private record ElementSpec(List<ElementParameter> parameters, int dataIndex,
+            DataInspector.PathFunction pathFunction) {}
 
     private record ElementParameter(Key type, Key id, boolean isDependency) {}
 }

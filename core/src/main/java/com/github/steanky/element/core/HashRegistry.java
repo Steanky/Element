@@ -3,14 +3,13 @@ package com.github.steanky.element.core;
 import net.kyori.adventure.key.Key;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.HashMap;
 import java.util.Map;
 import java.util.NoSuchElementException;
 import java.util.Objects;
 import java.util.concurrent.ConcurrentHashMap;
 
 /**
- * A {@link HashMap}-based Registry implementation. Uses a {@link ConcurrentHashMap} to ensure synchronous access.
+ * A {@link Map}-based Registry implementation. Uses a {@link ConcurrentHashMap} to ensure synchronous access.
  *
  * @param <TRegistrant> the kind of object stored as a registrant
  */
