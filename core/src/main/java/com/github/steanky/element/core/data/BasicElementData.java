@@ -17,17 +17,17 @@ import java.util.Objects;
 public class BasicElementData implements ElementData {
     private final Registry<ConfigProcessor<?>> processorRegistry;
     private final DataLocator dataLocator;
-    private final KeyExtractor keyExtractor;
+    private final KeyExtractor typeKeyExtractor;
     private final ConfigNode rootNode;
 
-    private final Map<Key, Map<Key, Object>> dataObjects;
+    private final Map<Key, Object> dataObjects;
 
     public BasicElementData(final @NotNull Registry<ConfigProcessor<?>> processorRegistry,
-            final @NotNull DataLocator dataLocator, final @NotNull KeyExtractor keyExtractor,
+            final @NotNull DataLocator dataLocator, final @NotNull KeyExtractor typeKeyExtractor,
             final @NotNull ConfigNode rootNode) {
         this.processorRegistry = Objects.requireNonNull(processorRegistry);
         this.dataLocator = Objects.requireNonNull(dataLocator);
-        this.keyExtractor = Objects.requireNonNull(keyExtractor);
+        this.typeKeyExtractor = Objects.requireNonNull(typeKeyExtractor);
         this.rootNode = Objects.requireNonNull(rootNode);
 
         this.dataObjects = new HashMap<>(4);
@@ -35,21 +35,17 @@ public class BasicElementData implements ElementData {
 
     @SuppressWarnings("unchecked")
     @Override
-    public <TData> @NotNull TData provide(@NotNull Key type, @Nullable Key path) {
-        final Map<Key, TData> map = (Map<Key, TData>) dataObjects.computeIfAbsent(type, key -> new HashMap<>(4));
-        return map.computeIfAbsent(path, key -> {
-            final ConfigProcessor<Object> dataProcessor = (ConfigProcessor<Object>) processorRegistry.lookup(type);
+    public <TData> @NotNull TData provide(final @Nullable Key path) {
+        return (TData) dataObjects.computeIfAbsent(path, key -> {
+            final ConfigNode dataNode = dataLocator.locate(rootNode, key);
+            final Key objectType = typeKeyExtractor.extractKey(dataNode);
+
             try {
-                return (TData) dataProcessor.dataFromElement(dataLocator.locate(rootNode, key));
+                return processorRegistry.lookup(objectType).dataFromElement(dataNode);
             } catch (ConfigProcessException e) {
-                throw new ElementException(e);
+                throw new ElementException("error deserializing data node at path " + path, e);
             }
         });
-    }
-
-    @Override
-    public <TData> @NotNull TData provideRoot() {
-        return provide(keyExtractor.extractKey(rootNode), null);
     }
 
     public static class Source implements ElementData.Source {

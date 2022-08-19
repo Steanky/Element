@@ -83,9 +83,9 @@ public class BasicFactoryResolver implements FactoryResolver {
             return provider.provide(parameter.type, parameter.id);
         }
 
-        final Key type = dataIdentifier.identifyKey(objectData);
-        final Key id = pathFunction.apply(objectData, parameter.id);
-        return builder.build(type, id, data, provider);
+        final Key dataPath = pathFunction.apply(objectData, parameter.id);
+        final Object dataObject = data.provide(dataPath);
+        return builder.build(dataObject, data, provider);
     }
 
     private static Key parseKey(final KeyParser parser, final @Subst(Constants.NAMESPACE_OR_KEY) String keyString) {

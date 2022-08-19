@@ -33,24 +33,6 @@ public interface ElementBuilder {
 
     @NotNull ElementData makeData(final @NotNull ConfigNode node);
 
-    <TElement> @NotNull TElement build(final @Nullable Key type, final @Nullable Key id,
-            final @Nullable ElementData data, final @NotNull DependencyProvider dependencyProvider);
-
-    default <TElement> @NotNull TElement buildWithKey(final @NotNull Key type,
-            final @NotNull DependencyProvider dependencyProvider) {
-        return build(type, null, null, dependencyProvider);
-    }
-
-    default <TElement> @NotNull TElement buildWithKey(final @NotNull Key type) {
-        return build(type, null, null, DependencyProvider.EMPTY);
-    }
-
-    default <TElement> @NotNull TElement buildRoot(final @Nullable ElementData data,
-            final @NotNull DependencyProvider dependencyProvider) {
-        return build(null, null, data, dependencyProvider);
-    }
-
-    default <TElement> @NotNull TElement buildRoot(final @Nullable ElementData data) {
-        return build(null, null, data, DependencyProvider.EMPTY);
-    }
+    <TElement> @NotNull TElement build(final @NotNull Object dataObject, final @Nullable ElementData data,
+            final @NotNull DependencyProvider dependencyProvider);
 }

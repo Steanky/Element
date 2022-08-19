@@ -64,31 +64,10 @@ public class BasicElementBuilder implements ElementBuilder {
     }
 
     @Override
-    public <TElement> @NotNull TElement build(final @Nullable Key type, final @Nullable Key id,
-            final @Nullable ElementData data, final @NotNull DependencyProvider dependencyProvider) {
-        if (type != null) {
-            return buildElement(type, id, data, dependencyProvider);
-        }
-
-        if(data == null) {
-            throw new ElementException("cannot infer root data type from null ElementData");
-        }
-
-        final Key rootType;
-        try {
-            rootType = dataIdentifier.identifyKey(data.provideRoot());
-        }
-        catch (ElementException e) {
-            throw new ElementException("failure to resolve root data type", e);
-        }
-
-        return buildElement(rootType, id, data, dependencyProvider);
-    }
-
     @SuppressWarnings("unchecked")
-    private <TElement> TElement buildElement(final Key type, final Key path, final ElementData data,
-            final DependencyProvider dependencyProvider) {
-        final Object dataObject = data == null ? null : data.provide(type, path);
+    public <TElement> @NotNull TElement build(final @NotNull Object dataObject,
+            final @Nullable ElementData data, final @NotNull DependencyProvider dependencyProvider) {
+        final Key type = dataIdentifier.identifyKey(dataObject);
         return (TElement) ((ElementFactory<Object, Object>)factoryRegistry.lookup(type)).make(dataObject, data,
                 dependencyProvider, this);
     }

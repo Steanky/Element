@@ -4,6 +4,7 @@ import com.github.steanky.element.core.HashRegistry;
 import com.github.steanky.element.core.Registry;
 import com.github.steanky.element.core.annotation.*;
 import com.github.steanky.element.core.data.*;
+import com.github.steanky.element.core.dependency.DependencyProvider;
 import com.github.steanky.element.core.factory.BasicFactoryResolver;
 import com.github.steanky.element.core.factory.FactoryResolver;
 import com.github.steanky.element.core.key.*;
@@ -54,7 +55,7 @@ public class BasicElementBuilderIntegrationTest {
 
     @Test
     void simpleElement() {
-        final SimpleElement simple = elementBuilder.buildWithKey(keyParser.parseKey("simple_element"));
+        final SimpleElement simple = elementBuilder.build(keyParser.parseKey("simple_element"), null, DependencyProvider.EMPTY);
         assertNotNull(simple);
     }
 
@@ -65,7 +66,7 @@ public class BasicElementBuilderIntegrationTest {
         node.putNumber("value", 10);
 
         final ElementData data = elementBuilder.makeData(node);
-        final SimpleData element = elementBuilder.buildRoot(data);
+        final SimpleData element = elementBuilder.build(data.provide(null), null, DependencyProvider.EMPTY);
 
         assertNotNull(element);
         assertEquals(10, element.data.value);
@@ -85,7 +86,7 @@ public class BasicElementBuilderIntegrationTest {
         node.put("sub", nested);
 
         final ElementData data = elementBuilder.makeData(node);
-        final Nested nestedElement = elementBuilder.buildRoot(data);
+        final Nested nestedElement = elementBuilder.build(data.provide(null), data, DependencyProvider.EMPTY);
 
         assertNotNull(nestedElement);
         assertEquals(10, nestedElement.simpleElement.data.value);

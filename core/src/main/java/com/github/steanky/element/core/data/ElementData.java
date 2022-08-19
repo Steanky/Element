@@ -9,9 +9,7 @@ import org.jetbrains.annotations.Nullable;
 
 
 public interface ElementData {
-    <TData> @NotNull TData provide(final @NotNull Key type, final @Nullable Key path);
-
-    <TData> @NotNull TData provideRoot();
+    <TData> @NotNull TData provide(final @Nullable Key path);
 
     interface Source {
         @NotNull ElementData make(@NotNull ConfigNode node);
