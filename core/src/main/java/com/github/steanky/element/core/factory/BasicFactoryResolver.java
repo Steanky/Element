@@ -1,8 +1,10 @@
 package com.github.steanky.element.core.factory;
 
+import com.github.steanky.element.core.ElementException;
 import com.github.steanky.element.core.annotation.*;
 import com.github.steanky.element.core.data.DataIdentifier;
 import com.github.steanky.element.core.data.DataInspector;
+import com.github.steanky.element.core.data.DataLocator;
 import com.github.steanky.element.core.data.ElementData;
 import com.github.steanky.element.core.dependency.DependencyProvider;
 import com.github.steanky.element.core.element.ElementBuilder;
@@ -190,13 +192,22 @@ public class BasicFactoryResolver implements FactoryResolver {
             }
 
             if (dependency == null) {
-                if (!parameter.getType().isAnnotationPresent(Model.class)) {
-                    throw elementException(elementClass, "dependency parameter missing annotation");
+                final Key name;
+                final DataName nameAnnotation = parameter.getDeclaredAnnotation(DataName.class);
+                if (nameAnnotation == null) {
+                    try {
+                        name = elementTypeIdentifier.identify(parameter.getType());
+                    }
+                    catch (ElementException e) {
+                        throw elementException(elementClass, "unnamed composite dependency or missing dependency " +
+                                "annotation", e);
+                    }
+                }
+                else {
+                    name = parseKey(keyParser, nameAnnotation.value());
                 }
 
-                final DataName nameAnnotation = parameter.getDeclaredAnnotation(DataName.class);
-                elementParameters.add(new ElementParameter(null, nameAnnotation == null ? null : parseKey(keyParser,
-                        nameAnnotation.value()), false));
+                elementParameters.add(new ElementParameter(null, name, false));
                 hasComposite = true;
                 continue;
             }

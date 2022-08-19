@@ -132,12 +132,6 @@ public class BasicElementInspectorIntegrationTest {
     }
 
     @Test
-    void dataAndUnnamedDependenciesConstructorFactory() {
-        assertThrows(ElementException.class,
-                () -> inspector.inspect(DataAndUnnamedDependenciesConstructorFactory.class));
-    }
-
-    @Test
     void dependenciesConstructorFactory() {
         ElementInspector.Information information = inspector.inspect(DependenciesConstructorFactory.class);
 

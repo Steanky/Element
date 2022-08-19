@@ -49,6 +49,7 @@ public class BasicElementBuilderIntegrationTest {
                 factoryRegistry);
         elementBuilder.registerElementClass(SimpleElement.class);
         elementBuilder.registerElementClass(SimpleData.class);
+        elementBuilder.registerElementClass(Nested.class);
     }
 
     @Test
@@ -72,7 +73,22 @@ public class BasicElementBuilderIntegrationTest {
 
     @Test
     void nested() {
+        final ConfigNode node = new LinkedConfigNode(2);
+        node.putString("type", "nested_element");
+        node.putString("key", "simple_data");
 
+        final ConfigNode nested = new LinkedConfigNode(2);
+        nested.putString("type", "simple_data");
+        nested.putString("id", "simple_data");
+        nested.putNumber("value", 10);
+
+        node.put("sub", nested);
+
+        final ElementData data = elementBuilder.makeData(node);
+        final Nested nestedElement = elementBuilder.buildRoot(data);
+
+        assertNotNull(nestedElement);
+        assertEquals(10, nestedElement.simpleElement.data.value);
     }
 
     @Model("simple_element")
@@ -110,13 +126,34 @@ public class BasicElementBuilderIntegrationTest {
         public record Data(int value) {}
     }
 
-    @Model("nested")
+    @Model("nested_element")
     public static class Nested {
-        @FactoryMethod
-        public Nested(SimpleElement simpleElement) {
+        private final Data data;
+        private final SimpleData simpleElement;
 
+        @ProcessorMethod
+        public static ConfigProcessor<Data> processor() {
+            return new ConfigProcessor<>() {
+                @Override
+                public Data dataFromElement(@NotNull ConfigElement element) throws ConfigProcessException {
+                    final Key key = Key.key("test", element.getStringOrThrow("key"));
+                    return new Data(key);
+                }
+
+                @Override
+                public @NotNull ConfigElement elementFromData(Data data) {
+                    return ConfigNode.of("key", data.key.asString());
+                }
+            };
         }
 
-        public record Data(@DataPath("simple_element") Key simpleElementKey) {}
+        @FactoryMethod
+        public Nested(Data data, SimpleData simpleElement) {
+            this.data = data;
+            this.simpleElement = simpleElement;
+        }
+
+        @DataObject
+        public record Data(@DataPath("simple_data") Key key) {}
     }
 }
