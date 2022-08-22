@@ -3,7 +3,7 @@ package com.github.steanky.element.core.data;
 import com.github.steanky.element.core.ElementException;
 import com.github.steanky.element.core.Registry;
 import com.github.steanky.element.core.dependency.DependencyProvider;
-import com.github.steanky.element.core.element.ElementBuilder;
+import com.github.steanky.element.core.element.ContextSource;
 import com.github.steanky.element.core.element.ElementFactory;
 import com.github.steanky.element.core.key.KeyExtractor;
 import com.github.steanky.ethylene.core.collection.ConfigNode;
@@ -21,7 +21,7 @@ import java.util.Objects;
  * Basic implementation of {@link ElementContext}.
  */
 public class BasicElementContext implements ElementContext {
-    private final ElementBuilder elementBuilder;
+    private final ContextSource contextSource;
     private final Registry<ConfigProcessor<?>> processorRegistry;
     private final Registry<ElementFactory<?, ?>> factoryRegistry;
     private final DataLocator dataLocator;
@@ -39,12 +39,12 @@ public class BasicElementContext implements ElementContext {
      * @param typeKeyExtractor  the {@link KeyExtractor} implementation used to extract type keys from nodes
      * @param rootNode          the {@link ConfigNode} used as the root (may contain additional element data)
      */
-    public BasicElementContext(final @NotNull ElementBuilder elementBuilder,
+    public BasicElementContext(final @NotNull ContextSource contextSource,
             final @NotNull Registry<ConfigProcessor<?>> processorRegistry,
             final @NotNull Registry<ElementFactory<?, ?>> factoryRegistry,
             final @NotNull DataLocator dataLocator, final @NotNull KeyExtractor typeKeyExtractor,
             final @NotNull ConfigNode rootNode) {
-        this.elementBuilder = Objects.requireNonNull(elementBuilder);
+        this.contextSource = Objects.requireNonNull(contextSource);
         this.processorRegistry = Objects.requireNonNull(processorRegistry);
         this.factoryRegistry = Objects.requireNonNull(factoryRegistry);
         this.dataLocator = Objects.requireNonNull(dataLocator);
@@ -85,8 +85,8 @@ public class BasicElementContext implements ElementContext {
     }
 
     @Override
-    public @NotNull ElementBuilder builder() {
-        return elementBuilder;
+    public @NotNull ContextSource builder() {
+        return contextSource;
     }
 
     /**
@@ -118,9 +118,9 @@ public class BasicElementContext implements ElementContext {
         }
 
         @Override
-        public @NotNull BasicElementContext make(final @NotNull ElementBuilder elementBuilder,
+        public @NotNull BasicElementContext make(final @NotNull ContextSource contextSource,
                 final @NotNull ConfigNode node) {
-            return new BasicElementContext(elementBuilder, processorRegistry, factoryRegistry, dataLocator,
+            return new BasicElementContext(contextSource, processorRegistry, factoryRegistry, dataLocator,
                     keyExtractor, node);
         }
 

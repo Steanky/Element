@@ -2,7 +2,7 @@ package com.github.steanky.element.core.data;
 
 import com.github.steanky.element.core.Registry;
 import com.github.steanky.element.core.dependency.DependencyProvider;
-import com.github.steanky.element.core.element.ElementBuilder;
+import com.github.steanky.element.core.element.ContextSource;
 import com.github.steanky.element.core.element.ElementFactory;
 import com.github.steanky.ethylene.core.collection.ConfigNode;
 import com.github.steanky.ethylene.core.processor.ConfigProcessor;
@@ -32,11 +32,11 @@ public interface ElementContext {
     @NotNull ConfigNode rootNode();
 
     /**
-     * Returns the {@link ElementBuilder} that created this context.
+     * Returns the {@link ContextSource} that created this context.
      *
      * @return the ElementBuilder that created this context
      */
-    @NotNull ElementBuilder builder();
+    @NotNull ContextSource builder();
 
     /**
      * A source of {@link ElementContext} objects.
@@ -48,7 +48,7 @@ public interface ElementContext {
          * @param node the node used to create the DataContext
          * @return the new DataContext object
          */
-        @NotNull ElementContext make(final @NotNull ElementBuilder elementBuilder, final @NotNull ConfigNode node);
+        @NotNull ElementContext make(final @NotNull ContextSource contextSource, final @NotNull ConfigNode node);
 
         /**
          * Returns the {@link Registry} object holding {@link ConfigProcessor} objects used to deserialize data

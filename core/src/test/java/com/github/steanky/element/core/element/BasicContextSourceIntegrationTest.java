@@ -22,11 +22,11 @@ import org.junit.jupiter.api.Test;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 
-public class BasicElementBuilderIntegrationTest {
+public class BasicContextSourceIntegrationTest {
     private final KeyParser keyParser;
-    private final ElementBuilder elementBuilder;
+    private final ContextSource contextSource;
 
-    public BasicElementBuilderIntegrationTest() {
+    public BasicContextSourceIntegrationTest() {
         this.keyParser = new BasicKeyParser("test");
 
         final KeyExtractor typeExtractor = new BasicKeyExtractor("type", keyParser);
@@ -48,10 +48,10 @@ public class BasicElementBuilderIntegrationTest {
         final ElementContext.Source source = new BasicElementContext.Source(configRegistry, factoryRegistry,
                 dataLocator, typeExtractor);
 
-        this.elementBuilder = new BasicElementBuilder(elementInspector, elementTypeIdentifier, source);
-        elementBuilder.registerElementClass(SimpleElement.class);
-        elementBuilder.registerElementClass(SimpleData.class);
-        elementBuilder.registerElementClass(Nested.class);
+        this.contextSource = new BasicContextSource(elementInspector, elementTypeIdentifier, source);
+        contextSource.registerElementClass(SimpleElement.class);
+        contextSource.registerElementClass(SimpleData.class);
+        contextSource.registerElementClass(Nested.class);
     }
 
     @Test
@@ -60,7 +60,7 @@ public class BasicElementBuilderIntegrationTest {
         node.putString("type", "simple_data");
         node.putNumber("value", 10);
 
-        final ElementContext data = elementBuilder.makeContext(node);
+        final ElementContext data = contextSource.makeContext(node);
         final SimpleData element = data.provide(null, DependencyProvider.EMPTY);
 
         assertNotNull(element);
@@ -80,7 +80,7 @@ public class BasicElementBuilderIntegrationTest {
 
         node.put("sub", nested);
 
-        final ElementContext data = elementBuilder.makeContext(node);
+        final ElementContext data = contextSource.makeContext(node);
         final Nested nestedElement = data.provide(null, DependencyProvider.EMPTY);
 
         assertNotNull(nestedElement);

@@ -9,7 +9,6 @@ import com.github.steanky.element.core.data.ElementContext;
 import com.github.steanky.element.core.data.DataInspector;
 import com.github.steanky.element.core.data.DataInspector.PathFunction;
 import com.github.steanky.element.core.dependency.DependencyProvider;
-import com.github.steanky.element.core.element.ElementBuilder;
 import com.github.steanky.element.core.element.ElementFactory;
 import com.github.steanky.element.core.element.ElementTypeIdentifier;
 import com.github.steanky.element.core.key.Constants;

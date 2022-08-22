@@ -5,13 +5,12 @@ import com.github.steanky.element.core.data.ElementContext;
 import com.github.steanky.element.core.dependency.DependencyProvider;
 import com.github.steanky.ethylene.core.collection.ConfigNode;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 /**
- * Represents a class capable of creating any of its registered element classes using data objects and a
- * {@link DependencyProvider} implementation.
+ * Represents a source of {@link ElementContext} instances. Element classes can be registered here, making them known to
+ * all ElementContext instances produced by this class.
  */
-public interface ElementBuilder {
+public interface ContextSource {
     /**
      * Registers the given element class. If the class does not conform to the standard element model, an
      * {@link ElementException} will be thrown.
