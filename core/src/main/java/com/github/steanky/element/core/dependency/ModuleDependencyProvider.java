@@ -140,9 +140,9 @@ public class ModuleDependencyProvider implements DependencyProvider {
         };
     }
 
+    @SuppressWarnings("unchecked")
     @Override
     public <TDependency> @NotNull TDependency provide(final @NotNull Key type, final @Nullable Key name) {
-        //noinspection unchecked
         return (TDependency) dependencyFunction.apply(type, name);
     }
 

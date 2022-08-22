@@ -202,7 +202,7 @@ public class BasicFactoryResolver implements FactoryResolver {
                         name = elementTypeIdentifier.identify(parameter.getType());
                     } catch (ElementException e) {
                         throw elementException(elementClass,
-                                "unnamed composite dependency or missing dependency " + "annotation", e);
+                                "unnamed composite dependency or missing dependency annotation", e);
                     }
                 } else {
                     name = parseKey(keyParser, nameAnnotation.value());

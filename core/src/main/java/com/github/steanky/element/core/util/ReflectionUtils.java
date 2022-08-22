@@ -24,11 +24,11 @@ public final class ReflectionUtils {
      * @param <TReturn>   the type of object to cast the new object to
      * @return the constructed object, after casting to the desired return value
      */
+    @SuppressWarnings("unchecked")
     public static <TReturn> TReturn invokeConstructor(final @NotNull Constructor<?> constructor, final Object... args) {
         Objects.requireNonNull(constructor);
 
         try {
-            //noinspection unchecked
             return (TReturn) constructor.newInstance(args);
         } catch (InstantiationException | IllegalAccessException | InvocationTargetException e) {
             throw new ElementException(e);
@@ -45,12 +45,12 @@ public final class ReflectionUtils {
      * @param <TReturn> the type of object to cast the return value to
      * @return the object returned by the method, after casting to the desired return value
      */
+    @SuppressWarnings("unchecked")
     public static <TReturn> TReturn invokeMethod(final @NotNull Method method, final @Nullable Object owner,
             final @Nullable Object @Nullable ... args) {
         Objects.requireNonNull(method);
 
         try {
-            //noinspection unchecked
             return (TReturn) method.invoke(owner, args);
         } catch (IllegalAccessException | InvocationTargetException e) {
             throw new ElementException(e);
