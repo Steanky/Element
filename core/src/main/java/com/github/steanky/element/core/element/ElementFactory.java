@@ -1,6 +1,5 @@
 package com.github.steanky.element.core.element;
 
-import com.github.steanky.element.core.data.ElementContext;
 import com.github.steanky.element.core.dependency.DependencyProvider;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;

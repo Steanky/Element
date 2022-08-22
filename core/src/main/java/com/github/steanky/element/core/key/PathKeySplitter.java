@@ -4,10 +4,8 @@ import net.kyori.adventure.key.Key;
 import org.jetbrains.annotations.NotNull;
 
 /**
- * A function capable of "splitting" a "path key" into (potentially) multiple constituent strings. The exact format used
- * is implementation-dependent.
+ * Splits "path keys" into string arrays.
  */
-@FunctionalInterface
 public interface PathKeySplitter {
     /**
      * Splits the given path key.
@@ -16,4 +14,13 @@ public interface PathKeySplitter {
      * @return the key's components
      */
     String @NotNull [] splitPathKey(final @NotNull Key pathKey);
+
+    /**
+     * "Normalizes" the given path key. This is done so that different path key representations that point to the same
+     * element can be converted to a single, "true" representation, for use as keys or storage.
+     *
+     * @param pathKey the path key to normalize
+     * @return the normalized key
+     */
+    @NotNull Key normalize(final @NotNull Key pathKey);
 }

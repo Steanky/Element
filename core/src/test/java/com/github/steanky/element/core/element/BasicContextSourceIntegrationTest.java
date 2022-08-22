@@ -46,7 +46,7 @@ public class BasicContextSourceIntegrationTest {
         final PathKeySplitter pathKeySplitter = new BasicPathKeySplitter();
         final DataLocator dataLocator = new BasicDataLocator(idExtractor, pathKeySplitter);
         final ElementContext.Source source = new BasicElementContext.Source(configRegistry, factoryRegistry,
-                dataLocator, typeExtractor);
+                pathKeySplitter, dataLocator, typeExtractor);
 
         this.contextSource = new BasicContextSource(elementInspector, elementTypeIdentifier, source);
         contextSource.registerElementClass(SimpleElement.class);

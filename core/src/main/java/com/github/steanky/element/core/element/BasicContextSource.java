@@ -1,6 +1,5 @@
 package com.github.steanky.element.core.element;
 
-import com.github.steanky.element.core.data.ElementContext;
 import com.github.steanky.ethylene.core.collection.ConfigNode;
 import com.github.steanky.ethylene.core.processor.ConfigProcessor;
 import net.kyori.adventure.key.Key;
@@ -14,7 +13,7 @@ import java.util.Objects;
 public class BasicContextSource implements ContextSource {
     private final ElementInspector elementInspector;
     private final ElementTypeIdentifier elementTypeIdentifier;
-    private final ElementContext.Source elementDataSource;
+    private final ElementContext.Source elementContextSource;
 
     /**
      * Creates a new instance of this class.
@@ -22,15 +21,15 @@ public class BasicContextSource implements ContextSource {
      * @param elementInspector      the {@link ElementInspector} used to extract a factory and processor from an element
      *                              object class
      * @param elementTypeIdentifier the {@link ElementTypeIdentifier} used to identify the key of element objects
-     * @param elementDataSource     the {@link ElementContext.Source} instance used to create {@link ElementContext}
+     * @param elementContextSource     the {@link ElementContext.Source} instance used to create {@link ElementContext}
      *                              instances from {@link ConfigNode}s
      */
     public BasicContextSource(final @NotNull ElementInspector elementInspector,
             final @NotNull ElementTypeIdentifier elementTypeIdentifier,
-            final @NotNull ElementContext.Source elementDataSource) {
+            final @NotNull ElementContext.Source elementContextSource) {
         this.elementInspector = Objects.requireNonNull(elementInspector);
         this.elementTypeIdentifier = Objects.requireNonNull(elementTypeIdentifier);
-        this.elementDataSource = Objects.requireNonNull(elementDataSource);
+        this.elementContextSource = Objects.requireNonNull(elementContextSource);
     }
 
     @Override
@@ -39,14 +38,14 @@ public class BasicContextSource implements ContextSource {
         final ElementInspector.Information elementInformation = elementInspector.inspect(elementClass);
         final ConfigProcessor<?> processor = elementInformation.processor();
         if (processor != null) {
-            elementDataSource.processorRegistry().register(elementKey, processor);
+            elementContextSource.processorRegistry().register(elementKey, processor);
         }
 
-        elementDataSource.factoryRegistry().register(elementKey, elementInformation.factory());
+        elementContextSource.factoryRegistry().register(elementKey, elementInformation.factory());
     }
 
     @Override
     public @NotNull ElementContext makeContext(final @NotNull ConfigNode node) {
-        return elementDataSource.make(node);
+        return elementContextSource.make(node);
     }
 }
