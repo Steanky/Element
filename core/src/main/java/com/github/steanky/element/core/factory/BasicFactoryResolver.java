@@ -5,7 +5,7 @@ import com.github.steanky.element.core.annotation.DataName;
 import com.github.steanky.element.core.annotation.DataObject;
 import com.github.steanky.element.core.annotation.Dependency;
 import com.github.steanky.element.core.annotation.FactoryMethod;
-import com.github.steanky.element.core.data.DataContext;
+import com.github.steanky.element.core.data.ElementContext;
 import com.github.steanky.element.core.data.DataInspector;
 import com.github.steanky.element.core.data.DataInspector.PathFunction;
 import com.github.steanky.element.core.dependency.DependencyProvider;
@@ -54,14 +54,13 @@ public class BasicFactoryResolver implements FactoryResolver {
         return parser.parseKey(keyString);
     }
 
-    private Object[] resolveArguments(final Object objectData, final DataContext data, final ElementBuilder builder,
+    private Object[] resolveArguments(final Object objectData, final ElementContext data,
             final DependencyProvider provider, final ElementSpec spec) {
         final Object[] args;
         if (spec.dataIndex == -1) {
             args = new Object[spec.parameters.size()];
             for (int i = 0; i < spec.parameters.size(); i++) {
-                args[i] = processParameter(spec.pathFunction, spec.parameters.get(i), objectData, data, builder,
-                        provider);
+                args[i] = processParameter(spec.pathFunction, spec.parameters.get(i), objectData, data, provider);
             }
 
             return args;
@@ -71,27 +70,24 @@ public class BasicFactoryResolver implements FactoryResolver {
         args[spec.dataIndex] = objectData;
 
         for (int i = 0; i < spec.dataIndex; i++) {
-            args[i] = processParameter(spec.pathFunction, spec.parameters.get(i), objectData, data, builder, provider);
+            args[i] = processParameter(spec.pathFunction, spec.parameters.get(i), objectData, data, provider);
         }
 
         for (int i = spec.dataIndex + 1; i < args.length; i++) {
-            args[i] = processParameter(spec.pathFunction, spec.parameters.get(i - 1), objectData, data, builder,
-                    provider);
+            args[i] = processParameter(spec.pathFunction, spec.parameters.get(i - 1), objectData, data, provider);
         }
 
         return args;
     }
 
     private Object processParameter(final DataInspector.PathFunction pathFunction, final ElementParameter parameter,
-            final Object objectData, final DataContext data, final ElementBuilder builder,
-            final DependencyProvider provider) {
+            final Object objectData, final ElementContext data, final DependencyProvider provider) {
         if (parameter.isDependency) {
             return provider.provide(parameter.type, parameter.id);
         }
 
         final Key dataPath = pathFunction.apply(objectData, parameter.id);
-        final Object dataObject = data.provide(dataPath);
-        return builder.build(dataObject, data, provider);
+        return data.provide(dataPath, provider);
     }
 
     @Override
@@ -159,8 +155,7 @@ public class BasicFactoryResolver implements FactoryResolver {
         final Constructor<?> finalFactoryConstructor = factoryConstructor;
         final Parameter[] parameters = factoryConstructor.getParameters();
         if (parameters.length == 0) {
-            return (objectData, data, dependencyProvider, builder) -> ReflectionUtils.invokeConstructor(
-                    finalFactoryConstructor);
+            return (objectData, data, dependencyProvider) -> ReflectionUtils.invokeConstructor(finalFactoryConstructor);
         }
 
         final ArrayList<ElementParameter> elementParameters = new ArrayList<>(parameters.length);
@@ -237,8 +232,8 @@ public class BasicFactoryResolver implements FactoryResolver {
         final DataInspector.PathFunction pathFunction =
                 dataClass == null ? null : dataInspector.pathFunction(dataClass);
         final ElementSpec elementSpec = new ElementSpec(elementParameters, dataParameterIndex, pathFunction);
-        return (objectData, data, dependencyProvider, builder) -> ReflectionUtils.invokeConstructor(
-                finalFactoryConstructor, resolveArguments(objectData, data, builder, dependencyProvider, elementSpec));
+        return (objectData, data, dependencyProvider) -> ReflectionUtils.invokeConstructor(finalFactoryConstructor,
+                resolveArguments(objectData, data, dependencyProvider, elementSpec));
     }
 
     private record ElementSpec(List<ElementParameter> parameters, int dataIndex,

@@ -40,25 +40,18 @@ public class BasicElementBuilderIntegrationTest {
         final ElementInspector elementInspector = new BasicElementInspector(factoryResolver, processorResolver);
 
         final Registry<ConfigProcessor<?>> configRegistry = new HashRegistry<>();
+        final Registry<ElementFactory<?, ?>> factoryRegistry = new HashRegistry<>();
+
         final KeyExtractor idExtractor = new BasicKeyExtractor("id", keyParser);
         final PathKeySplitter pathKeySplitter = new BasicPathKeySplitter();
         final DataLocator dataLocator = new BasicDataLocator(idExtractor, pathKeySplitter);
-        final DataContext.Source source = new BasicDataContext.Source(configRegistry, dataLocator, typeExtractor);
+        final ElementContext.Source source = new BasicElementContext.Source(configRegistry, factoryRegistry,
+                dataLocator, typeExtractor);
 
-        final Registry<ElementFactory<?, ?>> factoryRegistry = new HashRegistry<>();
-
-        this.elementBuilder = new BasicElementBuilder(elementInspector, dataIdentifier, elementTypeIdentifier, source,
-                factoryRegistry);
+        this.elementBuilder = new BasicElementBuilder(elementInspector, elementTypeIdentifier, source);
         elementBuilder.registerElementClass(SimpleElement.class);
         elementBuilder.registerElementClass(SimpleData.class);
         elementBuilder.registerElementClass(Nested.class);
-    }
-
-    @Test
-    void simpleElement() {
-        final SimpleElement simple = elementBuilder.build(keyParser.parseKey("simple_element"), null,
-                DependencyProvider.EMPTY);
-        assertNotNull(simple);
     }
 
     @Test
@@ -67,8 +60,8 @@ public class BasicElementBuilderIntegrationTest {
         node.putString("type", "simple_data");
         node.putNumber("value", 10);
 
-        final DataContext data = elementBuilder.makeContext(node);
-        final SimpleData element = elementBuilder.build(data.provide(null), null, DependencyProvider.EMPTY);
+        final ElementContext data = elementBuilder.makeContext(node);
+        final SimpleData element = data.provide(null, DependencyProvider.EMPTY);
 
         assertNotNull(element);
         assertEquals(10, element.data.value);
@@ -87,8 +80,8 @@ public class BasicElementBuilderIntegrationTest {
 
         node.put("sub", nested);
 
-        final DataContext data = elementBuilder.makeContext(node);
-        final Nested nestedElement = elementBuilder.build(data.provide(null), data, DependencyProvider.EMPTY);
+        final ElementContext data = elementBuilder.makeContext(node);
+        final Nested nestedElement = data.provide(null, DependencyProvider.EMPTY);
 
         assertNotNull(nestedElement);
         assertEquals(10, nestedElement.simpleElement.data.value);
