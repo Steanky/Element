@@ -95,8 +95,8 @@ public class BasicElementContext implements ElementContext {
          *
          * @param processorRegistry the {@link Registry} passed to all {@link BasicElementContext} instances created by
          *                          this source, used for referencing {@link ConfigProcessor} objects
-         * @param factoryRegistry   the {@link Registry} passed to all {@link BasicElementContext} instances created by
-         *                          this source, used for referencing {@link ElementFactory} objects
+         * @param factoryRegistry   the {@link Registry} passed to all BasicElementContext instances created by this
+         *                          source, used for referencing {@link ElementFactory} objects
          * @param dataLocator       the {@link DataLocator} passed to all BasicDataContext instances created by this
          *                          source
          * @param keyExtractor      the {@link KeyExtractor} passed to all BasicDataContext instances created by this

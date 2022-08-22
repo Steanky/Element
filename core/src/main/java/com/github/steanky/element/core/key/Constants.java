@@ -8,6 +8,11 @@ import org.intellij.lang.annotations.Subst;
  */
 public final class Constants {
     /**
+     * The default string used by key-related annotations.
+     */
+    public static final String DEFAULT = "DEFAULT";
+
+    /**
      * The namespace separator character.
      */
     public static final char NAMESPACE_SEPARATOR = ':';

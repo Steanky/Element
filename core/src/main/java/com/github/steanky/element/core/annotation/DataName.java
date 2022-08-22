@@ -6,8 +6,8 @@ import org.jetbrains.annotations.NotNull;
 import java.lang.annotation.*;
 
 /**
- * Annotation used to identify composite parameters, if doing so automatically their type is not possible (for example,
- * when depending on multiple elements of the same type).
+ * Annotation used to identify composite parameters, if doing so automatically based on their type is not possible (for
+ * example, when depending on multiple elements of the same type).
  */
 @Documented
 @Retention(RetentionPolicy.RUNTIME)

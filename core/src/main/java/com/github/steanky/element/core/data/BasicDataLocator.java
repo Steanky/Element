@@ -56,8 +56,8 @@ public class BasicDataLocator implements DataLocator {
 
             if (!foundNode) {
                 throw new ElementException(
-                        "couldn't find node named " + name + " in node " + current + " under namespace " +
-                                dataNamespace);
+                        "couldn't find node named '" + name + "' in node " + current + " under namespace '" +
+                                dataNamespace + "' with full path '" + dataPath + "'");
             }
         }
 

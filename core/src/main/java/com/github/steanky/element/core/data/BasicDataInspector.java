@@ -56,7 +56,7 @@ public class BasicDataInspector implements DataInspector {
         return (data, id) -> {
             final Method method = typeMap.get(id);
             if (method == null) {
-                throw elementException(dataClass, "no DataPath accessor for " + id);
+                throw elementException(dataClass, "no DataPath accessor for '" + id + "'");
             }
 
             return ReflectionUtils.invokeMethod(method, data);

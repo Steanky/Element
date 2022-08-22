@@ -52,7 +52,7 @@ public class BasicDataIdentifier implements DataIdentifier {
             throw elementException(dataClass, "must supply an ElementData annotation");
         }
 
-        if (!elementData.value().equals(DataObject.DEFAULT_VALUE)) {
+        if (!elementData.value().equals(Constants.DEFAULT)) {
             @Subst(Constants.NAMESPACE_OR_KEY) final String value = elementData.value();
             return keyParser.parseKey(value);
         }

@@ -53,13 +53,13 @@ public class BasicFactoryResolver implements FactoryResolver {
         return parser.parseKey(keyString);
     }
 
-    private Object[] resolveArguments(final Object objectData, final ElementContext data,
+    private Object[] resolveArguments(final Object objectData, final ElementContext context,
             final DependencyProvider provider, final ElementSpec spec) {
         final Object[] args;
         if (spec.dataIndex == -1) {
             args = new Object[spec.parameters.size()];
             for (int i = 0; i < spec.parameters.size(); i++) {
-                args[i] = processParameter(spec.pathFunction, spec.parameters.get(i), objectData, data, provider);
+                args[i] = processParameter(spec.pathFunction, spec.parameters.get(i), objectData, context, provider);
             }
 
             return args;
@@ -69,24 +69,23 @@ public class BasicFactoryResolver implements FactoryResolver {
         args[spec.dataIndex] = objectData;
 
         for (int i = 0; i < spec.dataIndex; i++) {
-            args[i] = processParameter(spec.pathFunction, spec.parameters.get(i), objectData, data, provider);
+            args[i] = processParameter(spec.pathFunction, spec.parameters.get(i), objectData, context, provider);
         }
 
         for (int i = spec.dataIndex + 1; i < args.length; i++) {
-            args[i] = processParameter(spec.pathFunction, spec.parameters.get(i - 1), objectData, data, provider);
+            args[i] = processParameter(spec.pathFunction, spec.parameters.get(i - 1), objectData, context, provider);
         }
 
         return args;
     }
 
     private Object processParameter(final DataInspector.PathFunction pathFunction, final ElementParameter parameter,
-            final Object objectData, final ElementContext data, final DependencyProvider provider) {
+            final Object objectData, final ElementContext context, final DependencyProvider provider) {
         if (parameter.isDependency) {
             return provider.provide(parameter.type, parameter.id);
         }
 
-        final Key dataPath = pathFunction.apply(objectData, parameter.id);
-        return data.provide(dataPath, provider);
+        return context.provide(pathFunction.apply(objectData, parameter.id), provider);
     }
 
     @Override
@@ -209,7 +208,7 @@ public class BasicFactoryResolver implements FactoryResolver {
 
             final String name = dependency.name();
             elementParameters.add(new ElementParameter(parseKey(keyParser, dependency.value()),
-                    name.equals(Dependency.DEFAULT_NAME) ? null : parseKey(keyParser, name), true));
+                    name.equals(Constants.DEFAULT) ? null : parseKey(keyParser, name), true));
         }
 
         if (hasComposite && dataClass == null) {
