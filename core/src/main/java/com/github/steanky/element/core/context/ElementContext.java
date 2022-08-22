@@ -25,6 +25,41 @@ public interface ElementContext {
             final @NotNull DependencyProvider dependencyProvider);
 
     /**
+     * Convenience overload for {@link ElementContext#provide(Key, DependencyProvider)}. This will provide the root
+     * element using the given {@link DependencyProvider}.
+     *
+     * @param dependencyProvider the DependencyProvider used to provide dependencies
+     * @param <TElement>         the type of the contextual element object
+     * @return the root element object
+     */
+    default <TElement> @NotNull TElement provide(final @NotNull DependencyProvider dependencyProvider) {
+        return provide(null, dependencyProvider);
+    }
+
+    /**
+     * Convenience overload for {@link ElementContext#provide(Key, DependencyProvider)}. This will provide the element
+     * specified by the path, using an empty dependency provider ({@link DependencyProvider#EMPTY}).
+     *
+     * @param path       the data path
+     * @param <TElement> the type of the contextual element object
+     * @return the element object
+     */
+    default <TElement> @NotNull TElement provide(final @Nullable Key path) {
+        return provide(path, DependencyProvider.EMPTY);
+    }
+
+    /**
+     * Convenience overload for {@link ElementContext#provide(Key, DependencyProvider)}. This will provide the root
+     * element using an empty dependency provider ({@link DependencyProvider#EMPTY}).
+     *
+     * @param <TElement> the type of the contextual element object
+     * @return the element object
+     */
+    default <TElement> @NotNull TElement provide() {
+        return provide(null, DependencyProvider.EMPTY);
+    }
+
+    /**
      * Returns the root node of this context. This might contain data for contextual objects.
      *
      * @return the root node of this context
