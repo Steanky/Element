@@ -1,5 +1,6 @@
-package com.github.steanky.element.core.element;
+package com.github.steanky.element.core.context;
 
+import com.github.steanky.element.core.ElementFactory;
 import com.github.steanky.element.core.Registry;
 import com.github.steanky.element.core.dependency.DependencyProvider;
 import com.github.steanky.ethylene.core.collection.ConfigNode;

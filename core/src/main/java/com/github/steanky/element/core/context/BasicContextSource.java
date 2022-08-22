@@ -1,5 +1,7 @@
-package com.github.steanky.element.core.element;
+package com.github.steanky.element.core.context;
 
+import com.github.steanky.element.core.ElementInspector;
+import com.github.steanky.element.core.ElementTypeIdentifier;
 import com.github.steanky.ethylene.core.collection.ConfigNode;
 import com.github.steanky.ethylene.core.processor.ConfigProcessor;
 import net.kyori.adventure.key.Key;
@@ -21,7 +23,7 @@ public class BasicContextSource implements ContextSource {
      * @param elementInspector      the {@link ElementInspector} used to extract a factory and processor from an element
      *                              object class
      * @param elementTypeIdentifier the {@link ElementTypeIdentifier} used to identify the key of element objects
-     * @param elementContextSource     the {@link ElementContext.Source} instance used to create {@link ElementContext}
+     * @param elementContextSource  the {@link ElementContext.Source} instance used to create {@link ElementContext}
      *                              instances from {@link ConfigNode}s
      */
     public BasicContextSource(final @NotNull ElementInspector elementInspector,

@@ -1,6 +1,8 @@
 package com.github.steanky.element.core.element;
 
+import com.github.steanky.element.core.BasicElementTypeIdentifier;
 import com.github.steanky.element.core.ElementException;
+import com.github.steanky.element.core.ElementTypeIdentifier;
 import com.github.steanky.element.core.annotation.Model;
 import com.github.steanky.element.core.key.BasicKeyParser;
 import net.kyori.adventure.key.Key;

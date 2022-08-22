@@ -1,8 +1,11 @@
 package com.github.steanky.element.core.element;
 
-import com.github.steanky.element.core.HashRegistry;
-import com.github.steanky.element.core.Registry;
+import com.github.steanky.element.core.*;
 import com.github.steanky.element.core.annotation.*;
+import com.github.steanky.element.core.context.BasicContextSource;
+import com.github.steanky.element.core.context.BasicElementContext;
+import com.github.steanky.element.core.context.ContextSource;
+import com.github.steanky.element.core.context.ElementContext;
 import com.github.steanky.element.core.data.*;
 import com.github.steanky.element.core.dependency.DependencyProvider;
 import com.github.steanky.element.core.factory.BasicFactoryResolver;

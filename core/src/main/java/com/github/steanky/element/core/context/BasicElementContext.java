@@ -1,6 +1,7 @@
-package com.github.steanky.element.core.element;
+package com.github.steanky.element.core.context;
 
 import com.github.steanky.element.core.ElementException;
+import com.github.steanky.element.core.ElementFactory;
 import com.github.steanky.element.core.Registry;
 import com.github.steanky.element.core.data.DataLocator;
 import com.github.steanky.element.core.dependency.DependencyProvider;
@@ -72,14 +73,14 @@ public class BasicElementContext implements ElementContext {
 
         final Object dataObject;
         try {
-            dataObject = processorRegistry.contains(objectType) ? processorRegistry.lookup(objectType)
-                    .dataFromElement(dataNode) : null;
+            dataObject = processorRegistry.contains(objectType) ?
+                    processorRegistry.lookup(objectType).dataFromElement(dataNode) : null;
         } catch (ConfigProcessException e) {
             throw new ElementException("error deserializing data node at path '" + normalizedPath + "'", e);
         }
 
-        final TElement element = (TElement) ((ElementFactory<Object, Object>) factoryRegistry.lookup(objectType))
-                .make(dataObject, this, dependencyProvider);
+        final TElement element = (TElement) ((ElementFactory<Object, Object>) factoryRegistry.lookup(objectType)).make(
+                dataObject, this, dependencyProvider);
         elementObjects.put(normalizedPath, element);
         return element;
     }

@@ -1,4 +1,4 @@
-package com.github.steanky.element.core.element;
+package com.github.steanky.element.core;
 
 import com.github.steanky.element.core.annotation.Model;
 import com.github.steanky.element.core.key.Constants;

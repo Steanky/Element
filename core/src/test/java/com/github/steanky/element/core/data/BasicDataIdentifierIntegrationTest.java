@@ -1,10 +1,10 @@
 package com.github.steanky.element.core.data;
 
+import com.github.steanky.element.core.BasicElementTypeIdentifier;
 import com.github.steanky.element.core.ElementException;
+import com.github.steanky.element.core.ElementTypeIdentifier;
 import com.github.steanky.element.core.annotation.DataObject;
 import com.github.steanky.element.core.annotation.Model;
-import com.github.steanky.element.core.element.BasicElementTypeIdentifier;
-import com.github.steanky.element.core.element.ElementTypeIdentifier;
 import com.github.steanky.element.core.key.BasicKeyParser;
 import com.github.steanky.element.core.key.KeyParser;
 import net.kyori.adventure.key.Key;

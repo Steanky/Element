@@ -1,4 +1,4 @@
-package com.github.steanky.element.core.element;
+package com.github.steanky.element.core.context;
 
 import com.github.steanky.element.core.ElementException;
 import com.github.steanky.ethylene.core.collection.ConfigNode;

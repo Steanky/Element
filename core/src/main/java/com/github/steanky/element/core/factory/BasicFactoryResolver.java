@@ -1,16 +1,16 @@
 package com.github.steanky.element.core.factory;
 
 import com.github.steanky.element.core.ElementException;
+import com.github.steanky.element.core.ElementFactory;
+import com.github.steanky.element.core.ElementTypeIdentifier;
 import com.github.steanky.element.core.annotation.DataName;
 import com.github.steanky.element.core.annotation.DataObject;
 import com.github.steanky.element.core.annotation.Dependency;
 import com.github.steanky.element.core.annotation.FactoryMethod;
+import com.github.steanky.element.core.context.ElementContext;
 import com.github.steanky.element.core.data.DataInspector;
 import com.github.steanky.element.core.data.DataInspector.PathFunction;
-import com.github.steanky.element.core.element.ElementContext;
 import com.github.steanky.element.core.dependency.DependencyProvider;
-import com.github.steanky.element.core.element.ElementFactory;
-import com.github.steanky.element.core.element.ElementTypeIdentifier;
 import com.github.steanky.element.core.key.Constants;
 import com.github.steanky.element.core.key.KeyParser;
 import com.github.steanky.element.core.util.ReflectionUtils;

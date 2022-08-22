@@ -1,7 +1,7 @@
 package com.github.steanky.element.core.factory;
 
+import com.github.steanky.element.core.ElementFactory;
 import com.github.steanky.element.core.annotation.FactoryMethod;
-import com.github.steanky.element.core.element.ElementFactory;
 import com.github.steanky.ethylene.core.processor.ConfigProcessor;
 import org.jetbrains.annotations.NotNull;
 

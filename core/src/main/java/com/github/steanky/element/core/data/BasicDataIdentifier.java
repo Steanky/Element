@@ -1,8 +1,8 @@
 package com.github.steanky.element.core.data;
 
+import com.github.steanky.element.core.ElementTypeIdentifier;
 import com.github.steanky.element.core.annotation.DataObject;
 import com.github.steanky.element.core.annotation.Model;
-import com.github.steanky.element.core.element.ElementTypeIdentifier;
 import com.github.steanky.element.core.key.Constants;
 import com.github.steanky.element.core.key.KeyParser;
 import net.kyori.adventure.key.Key;
