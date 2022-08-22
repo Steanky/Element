@@ -2,7 +2,6 @@ package com.github.steanky.element.core.element;
 
 import com.github.steanky.element.core.ElementException;
 import com.github.steanky.element.core.data.ElementContext;
-import com.github.steanky.element.core.dependency.DependencyProvider;
 import com.github.steanky.ethylene.core.collection.ConfigNode;
 import org.jetbrains.annotations.NotNull;
 

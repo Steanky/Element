@@ -17,7 +17,8 @@ public interface ElementFactory<TData, TElement> {
      * Constructs an element object from a specific data object, {@link ElementContext}, dependencies, and builder.
      *
      * @param objectData         the specific data object used to create this type
-     * @param context            the element context, potentially used for resolving dependencies that are also elements
+     * @param context            the element context, potentially used for resolving dependencies that are also
+     *                           elements
      * @param dependencyProvider the provider of dependency objects that are not elements
      * @return the element object
      */

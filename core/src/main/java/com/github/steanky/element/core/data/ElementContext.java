@@ -2,7 +2,6 @@ package com.github.steanky.element.core.data;
 
 import com.github.steanky.element.core.Registry;
 import com.github.steanky.element.core.dependency.DependencyProvider;
-import com.github.steanky.element.core.element.ContextSource;
 import com.github.steanky.element.core.element.ElementFactory;
 import com.github.steanky.ethylene.core.collection.ConfigNode;
 import com.github.steanky.ethylene.core.processor.ConfigProcessor;
@@ -19,10 +18,11 @@ public interface ElementContext {
      *
      * @param path               the path key
      * @param dependencyProvider the {@link DependencyProvider} used to provide dependencies
-     * @param <TElement> the type of the element object
+     * @param <TElement>         the type of the element object
      * @return the contextual element object
      */
-    <TElement> @NotNull TElement provide(final @Nullable Key path, final @NotNull DependencyProvider dependencyProvider);
+    <TElement> @NotNull TElement provide(final @Nullable Key path,
+            final @NotNull DependencyProvider dependencyProvider);
 
     /**
      * Returns the root node of this context. This might contain data for contextual objects.
@@ -30,13 +30,6 @@ public interface ElementContext {
      * @return the root node of this context
      */
     @NotNull ConfigNode rootNode();
-
-    /**
-     * Returns the {@link ContextSource} that created this context.
-     *
-     * @return the ElementBuilder that created this context
-     */
-    @NotNull ContextSource builder();
 
     /**
      * A source of {@link ElementContext} objects.
@@ -48,15 +41,20 @@ public interface ElementContext {
          * @param node the node used to create the DataContext
          * @return the new DataContext object
          */
-        @NotNull ElementContext make(final @NotNull ContextSource contextSource, final @NotNull ConfigNode node);
+        @NotNull ElementContext make(final @NotNull ConfigNode node);
 
         /**
-         * Returns the {@link Registry} object holding {@link ConfigProcessor} objects used to deserialize data
+         * Returns the {@link Registry} object holding {@link ConfigProcessor} objects used to deserialize data.
          *
          * @return a Registry of ConfigProcessors
          */
         @NotNull Registry<ConfigProcessor<?>> processorRegistry();
 
+        /**
+         * Returns the {@link Registry} object holding {@link ElementFactory} objects used to create elements.
+         *
+         * @return a Registry of ElementFactories
+         */
         @NotNull Registry<ElementFactory<?, ?>> factoryRegistry();
     }
 }

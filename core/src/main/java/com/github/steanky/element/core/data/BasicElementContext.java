@@ -3,7 +3,6 @@ package com.github.steanky.element.core.data;
 import com.github.steanky.element.core.ElementException;
 import com.github.steanky.element.core.Registry;
 import com.github.steanky.element.core.dependency.DependencyProvider;
-import com.github.steanky.element.core.element.ContextSource;
 import com.github.steanky.element.core.element.ElementFactory;
 import com.github.steanky.element.core.key.KeyExtractor;
 import com.github.steanky.ethylene.core.collection.ConfigNode;
@@ -21,7 +20,6 @@ import java.util.Objects;
  * Basic implementation of {@link ElementContext}.
  */
 public class BasicElementContext implements ElementContext {
-    private final ContextSource contextSource;
     private final Registry<ConfigProcessor<?>> processorRegistry;
     private final Registry<ElementFactory<?, ?>> factoryRegistry;
     private final DataLocator dataLocator;
@@ -35,16 +33,15 @@ public class BasicElementContext implements ElementContext {
      *
      * @param processorRegistry the {@link Registry} used to hold references to {@link ConfigProcessor} instances needed
      *                          to deserialize element object data
+     * @param factoryRegistry   the Registry used to hold references to {@link ElementFactory} instances needed to
+     *                          construct element objects
      * @param dataLocator       the {@link DataLocator} implementation used to locate data objects from identifiers
      * @param typeKeyExtractor  the {@link KeyExtractor} implementation used to extract type keys from nodes
      * @param rootNode          the {@link ConfigNode} used as the root (may contain additional element data)
      */
-    public BasicElementContext(final @NotNull ContextSource contextSource,
-            final @NotNull Registry<ConfigProcessor<?>> processorRegistry,
-            final @NotNull Registry<ElementFactory<?, ?>> factoryRegistry,
-            final @NotNull DataLocator dataLocator, final @NotNull KeyExtractor typeKeyExtractor,
-            final @NotNull ConfigNode rootNode) {
-        this.contextSource = Objects.requireNonNull(contextSource);
+    public BasicElementContext(final @NotNull Registry<ConfigProcessor<?>> processorRegistry,
+            final @NotNull Registry<ElementFactory<?, ?>> factoryRegistry, final @NotNull DataLocator dataLocator,
+            final @NotNull KeyExtractor typeKeyExtractor, final @NotNull ConfigNode rootNode) {
         this.processorRegistry = Objects.requireNonNull(processorRegistry);
         this.factoryRegistry = Objects.requireNonNull(factoryRegistry);
         this.dataLocator = Objects.requireNonNull(dataLocator);
@@ -73,8 +70,8 @@ public class BasicElementContext implements ElementContext {
             throw new ElementException("error deserializing data node at path '" + path + "'", e);
         }
 
-        final TElement element = (TElement) ((ElementFactory<Object, Object>) factoryRegistry.lookup(objectType))
-                .make(dataObject, this, dependencyProvider);
+        final TElement element = (TElement) ((ElementFactory<Object, Object>) factoryRegistry.lookup(objectType)).make(
+                dataObject, this, dependencyProvider);
         elementObjects.put(path, element);
         return element;
     }
@@ -82,11 +79,6 @@ public class BasicElementContext implements ElementContext {
     @Override
     public @NotNull ConfigNode rootNode() {
         return rootNode;
-    }
-
-    @Override
-    public @NotNull ContextSource builder() {
-        return contextSource;
     }
 
     /**
@@ -102,15 +94,17 @@ public class BasicElementContext implements ElementContext {
          * Creates a new instance of this class.
          *
          * @param processorRegistry the {@link Registry} passed to all {@link BasicElementContext} instances created by
-         *                          this source
+         *                          this source, used for referencing {@link ConfigProcessor} objects
+         * @param factoryRegistry   the {@link Registry} passed to all {@link BasicElementContext} instances created by
+         *                          this source, used for referencing {@link ElementFactory} objects
          * @param dataLocator       the {@link DataLocator} passed to all BasicDataContext instances created by this
          *                          source
          * @param keyExtractor      the {@link KeyExtractor} passed to all BasicDataContext instances created by this
          *                          source
          */
         public Source(final @NotNull Registry<ConfigProcessor<?>> processorRegistry,
-                final @NotNull Registry<ElementFactory<?, ?>> factoryRegistry,
-                final @NotNull DataLocator dataLocator, final @NotNull KeyExtractor keyExtractor) {
+                final @NotNull Registry<ElementFactory<?, ?>> factoryRegistry, final @NotNull DataLocator dataLocator,
+                final @NotNull KeyExtractor keyExtractor) {
             this.processorRegistry = Objects.requireNonNull(processorRegistry);
             this.factoryRegistry = Objects.requireNonNull(factoryRegistry);
             this.dataLocator = Objects.requireNonNull(dataLocator);
@@ -118,10 +112,8 @@ public class BasicElementContext implements ElementContext {
         }
 
         @Override
-        public @NotNull BasicElementContext make(final @NotNull ContextSource contextSource,
-                final @NotNull ConfigNode node) {
-            return new BasicElementContext(contextSource, processorRegistry, factoryRegistry, dataLocator,
-                    keyExtractor, node);
+        public @NotNull BasicElementContext make(final @NotNull ConfigNode node) {
+            return new BasicElementContext(processorRegistry, factoryRegistry, dataLocator, keyExtractor, node);
         }
 
         @Override

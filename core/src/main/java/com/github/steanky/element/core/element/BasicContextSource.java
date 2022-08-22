@@ -47,6 +47,6 @@ public class BasicContextSource implements ContextSource {
 
     @Override
     public @NotNull ElementContext makeContext(final @NotNull ConfigNode node) {
-        return elementDataSource.make(this, node);
+        return elementDataSource.make(node);
     }
 }
