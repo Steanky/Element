@@ -16,9 +16,11 @@ import org.jetbrains.annotations.NotNull;
  * separator character present</i>.
  */
 public class BasicKeyParser implements KeyParser {
+    /**
+     * The default-default namespace for this {@link KeyParser} implementation.
+     */
     public static final String DEFAULT_DEFAULT_NAMESPACE = "default";
 
-    @Subst(Constants.NAMESPACE_OR_KEY)
     private final String defaultNamespace;
 
     /**

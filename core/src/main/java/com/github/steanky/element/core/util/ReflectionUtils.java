@@ -5,7 +5,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.lang.reflect.*;
-import java.util.Objects;
+import java.util.*;
 
 /**
  * Contains reflection-related utility methods.
@@ -114,6 +114,6 @@ public final class ReflectionUtils {
             return Object.class;
         }
 
-        throw new IllegalArgumentException("Unexpected subclass of Type: " + type.getClass().getTypeName());
+        throw new IllegalArgumentException("unexpected subclass of Type '" + type.getClass().getTypeName() + "'");
     }
 }
