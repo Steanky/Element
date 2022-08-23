@@ -18,7 +18,7 @@ public interface DependencyProvider {
     DependencyProvider EMPTY = new DependencyProvider() {
         @Override
         public <TDependency> @NotNull TDependency provide(@NotNull Key type, @Nullable Key name) {
-            throw new ElementException("unable to resolve dependency of type '" + type + "'");
+            throw new ElementException("unable to resolve dependency of type '" + type + "'" + " and name '" + name + "'");
         }
     };
 
@@ -38,7 +38,7 @@ public interface DependencyProvider {
      * @param type          the dependency type
      * @param <TDependency> the type of object to depend upon
      * @return the dependency object
-     * @throws ElementException if the dependency could not be loaded
+     * @throws ElementException if the dependency could not be provided
      */
     default <TDependency> @NotNull TDependency provide(final @NotNull Key type) {
         return provide(type, null);

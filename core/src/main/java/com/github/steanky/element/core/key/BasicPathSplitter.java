@@ -6,7 +6,8 @@ import java.util.List;
 import java.util.regex.Pattern;
 
 /**
- * Basic implementation of {@link PathSplitter}. A forward slash '/' is interpreted as a delimiter character.
+ * Basic implementation of {@link PathSplitter}. A forward slash '/' is interpreted as a delimiter character. Empty
+ * path nodes are ignored.
  */
 public class BasicPathSplitter implements PathSplitter {
     private static final String SPLIT_STRING = "/";
@@ -14,6 +15,10 @@ public class BasicPathSplitter implements PathSplitter {
 
     @Override
     public Object @NotNull [] splitPathKey(final @NotNull String pathString) {
+        if (pathString.isEmpty()) {
+            return new Object[0];
+        }
+
         final String[] entries = pathString.split(SPLIT_STRING);
         final List<Object> objects = new ArrayList<>(entries.length);
 

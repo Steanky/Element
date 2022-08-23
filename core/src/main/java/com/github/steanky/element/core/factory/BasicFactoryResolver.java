@@ -59,7 +59,7 @@ public class BasicFactoryResolver implements FactoryResolver {
         if (spec.dataIndex == -1) {
             args = new Object[spec.parameters.size()];
             for (int i = 0; i < spec.parameters.size(); i++) {
-                args[i] = processParameter(spec.pathFunction, spec.parameters.get(i), objectData, context, provider);
+                args[i] = processParameter(spec.parameters.get(i), context, provider, spec.pathFunction, objectData);
             }
 
             return args;
@@ -69,23 +69,23 @@ public class BasicFactoryResolver implements FactoryResolver {
         args[spec.dataIndex] = objectData;
 
         for (int i = 0; i < spec.dataIndex; i++) {
-            args[i] = processParameter(spec.pathFunction, spec.parameters.get(i), objectData, context, provider);
+            args[i] = processParameter(spec.parameters.get(i), context, provider, spec.pathFunction, objectData);
         }
 
         for (int i = spec.dataIndex + 1; i < args.length; i++) {
-            args[i] = processParameter(spec.pathFunction, spec.parameters.get(i - 1), objectData, context, provider);
+            args[i] = processParameter(spec.parameters.get(i - 1), context, provider, spec.pathFunction, objectData);
         }
 
         return args;
     }
 
-    private Object processParameter(final DataInspector.PathFunction pathFunction, final ElementParameter parameter,
-            final Object objectData, final ElementContext context, final DependencyProvider provider) {
+    private Object processParameter(final ElementParameter parameter, final ElementContext context,
+            final DependencyProvider provider, final PathFunction pathFunction, final Object data) {
         if (parameter.isDependency) {
             return provider.provide(parameter.type, parameter.id);
         }
 
-        return context.provide(pathFunction.apply(objectData, parameter.id), provider);
+        return context.provide(pathFunction.apply(data, parameter.id), provider);
     }
 
     @Override

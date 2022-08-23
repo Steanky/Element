@@ -33,10 +33,10 @@ public class BasicDataInspector implements DataInspector {
 
     @Override
     public @NotNull PathFunction pathFunction(final @NotNull Class<?> dataClass) {
-        final Method[] accessorMethods = dataClass.getDeclaredMethods();
-        final Map<Key, Method> typeMap = new HashMap<>(2);
+        final Method[] declaredMethods = dataClass.getDeclaredMethods();
+        final Map<Key, Method> accessorMap = new HashMap<>(2);
 
-        for (final Method method : accessorMethods) {
+        for (final Method method : declaredMethods) {
             final DataPath dataPathAnnotation = method.getDeclaredAnnotation(DataPath.class);
             if (dataPathAnnotation != null) {
                 validateModifiersPresent(method, () -> "DataPath accessor must be public", Modifier.PUBLIC);
@@ -48,14 +48,14 @@ public class BasicDataInspector implements DataInspector {
                 @Subst(Constants.NAMESPACE_OR_KEY) final String idString = dataPathAnnotation.value();
                 final Key idKey = keyParser.parseKey(idString);
 
-                if (typeMap.putIfAbsent(idKey, method) != null) {
-                    throw elementException(dataClass, "multiple DataPath accessors for name '" + idKey + "'");
+                if (accessorMap.putIfAbsent(idKey, method) != null) {
+                    throw elementException(dataClass, "multiple DataPath accessors with name '" + idKey + "'");
                 }
             }
         }
 
         return (data, id) -> {
-            final Method method = typeMap.get(id);
+            final Method method = accessorMap.get(id);
             if (method == null) {
                 throw elementException(dataClass, "no DataPath accessor for '" + id + "'");
             }

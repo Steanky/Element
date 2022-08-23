@@ -16,6 +16,8 @@ import org.jetbrains.annotations.NotNull;
  * separator character present</i>.
  */
 public class BasicKeyParser implements KeyParser {
+    public static final String DEFAULT_DEFAULT_NAMESPACE = "default";
+
     @Subst(Constants.NAMESPACE_OR_KEY)
     private final String defaultNamespace;
 
@@ -28,17 +30,18 @@ public class BasicKeyParser implements KeyParser {
      */
     public BasicKeyParser(final @NotNull @NamespaceString String defaultNamespace) {
         if (!namespaceValid(defaultNamespace)) {
-            throw new IllegalArgumentException("Invalid default namespace: " + defaultNamespace);
+            throw new IllegalArgumentException("invalid default namespace '" + defaultNamespace +  "'");
         }
 
         this.defaultNamespace = defaultNamespace;
     }
 
     /**
-     * Creates a new instance of this class that uses the default namespace "default".
+     * Creates a new instance of this class that uses the default namespace string
+     * {@link BasicKeyParser#DEFAULT_DEFAULT_NAMESPACE}.
      */
     public BasicKeyParser() {
-        this("default");
+        this(DEFAULT_DEFAULT_NAMESPACE);
     }
 
     //below logic currently duplicates what is in KeyImpl, this should no longer be necessary after Adventure 4.12.0
@@ -85,12 +88,12 @@ public class BasicKeyParser implements KeyParser {
         //resolve default namespaces differently than in adventure: leading : means empty namespace, no : means default
         @Subst(Constants.NAMESPACE_OR_KEY) final String namespace = extractNamespace(keyString, separatorIndex);
         if (!namespaceValid(namespace)) {
-            throw new ElementException("Invalid namespace: " + keyString);
+            throw new ElementException("invalid namespace '" + namespace + "' from key '" + keyString + "'");
         }
 
         @Subst(Constants.NAMESPACE_OR_KEY) final String value = extractValue(keyString, separatorIndex);
         if (!valueValid(value)) {
-            throw new ElementException("Invalid value: " + value);
+            throw new ElementException("invalid value '" + value + "' from key '" + keyString + "'");
         }
 
         return Key.key(namespace, value);

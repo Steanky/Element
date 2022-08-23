@@ -9,6 +9,7 @@ import org.jetbrains.annotations.Nullable;
  * Extracts a {@link ConfigProcessor} implementation from the given class. There must be a {@code public static} method
  * annotated with {@link ProcessorMethod} that returns the ConfigProcessor when called.
  */
+@FunctionalInterface
 public interface ProcessorResolver {
     /**
      * Resolves a {@link ConfigProcessor} from the given {@link Class}.

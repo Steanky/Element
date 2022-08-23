@@ -18,7 +18,7 @@ public class BasicDataLocator implements DataLocator {
     /**
      * Creates a new instance of this class.
      *
-     * @param pathSplitter the {@link PathSplitter} used to split path keys
+     * @param pathSplitter the {@link PathSplitter} used to split path strings
      */
     public BasicDataLocator(final @NotNull PathSplitter pathSplitter) {
         this.pathSplitter = Objects.requireNonNull(pathSplitter);
@@ -35,7 +35,7 @@ public class BasicDataLocator implements DataLocator {
             return rootNode.getNodeOrThrow(path);
         }
         catch (ConfigProcessException e) {
-            throw new ElementException("invalid data path '" + dataPath + "'", e);
+            throw new ElementException("invalid or missing data path '" + dataPath + "'", e);
         }
     }
 }
