@@ -24,11 +24,10 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 
 public class BasicContextSourceIntegrationTest {
-    private final KeyParser keyParser;
     private final ContextSource contextSource;
 
     public BasicContextSourceIntegrationTest() {
-        this.keyParser = new BasicKeyParser("test");
+        KeyParser keyParser = new BasicKeyParser("test");
 
         final KeyExtractor typeExtractor = new BasicKeyExtractor("type", keyParser);
         final ElementTypeIdentifier elementTypeIdentifier = new BasicElementTypeIdentifier(keyParser);
@@ -75,6 +74,7 @@ public class BasicContextSourceIntegrationTest {
 
         assertNotNull(nestedElement);
         assertEquals(10, nestedElement.simpleElement.data.value);
+        assertEquals("simple_data", nestedElement.data.key);
     }
 
     @Model("simple_element")
