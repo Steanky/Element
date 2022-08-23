@@ -1,11 +1,12 @@
 package com.github.steanky.element.core.key;
 
 import org.jetbrains.annotations.NotNull;
+import com.github.steanky.ethylene.core.ConfigElement;
 
 /**
- * Splits "path keys" into string arrays.
+ * Splits "path strings" into object arrays that can be passed to {@link ConfigElement#getElement(Object...)}.
  */
-public interface PathKeySplitter {
+public interface PathSplitter {
     /**
      * Splits the given path string. The resulting object array will be a valid Ethylene data path.
      *

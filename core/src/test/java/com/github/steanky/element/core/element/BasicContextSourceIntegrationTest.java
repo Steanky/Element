@@ -15,10 +15,8 @@ import com.github.steanky.element.core.processor.BasicProcessorResolver;
 import com.github.steanky.element.core.processor.ProcessorResolver;
 import com.github.steanky.ethylene.core.ConfigElement;
 import com.github.steanky.ethylene.core.collection.ConfigNode;
-import com.github.steanky.ethylene.core.collection.LinkedConfigNode;
 import com.github.steanky.ethylene.core.processor.ConfigProcessException;
 import com.github.steanky.ethylene.core.processor.ConfigProcessor;
-import net.kyori.adventure.key.Key;
 import org.jetbrains.annotations.NotNull;
 import org.junit.jupiter.api.Test;
 
@@ -44,10 +42,10 @@ public class BasicContextSourceIntegrationTest {
         final Registry<ConfigProcessor<?>> configRegistry = new HashRegistry<>();
         final Registry<ElementFactory<?, ?>> factoryRegistry = new HashRegistry<>();
 
-        final PathKeySplitter pathKeySplitter = new BasicPathKeySplitter();
-        final DataLocator dataLocator = new BasicDataLocator(pathKeySplitter);
+        final PathSplitter pathSplitter = new BasicPathSplitter();
+        final DataLocator dataLocator = new BasicDataLocator(pathSplitter);
         final ElementContext.Source source = new BasicElementContext.Source(configRegistry, factoryRegistry,
-                pathKeySplitter, dataLocator, typeExtractor);
+                pathSplitter, dataLocator, typeExtractor);
 
         this.contextSource = new BasicContextSource(elementInspector, elementTypeIdentifier, source);
         contextSource.registerElementClass(SimpleElement.class);

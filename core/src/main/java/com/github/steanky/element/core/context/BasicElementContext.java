@@ -6,7 +6,7 @@ import com.github.steanky.element.core.Registry;
 import com.github.steanky.element.core.data.DataLocator;
 import com.github.steanky.element.core.dependency.DependencyProvider;
 import com.github.steanky.element.core.key.KeyExtractor;
-import com.github.steanky.element.core.key.PathKeySplitter;
+import com.github.steanky.element.core.key.PathSplitter;
 import com.github.steanky.ethylene.core.collection.ConfigNode;
 import com.github.steanky.ethylene.core.processor.ConfigProcessException;
 import com.github.steanky.ethylene.core.processor.ConfigProcessor;
@@ -24,7 +24,7 @@ import java.util.Objects;
 public class BasicElementContext implements ElementContext {
     private final Registry<ConfigProcessor<?>> processorRegistry;
     private final Registry<ElementFactory<?, ?>> factoryRegistry;
-    private final PathKeySplitter pathKeySplitter;
+    private final PathSplitter pathSplitter;
     private final DataLocator dataLocator;
     private final KeyExtractor typeKeyExtractor;
     private final ConfigNode rootNode;
@@ -38,18 +38,18 @@ public class BasicElementContext implements ElementContext {
      *                          to deserialize element object data
      * @param factoryRegistry   the Registry used to hold references to {@link ElementFactory} instances needed to
      *                          construct element objects
-     * @param pathKeySplitter   the {@link PathKeySplitter} used to split path keys
+     * @param pathSplitter   the {@link PathSplitter} used to split path keys
      * @param dataLocator       the {@link DataLocator} implementation used to locate data objects from identifiers
      * @param typeKeyExtractor  the {@link KeyExtractor} implementation used to extract type keys from nodes
      * @param rootNode          the {@link ConfigNode} used as the root (may contain additional element data)
      */
     public BasicElementContext(final @NotNull Registry<ConfigProcessor<?>> processorRegistry,
             final @NotNull Registry<ElementFactory<?, ?>> factoryRegistry,
-            final @NotNull PathKeySplitter pathKeySplitter, final @NotNull DataLocator dataLocator,
+            final @NotNull PathSplitter pathSplitter, final @NotNull DataLocator dataLocator,
             final @NotNull KeyExtractor typeKeyExtractor, final @NotNull ConfigNode rootNode) {
         this.processorRegistry = Objects.requireNonNull(processorRegistry);
         this.factoryRegistry = Objects.requireNonNull(factoryRegistry);
-        this.pathKeySplitter = Objects.requireNonNull(pathKeySplitter);
+        this.pathSplitter = Objects.requireNonNull(pathSplitter);
         this.dataLocator = Objects.requireNonNull(dataLocator);
         this.typeKeyExtractor = Objects.requireNonNull(typeKeyExtractor);
         this.rootNode = Objects.requireNonNull(rootNode);
@@ -61,7 +61,7 @@ public class BasicElementContext implements ElementContext {
     @Override
     public <TElement> @NotNull TElement provide(final @Nullable String path,
             final @NotNull DependencyProvider dependencyProvider) {
-        final String normalizedPath = path == null ? null : pathKeySplitter.normalize(path);
+        final String normalizedPath = path == null ? null : pathSplitter.normalize(path);
 
         //don't use computeIfAbsent because the map may be modified by the mapping function
         if (elementObjects.containsKey(normalizedPath)) {
@@ -96,7 +96,7 @@ public class BasicElementContext implements ElementContext {
     public static class Source implements ElementContext.Source {
         private final Registry<ConfigProcessor<?>> processorRegistry;
         private final Registry<ElementFactory<?, ?>> factoryRegistry;
-        private final PathKeySplitter pathKeySplitter;
+        private final PathSplitter pathSplitter;
         private final DataLocator dataLocator;
         private final KeyExtractor keyExtractor;
 
@@ -107,7 +107,7 @@ public class BasicElementContext implements ElementContext {
          *                          this source, used for referencing {@link ConfigProcessor} objects
          * @param factoryRegistry   the {@link Registry} passed to all BasicElementContext instances created by this
          *                          source, used for referencing {@link ElementFactory} objects
-         * @param pathKeySplitter   the {@link PathKeySplitter} used to split path keys
+         * @param pathSplitter   the {@link PathSplitter} used to split path keys
          * @param dataLocator       the {@link DataLocator} passed to all BasicDataContext instances created by this
          *                          source
          * @param keyExtractor      the {@link KeyExtractor} passed to all BasicDataContext instances created by this
@@ -115,18 +115,18 @@ public class BasicElementContext implements ElementContext {
          */
         public Source(final @NotNull Registry<ConfigProcessor<?>> processorRegistry,
                 final @NotNull Registry<ElementFactory<?, ?>> factoryRegistry,
-                final @NotNull PathKeySplitter pathKeySplitter, final @NotNull DataLocator dataLocator,
+                final @NotNull PathSplitter pathSplitter, final @NotNull DataLocator dataLocator,
                 final @NotNull KeyExtractor keyExtractor) {
             this.processorRegistry = Objects.requireNonNull(processorRegistry);
             this.factoryRegistry = Objects.requireNonNull(factoryRegistry);
-            this.pathKeySplitter = Objects.requireNonNull(pathKeySplitter);
+            this.pathSplitter = Objects.requireNonNull(pathSplitter);
             this.dataLocator = Objects.requireNonNull(dataLocator);
             this.keyExtractor = Objects.requireNonNull(keyExtractor);
         }
 
         @Override
         public @NotNull BasicElementContext make(final @NotNull ConfigNode node) {
-            return new BasicElementContext(processorRegistry, factoryRegistry, pathKeySplitter, dataLocator,
+            return new BasicElementContext(processorRegistry, factoryRegistry, pathSplitter, dataLocator,
                     keyExtractor, node);
         }
 

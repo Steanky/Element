@@ -1,8 +1,7 @@
 package com.github.steanky.element.core.data;
 
 import com.github.steanky.element.core.ElementException;
-import com.github.steanky.element.core.key.KeyExtractor;
-import com.github.steanky.element.core.key.PathKeySplitter;
+import com.github.steanky.element.core.key.PathSplitter;
 import com.github.steanky.ethylene.core.collection.ConfigNode;
 import com.github.steanky.ethylene.core.processor.ConfigProcessException;
 import org.jetbrains.annotations.NotNull;
@@ -14,15 +13,15 @@ import java.util.Objects;
  * Basic implementation of {@link DataLocator}.
  */
 public class BasicDataLocator implements DataLocator {
-    private final PathKeySplitter pathKeySplitter;
+    private final PathSplitter pathSplitter;
 
     /**
      * Creates a new instance of this class.
      *
-     * @param pathKeySplitter the {@link PathKeySplitter} used to split path keys
+     * @param pathSplitter the {@link PathSplitter} used to split path keys
      */
-    public BasicDataLocator(final @NotNull PathKeySplitter pathKeySplitter) {
-        this.pathKeySplitter = Objects.requireNonNull(pathKeySplitter);
+    public BasicDataLocator(final @NotNull PathSplitter pathSplitter) {
+        this.pathSplitter = Objects.requireNonNull(pathSplitter);
     }
 
     @Override
@@ -31,7 +30,7 @@ public class BasicDataLocator implements DataLocator {
             return rootNode;
         }
 
-        final Object[] path = pathKeySplitter.splitPathKey(dataPath);
+        final Object[] path = pathSplitter.splitPathKey(dataPath);
         try {
             return rootNode.getNodeOrThrow(path);
         }

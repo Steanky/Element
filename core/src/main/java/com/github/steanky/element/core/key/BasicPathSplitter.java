@@ -6,9 +6,9 @@ import java.util.List;
 import java.util.regex.Pattern;
 
 /**
- * Basic implementation of {@link PathKeySplitter}. A forward slash '/' is interpreted as a delimiter character.
+ * Basic implementation of {@link PathSplitter}. A forward slash '/' is interpreted as a delimiter character.
  */
-public class BasicPathKeySplitter implements PathKeySplitter {
+public class BasicPathSplitter implements PathSplitter {
     private static final String SPLIT_STRING = "/";
     private static final Pattern NUMBER_PATTERN = Pattern.compile("\\d+");
 
@@ -39,7 +39,7 @@ public class BasicPathKeySplitter implements PathKeySplitter {
     public @NotNull String normalize(final @NotNull String pathString) {
         final Object[] path = splitPathKey(pathString);
 
-        final StringBuilder builder = new StringBuilder();
+        final StringBuilder builder = new StringBuilder(pathString.length());
         for (int i = 0; i < path.length; i++) {
             builder.append(path[i]);
 
