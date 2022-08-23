@@ -10,9 +10,9 @@ import org.jetbrains.annotations.NotNull;
 import java.util.Objects;
 
 /**
- * Standard implementation of {@link ContextSource}.
+ * Standard implementation of {@link ContextManager}.
  */
-public class BasicContextSource implements ContextSource {
+public class BasicContextManager implements ContextManager {
     private final ElementInspector elementInspector;
     private final ElementTypeIdentifier elementTypeIdentifier;
     private final ElementContext.Source elementContextSource;
@@ -26,7 +26,7 @@ public class BasicContextSource implements ContextSource {
      * @param elementContextSource  the {@link ElementContext.Source} instance used to create {@link ElementContext}
      *                              instances from {@link ConfigNode}s
      */
-    public BasicContextSource(final @NotNull ElementInspector elementInspector,
+    public BasicContextManager(final @NotNull ElementInspector elementInspector,
             final @NotNull ElementTypeIdentifier elementTypeIdentifier,
             final @NotNull ElementContext.Source elementContextSource) {
         this.elementInspector = Objects.requireNonNull(elementInspector);

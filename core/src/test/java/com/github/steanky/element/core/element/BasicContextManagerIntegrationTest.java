@@ -2,9 +2,9 @@ package com.github.steanky.element.core.element;
 
 import com.github.steanky.element.core.*;
 import com.github.steanky.element.core.annotation.*;
-import com.github.steanky.element.core.context.BasicContextSource;
+import com.github.steanky.element.core.context.BasicContextManager;
 import com.github.steanky.element.core.context.BasicElementContext;
-import com.github.steanky.element.core.context.ContextSource;
+import com.github.steanky.element.core.context.ContextManager;
 import com.github.steanky.element.core.context.ElementContext;
 import com.github.steanky.element.core.data.*;
 import com.github.steanky.element.core.dependency.DependencyProvider;
@@ -23,10 +23,10 @@ import org.junit.jupiter.api.Test;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 
-public class BasicContextSourceIntegrationTest {
-    private final ContextSource contextSource;
+public class BasicContextManagerIntegrationTest {
+    private final ContextManager contextManager;
 
-    public BasicContextSourceIntegrationTest() {
+    public BasicContextManagerIntegrationTest() {
         KeyParser keyParser = new BasicKeyParser("test");
 
         final KeyExtractor typeExtractor = new BasicKeyExtractor("type", keyParser);
@@ -46,17 +46,17 @@ public class BasicContextSourceIntegrationTest {
         final ElementContext.Source source = new BasicElementContext.Source(configRegistry, factoryRegistry,
                 pathSplitter, dataLocator, typeExtractor);
 
-        this.contextSource = new BasicContextSource(elementInspector, elementTypeIdentifier, source);
-        contextSource.registerElementClass(SimpleElement.class);
-        contextSource.registerElementClass(SimpleData.class);
-        contextSource.registerElementClass(Nested.class);
+        this.contextManager = new BasicContextManager(elementInspector, elementTypeIdentifier, source);
+        contextManager.registerElementClass(SimpleElement.class);
+        contextManager.registerElementClass(SimpleData.class);
+        contextManager.registerElementClass(Nested.class);
     }
 
     @Test
     void simpleData() {
         final ConfigNode node = ConfigNode.of("type", "simple_data", "value", 10);
 
-        final ElementContext data = contextSource.makeContext(node);
+        final ElementContext data = contextManager.makeContext(node);
         final SimpleData element = data.provide(null, DependencyProvider.EMPTY);
 
         assertNotNull(element);
@@ -69,7 +69,7 @@ public class BasicContextSourceIntegrationTest {
         final ConfigNode nested = ConfigNode.of("type", "simple_data", "value", 10);
         node.put("simple_data", nested);
 
-        final ElementContext data = contextSource.makeContext(node);
+        final ElementContext data = contextManager.makeContext(node);
         final Nested nestedElement = data.provide(null, DependencyProvider.EMPTY);
 
         assertNotNull(nestedElement);
