@@ -34,7 +34,7 @@ public class BasicKeyExtractor implements KeyExtractor {
             @Subst(Constants.NAMESPACE_OR_KEY) final String keyString = node.getStringOrThrow(keyName);
             return keyParser.parseKey(keyString);
         } catch (ConfigProcessException e) {
-            throw new ElementException("Failed to extract key", e);
+            throw new ElementException("failed to extract key", e);
         }
     }
 

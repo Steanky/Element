@@ -29,7 +29,7 @@ public class BasicElementContext implements ElementContext {
     private final KeyExtractor typeKeyExtractor;
     private final ConfigNode rootNode;
 
-    private final Map<Key, Object> elementObjects;
+    private final Map<String, Object> elementObjects;
 
     /**
      * Creates a new instance of this class.
@@ -59,9 +59,9 @@ public class BasicElementContext implements ElementContext {
 
     @SuppressWarnings("unchecked")
     @Override
-    public <TElement> @NotNull TElement provide(final @Nullable Key path,
+    public <TElement> @NotNull TElement provide(final @Nullable String path,
             final @NotNull DependencyProvider dependencyProvider) {
-        final Key normalizedPath = path == null ? null : pathKeySplitter.normalize(path);
+        final String normalizedPath = path == null ? null : pathKeySplitter.normalize(path);
 
         //don't use computeIfAbsent because the map may be modified by the mapping function
         if (elementObjects.containsKey(normalizedPath)) {

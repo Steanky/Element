@@ -1,7 +1,6 @@
 package com.github.steanky.element.core.data;
 
 import com.github.steanky.ethylene.core.collection.ConfigNode;
-import net.kyori.adventure.key.Key;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -18,5 +17,5 @@ public interface DataLocator {
      * @param dataPath the path key; if null, {@code rootNode} will be returned
      * @return the nested {@link ConfigNode}
      */
-    @NotNull ConfigNode locate(final @NotNull ConfigNode rootNode, final @Nullable Key dataPath);
+    @NotNull ConfigNode locate(final @NotNull ConfigNode rootNode, final @Nullable String dataPath);
 }

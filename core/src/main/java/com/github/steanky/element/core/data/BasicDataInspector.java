@@ -41,14 +41,15 @@ public class BasicDataInspector implements DataInspector {
             if (dataPathAnnotation != null) {
                 validateModifiersPresent(method, () -> "DataPath accessor must be public", Modifier.PUBLIC);
                 validateModifiersAbsent(method, () -> "DataPath accessor must be non-static", Modifier.STATIC);
-                validateReturnType(method, Key.class, () -> "DataPath accessor return value must be assignable to Key");
+                validateReturnType(method, String.class, () -> "DataPath accessor return value must be assignable to " +
+                        "String");
                 validateParameterCount(method, 0, () -> "DataPath accessor must have no parameters");
 
                 @Subst(Constants.NAMESPACE_OR_KEY) final String idString = dataPathAnnotation.value();
                 final Key idKey = keyParser.parseKey(idString);
 
                 if (typeMap.putIfAbsent(idKey, method) != null) {
-                    throw elementException(dataClass, "multiple DataPath accessors for name " + idKey);
+                    throw elementException(dataClass, "multiple DataPath accessors for name '" + idKey + "'");
                 }
             }
         }

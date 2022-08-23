@@ -34,7 +34,6 @@ public class BasicContextSourceIntegrationTest {
 
         final KeyExtractor typeExtractor = new BasicKeyExtractor("type", keyParser);
         final ElementTypeIdentifier elementTypeIdentifier = new BasicElementTypeIdentifier(keyParser);
-        final DataIdentifier dataIdentifier = new BasicDataIdentifier(keyParser, elementTypeIdentifier);
         final DataInspector dataInspector = new BasicDataInspector(keyParser);
 
         final FactoryResolver factoryResolver = new BasicFactoryResolver(keyParser, elementTypeIdentifier,
@@ -45,9 +44,8 @@ public class BasicContextSourceIntegrationTest {
         final Registry<ConfigProcessor<?>> configRegistry = new HashRegistry<>();
         final Registry<ElementFactory<?, ?>> factoryRegistry = new HashRegistry<>();
 
-        final KeyExtractor idExtractor = new BasicKeyExtractor("id", keyParser);
         final PathKeySplitter pathKeySplitter = new BasicPathKeySplitter();
-        final DataLocator dataLocator = new BasicDataLocator(idExtractor, pathKeySplitter);
+        final DataLocator dataLocator = new BasicDataLocator(pathKeySplitter);
         final ElementContext.Source source = new BasicElementContext.Source(configRegistry, factoryRegistry,
                 pathKeySplitter, dataLocator, typeExtractor);
 
@@ -59,9 +57,7 @@ public class BasicContextSourceIntegrationTest {
 
     @Test
     void simpleData() {
-        final ConfigNode node = new LinkedConfigNode(2);
-        node.putString("type", "simple_data");
-        node.putNumber("value", 10);
+        final ConfigNode node = ConfigNode.of("type", "simple_data", "value", 10);
 
         final ElementContext data = contextSource.makeContext(node);
         final SimpleData element = data.provide(null, DependencyProvider.EMPTY);
@@ -72,16 +68,9 @@ public class BasicContextSourceIntegrationTest {
 
     @Test
     void nested() {
-        final ConfigNode node = new LinkedConfigNode(2);
-        node.putString("type", "nested_element");
-        node.putString("key", "simple_data");
-
-        final ConfigNode nested = new LinkedConfigNode(2);
-        nested.putString("type", "simple_data");
-        nested.putString("id", "simple_data");
-        nested.putNumber("value", 10);
-
-        node.put("sub", nested);
+        final ConfigNode node = ConfigNode.of("type", "nested_element", "key", "simple_data");
+        final ConfigNode nested = ConfigNode.of("type", "simple_data", "value", 10);
+        node.put("simple_data", nested);
 
         final ElementContext data = contextSource.makeContext(node);
         final Nested nestedElement = data.provide(null, DependencyProvider.EMPTY);
@@ -141,18 +130,17 @@ public class BasicContextSourceIntegrationTest {
             return new ConfigProcessor<>() {
                 @Override
                 public Data dataFromElement(@NotNull ConfigElement element) throws ConfigProcessException {
-                    final Key key = Key.key("test", element.getStringOrThrow("key"));
-                    return new Data(key);
+                    return new Data(element.getStringOrThrow("key"));
                 }
 
                 @Override
                 public @NotNull ConfigElement elementFromData(Data data) {
-                    return ConfigNode.of("key", data.key.asString());
+                    return ConfigNode.of("key", data.key);
                 }
             };
         }
 
         @DataObject
-        public record Data(@DataPath("simple_data") Key key) {}
+        public record Data(@DataPath("simple_data") String key) {}
     }
 }

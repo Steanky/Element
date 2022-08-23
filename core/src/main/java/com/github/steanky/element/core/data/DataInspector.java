@@ -28,6 +28,6 @@ public interface DataInspector {
          * @param id         the identifier used to locate the right accessor
          * @return the path key
          */
-        @NotNull Key apply(final @NotNull Object dataObject, final @NotNull Key id);
+        @NotNull String apply(final @NotNull Object dataObject, final @NotNull Key id);
     }
 }

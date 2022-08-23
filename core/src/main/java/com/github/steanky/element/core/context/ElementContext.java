@@ -5,7 +5,6 @@ import com.github.steanky.element.core.Registry;
 import com.github.steanky.element.core.dependency.DependencyProvider;
 import com.github.steanky.ethylene.core.collection.ConfigNode;
 import com.github.steanky.ethylene.core.processor.ConfigProcessor;
-import net.kyori.adventure.key.Key;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -21,11 +20,11 @@ public interface ElementContext {
      * @param <TElement>         the type of the element object
      * @return the contextual element object
      */
-    <TElement> @NotNull TElement provide(final @Nullable Key path,
+    <TElement> @NotNull TElement provide(final @Nullable String path,
             final @NotNull DependencyProvider dependencyProvider);
 
     /**
-     * Convenience overload for {@link ElementContext#provide(Key, DependencyProvider)}. This will provide the root
+     * Convenience overload for {@link ElementContext#provide(String, DependencyProvider)}. This will provide the root
      * element using the given {@link DependencyProvider}.
      *
      * @param dependencyProvider the DependencyProvider used to provide dependencies
@@ -37,19 +36,19 @@ public interface ElementContext {
     }
 
     /**
-     * Convenience overload for {@link ElementContext#provide(Key, DependencyProvider)}. This will provide the element
+     * Convenience overload for {@link ElementContext#provide(String, DependencyProvider)}. This will provide the element
      * specified by the path, using an empty dependency provider ({@link DependencyProvider#EMPTY}).
      *
      * @param path       the data path
      * @param <TElement> the type of the contextual element object
      * @return the element object
      */
-    default <TElement> @NotNull TElement provide(final @Nullable Key path) {
+    default <TElement> @NotNull TElement provide(final @Nullable String path) {
         return provide(path, DependencyProvider.EMPTY);
     }
 
     /**
-     * Convenience overload for {@link ElementContext#provide(Key, DependencyProvider)}. This will provide the root
+     * Convenience overload for {@link ElementContext#provide(String, DependencyProvider)}. This will provide the root
      * element using an empty dependency provider ({@link DependencyProvider#EMPTY}).
      *
      * @param <TElement> the type of the contextual element object
