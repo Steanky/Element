@@ -1,7 +1,6 @@
 package com.github.steanky.element.core.data;
 
-import com.github.steanky.element.core.annotation.CompositeData;
-import com.github.steanky.element.core.element.ElementTypeIdentifier;
+import com.github.steanky.element.core.annotation.DataPath;
 import com.github.steanky.element.core.key.Constants;
 import com.github.steanky.element.core.key.KeyParser;
 import com.github.steanky.element.core.util.ReflectionUtils;
@@ -11,12 +10,9 @@ import org.jetbrains.annotations.NotNull;
 
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
-import java.lang.reflect.RecordComponent;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
-import java.util.WeakHashMap;
-import java.util.function.Function;
 
 import static com.github.steanky.element.core.util.Validate.*;
 
@@ -25,72 +21,46 @@ import static com.github.steanky.element.core.util.Validate.*;
  */
 public class BasicDataInspector implements DataInspector {
     private final KeyParser keyParser;
-    private final ElementTypeIdentifier elementTypeIdentifier;
-    private final Map<Class<?>, Map<Key, Function<Object, Object>>> resolverMappings;
 
     /**
      * Creates a new instance of this class.
      *
-     * @param keyParser the {@link KeyParser} used to convert strings to keys
-     * @param elementTypeIdentifier the {@link ElementTypeIdentifier} used to identify the names of element classes
+     * @param idParser the {@link KeyParser} implementation used to parse path key strings
      */
-    public BasicDataInspector(final @NotNull KeyParser keyParser,
-            final @NotNull ElementTypeIdentifier elementTypeIdentifier) {
-        this.keyParser = Objects.requireNonNull(keyParser);
-        this.elementTypeIdentifier = Objects.requireNonNull(elementTypeIdentifier);
-        this.resolverMappings = new WeakHashMap<>();
+    public BasicDataInspector(final @NotNull KeyParser idParser) {
+        this.keyParser = Objects.requireNonNull(idParser);
     }
 
     @Override
-    public @NotNull Map<Key, Function<Object, Object>> extractResolvers(final @NotNull Class<?> dataClass) {
-        Objects.requireNonNull(dataClass);
+    public @NotNull PathFunction pathFunction(final @NotNull Class<?> dataClass) {
+        final Method[] declaredMethods = dataClass.getDeclaredMethods();
+        final Map<Key, Method> accessorMap = new HashMap<>(2);
 
-        return resolverMappings.computeIfAbsent(dataClass, data -> {
-            final Map<Key, Function<Object, Object>> resolvers = new HashMap<>(2);
+        for (final Method method : declaredMethods) {
+            final DataPath dataPathAnnotation = method.getDeclaredAnnotation(DataPath.class);
+            if (dataPathAnnotation != null) {
+                validateModifiersPresent(method, () -> "DataPath accessor must be public", Modifier.PUBLIC);
+                validateModifiersAbsent(method, () -> "DataPath accessor must be non-static", Modifier.STATIC);
+                validateReturnType(method, String.class, () -> "DataPath accessor return value must be assignable to " +
+                        "String");
+                validateParameterCount(method, 0, () -> "DataPath accessor must have no parameters");
 
-            if (data.isRecord()) {
-                final RecordComponent[] recordComponents = data.getRecordComponents();
+                @Subst(Constants.NAMESPACE_OR_KEY) final String idString = dataPathAnnotation.value();
+                final Key idKey = keyParser.parseKey(idString);
 
-                for (final RecordComponent component : recordComponents) {
-                    final CompositeData dataAnnotation = component.getAccessor()
-                            .getDeclaredAnnotation(CompositeData.class);
-                    if (dataAnnotation != null) {
-                        registerAccessorMethod(dataAnnotation.value(), resolvers, component.getAccessor());
-                    }
-                }
-
-                return resolvers;
-            }
-
-            final Method[] declaredMethods = data.getDeclaredMethods();
-            for (final Method method : declaredMethods) {
-                final CompositeData dataAnnotation = method.getDeclaredAnnotation(CompositeData.class);
-                if (dataAnnotation != null) {
-                    validateModifiersPresent(method, () -> "CompositeData accessor is not public", Modifier.PUBLIC);
-                    validateModifiersAbsent(method, () -> "CompositeData accessor is static", Modifier.STATIC);
-                    validateParameterCount(method, 0, () -> "CompositeData accessor has parameters");
-
-                    if (method.getReturnType().equals(void.class)) {
-                        throw elementException(data, "CompositeData accessor returns void");
-                    }
-
-                    registerAccessorMethod(dataAnnotation.value(), resolvers, method);
+                if (accessorMap.putIfAbsent(idKey, method) != null) {
+                    throw elementException(dataClass, "multiple DataPath accessors with name '" + idKey + "'");
                 }
             }
-
-            return resolvers;
-        });
-    }
-
-    private void registerAccessorMethod(@Subst(Constants.NAMESPACE_OR_KEY) String keyString,
-            final Map<Key, Function<Object, Object>> resolvers, final Method accessor) {
-        final Key key = keyString.equals(CompositeData.DEFAULT_VALUE) ? elementTypeIdentifier
-                .identify(accessor.getReturnType()) : keyParser.parseKey(keyString);
-
-        if (resolvers.putIfAbsent(key,
-                (data) -> ReflectionUtils.invokeMethod(accessor, data)) != null) {
-            throw elementException(accessor.getDeclaringClass(),
-                    "CompositeData accessor already exists for composite data");
         }
+
+        return (data, id) -> {
+            final Method method = accessorMap.get(id);
+            if (method == null) {
+                throw elementException(dataClass, "no DataPath accessor for '" + id + "'");
+            }
+
+            return ReflectionUtils.invokeMethod(method, data);
+        };
     }
 }

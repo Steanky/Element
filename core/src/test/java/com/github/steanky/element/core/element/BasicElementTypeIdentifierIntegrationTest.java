@@ -1,7 +1,9 @@
 package com.github.steanky.element.core.element;
 
+import com.github.steanky.element.core.BasicElementTypeIdentifier;
 import com.github.steanky.element.core.ElementException;
-import com.github.steanky.element.core.annotation.ElementModel;
+import com.github.steanky.element.core.ElementTypeIdentifier;
+import com.github.steanky.element.core.annotation.Model;
 import com.github.steanky.element.core.key.BasicKeyParser;
 import net.kyori.adventure.key.Key;
 import org.junit.jupiter.api.Test;
@@ -32,7 +34,7 @@ public class BasicElementTypeIdentifierIntegrationTest {
         assertThrows(ElementException.class, () -> identifier.identify(BadKey.class));
     }
 
-    @ElementModel("basic")
+    @Model("basic")
     public static class BasicElement {
 
     }
@@ -40,6 +42,6 @@ public class BasicElementTypeIdentifierIntegrationTest {
     public static class NoElement {}
 
     @SuppressWarnings("PatternValidation")
-    @ElementModel("default:invalid key")
+    @Model("default:invalid key")
     public static class BadKey {}
 }

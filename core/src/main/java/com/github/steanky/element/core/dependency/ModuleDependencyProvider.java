@@ -6,7 +6,6 @@ import com.github.steanky.element.core.annotation.Memoize;
 import com.github.steanky.element.core.key.Constants;
 import com.github.steanky.element.core.key.KeyParser;
 import com.github.steanky.element.core.util.ReflectionUtils;
-import com.github.steanky.element.core.util.Validate;
 import net.kyori.adventure.key.Key;
 import org.intellij.lang.annotations.Subst;
 import org.jetbrains.annotations.NotNull;
@@ -21,7 +20,8 @@ import java.util.Objects;
 import java.util.function.BiFunction;
 import java.util.function.Function;
 
-import static com.github.steanky.element.core.util.Validate.*;
+import static com.github.steanky.element.core.util.Validate.elementException;
+import static com.github.steanky.element.core.util.Validate.validateModifiersPresent;
 
 /**
  * Implementation of DependencyProvider which has a concept of modules. Each module consists of a single object which
@@ -66,14 +66,14 @@ public class ModuleDependencyProvider implements DependencyProvider {
 
             final Class<?> returnType = declaredMethod.getReturnType();
             if (returnType.equals(void.class)) {
-                throw Validate.elementException(moduleClass, "DependencySupplier method returns void");
+                throw elementException(moduleClass, "DependencySupplier method returns void");
             }
 
             @Subst(Constants.NAMESPACE_OR_KEY) final String dependencyString = supplierAnnotation.value();
             final Key dependencyName = keyParser.parseKey(dependencyString);
             final Parameter[] supplierParameters = declaredMethod.getParameters();
             if (supplierParameters.length > 1) {
-                throw Validate.elementException(moduleClass, "Supplier has too many parameters");
+                throw elementException(moduleClass, "supplier has too many parameters");
             }
 
             final boolean memoize;
@@ -102,7 +102,7 @@ public class ModuleDependencyProvider implements DependencyProvider {
 
             final Class<?> parameterType = supplierParameters[0].getType();
             if (!Key.class.isAssignableFrom(parameterType)) {
-                throw Validate.elementException(moduleClass, "Parameter type was not assignable to Key");
+                throw elementException(moduleClass, "parameter type was not assignable to Key");
             }
 
             memoize = declaredMethod.isAnnotationPresent(Memoize.class);
@@ -123,26 +123,27 @@ public class ModuleDependencyProvider implements DependencyProvider {
         return (type, name) -> {
             final DependencyFunction function = dependencyFunctionMap.get(type);
             if (function == null) {
-                throw new ElementException("Unable to resolve dependency of type " + type);
+                throw new ElementException("unable to resolve dependency of type " + type);
             }
 
             if (function.requiresKey == (name == null)) {
-                throw new ElementException(name == null ? "Dependency supplier needs a key, but none was provided" :
-                        "Dependency supplier takes no arguments, but a key was provided");
+                throw new ElementException(name == null ? "dependency supplier needs a key, but none was provided" :
+                        "dependency supplier takes no arguments, but a key was provided");
             }
 
             final Object dependency = function.apply(name);
             if (dependency == null) {
-                throw new ElementException("Unable to resolve dependency of type " + type + " and name " + name);
+                throw new ElementException(
+                        "unable to resolve dependency of type '" + type + "' and name '" + name + "'");
             }
 
             return dependency;
         };
     }
 
+    @SuppressWarnings("unchecked")
     @Override
     public <TDependency> @NotNull TDependency provide(final @NotNull Key type, final @Nullable Key name) {
-        //noinspection unchecked
         return (TDependency) dependencyFunction.apply(type, name);
     }
 

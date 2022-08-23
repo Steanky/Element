@@ -1,5 +1,6 @@
 package com.github.steanky.element.core.annotation;
 
+import com.github.steanky.element.core.key.Constants;
 import com.github.steanky.element.core.key.KeyString;
 import org.jetbrains.annotations.NotNull;
 
@@ -12,12 +13,7 @@ import java.lang.annotation.*;
 @Documented
 @Retention(RetentionPolicy.RUNTIME)
 @Target({ElementType.PARAMETER, ElementType.TYPE})
-public @interface ElementDependency {
-    /**
-     * The default name. This is invalid as a key string, by design.
-     */
-    String DEFAULT_NAME = "DEFAULT";
-
+public @interface Dependency {
     /**
      * The type identifier of this dependency, which must be a valid key string.
      *
@@ -26,10 +22,9 @@ public @interface ElementDependency {
     @NotNull @KeyString String value();
 
     /**
-     * The name of this dependency, which must be a valid key string OR equal to {@link ElementDependency#DEFAULT_NAME}
+     * The name of this dependency, which must be a valid key string OR equal to {@link Constants#DEFAULT}.
      *
-     * @return the name of this dependency, which must be a valid key string OR equal to
-     * {@link ElementDependency#DEFAULT_NAME}
+     * @return the name of this dependency, or {@link Constants#DEFAULT}
      */
-    @NotNull @KeyString String name() default DEFAULT_NAME;
+    @NotNull @KeyString String name() default Constants.DEFAULT;
 }

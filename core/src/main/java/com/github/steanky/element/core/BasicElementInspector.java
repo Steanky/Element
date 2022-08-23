@@ -1,4 +1,4 @@
-package com.github.steanky.element.core.element;
+package com.github.steanky.element.core;
 
 import com.github.steanky.element.core.factory.FactoryResolver;
 import com.github.steanky.element.core.processor.ProcessorResolver;
@@ -8,7 +8,7 @@ import org.jetbrains.annotations.NotNull;
 import java.lang.reflect.Modifier;
 import java.util.Objects;
 
-import static com.github.steanky.element.core.util.Validate.*;
+import static com.github.steanky.element.core.util.Validate.elementException;
 
 /**
  * Standard implementation of {@link ElementInspector}. Uses reflection to automatically infer factories and processors
@@ -21,7 +21,7 @@ public class BasicElementInspector implements ElementInspector {
     /**
      * Creates a new instance of this class.
      *
-     * @param factoryResolver the {@link FactoryResolver} implementation used to extract factories
+     * @param factoryResolver   the {@link FactoryResolver} implementation used to extract factories
      * @param processorResolver the {@link ProcessorResolver} implementation use to extract processors
      */
     public BasicElementInspector(final @NotNull FactoryResolver factoryResolver,
@@ -34,7 +34,7 @@ public class BasicElementInspector implements ElementInspector {
     public @NotNull Information inspect(final @NotNull Class<?> elementClass) {
         final int modifiers = elementClass.getModifiers();
         if (!Modifier.isStatic(elementClass.getModifiers()) && elementClass.getDeclaringClass() != null) {
-            throw elementException(elementClass, "non-static and has a declaring class");
+            throw elementException(elementClass, "non-static with declaring class");
         }
 
         if (!Modifier.isPublic(modifiers)) {

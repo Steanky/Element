@@ -23,7 +23,7 @@ class BasicKeyExtractorTest {
         Mockito.when(mockParser.parseKey(Mockito.anyString())).thenReturn(Key.key("key:string"));
 
         KeyExtractor keyExtractor = new BasicKeyExtractor("key", mockParser);
-        assertEquals(Key.key("key:string"), keyExtractor.extract(node));
+        assertEquals(Key.key("key:string"), keyExtractor.extractKey(node));
     }
 
     @Test
@@ -34,6 +34,6 @@ class BasicKeyExtractorTest {
         KeyParser mockParser = Mockito.mock(KeyParser.class);
         Mockito.when(mockParser.parseKey(Mockito.anyString())).thenReturn(Key.key("key:string"));
         KeyExtractor keyExtractor = new BasicKeyExtractor("missing", mockParser);
-        assertThrows(ElementException.class, () -> keyExtractor.extract(node));
+        assertThrows(ElementException.class, () -> keyExtractor.extractKey(node));
     }
 }

@@ -6,7 +6,7 @@ if (localSettings.exists()) {
 }
 
 
-sequenceOf("core", "example").forEach {
+sequenceOf("core").forEach {
     include(":${rootProject.name}-$it")
     project(":${rootProject.name}-$it").projectDir = file(it)
 }
