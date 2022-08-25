@@ -247,13 +247,8 @@ public class BasicFactoryResolver implements FactoryResolver {
                     }
 
                     if (info.isCollection()) {
-                        validateType(elementClass, DataInspector.COLLECTION_TYPE, parameter.parameter
-                                .getParameterizedType(), () -> "parameter with name '" + parameter.id + "' must " +
-                                "be assignable to Collection<? extends String>");
-                    }
-                    else {
-                        validateType(elementClass, String.class, parameter.parameter.getType(), () -> "parameter " +
-                                "with name '" + parameter.id + "' must be assignable to String");
+                        validateType(elementClass, Collection.class, parameter.parameter.getType(), () -> "parameter" +
+                                " with name '" + parameter.id + "' must be assignable to Collection<?>");
                     }
 
                     nonDependencyCount++;
