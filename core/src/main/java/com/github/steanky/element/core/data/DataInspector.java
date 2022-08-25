@@ -7,7 +7,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Unmodifiable;
 
 import java.lang.reflect.Method;
-import java.lang.reflect.Type;
 import java.util.Collection;
 import java.util.Map;
 
@@ -16,11 +15,6 @@ import java.util.Map;
  */
 @FunctionalInterface
 public interface DataInspector {
-    Type COLLECTION_TYPE = TypeUtils.parameterize(Collection.class, TypeUtils.wildcardType()
-            .withUpperBounds(String.class).build());
-
-    Type STRING_TYPE = String.class;
-
     /**
      * Returns a computed {@link PathFunction}.
      *
