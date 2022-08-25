@@ -531,31 +531,9 @@ public class BasicElementInspectorIntegrationTest {
 
     @Model("test:empty_constructor_factory")
     public static class EmptyConstructorFactory {
-        private static final ConfigProcessor<? extends Keyed> PROCESSOR = new ConfigProcessor<Data>() {
-            @Override
-            public Data dataFromElement(@NotNull ConfigElement element) {
-                return new Data();
-            }
-
-            @Override
-            public @NotNull ConfigElement elementFromData(Data keyed) {
-                return new LinkedConfigNode(0);
-            }
-        };
-
         @FactoryMethod
         public EmptyConstructorFactory() {
 
-        }
-
-        @DataObject
-        public record Data() implements Keyed {
-            public static final Key KEY = Key.key("test:empty_constructor_factory");
-
-            @Override
-            public @NotNull Key key() {
-                return KEY;
-            }
         }
     }
 
