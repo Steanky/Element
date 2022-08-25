@@ -3,6 +3,7 @@ package com.github.steanky.element.core.data;
 import net.kyori.adventure.key.Key;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.Collection;
 import java.util.Objects;
 
 /**
@@ -26,14 +27,15 @@ public interface DataInspector {
         /**
          * Represents some info for a path.
          */
-        record PathInfo(@NotNull String path, boolean cache) {
+        record PathInfo(@NotNull Iterable<String> paths, boolean cache, boolean isIterable) {
             /**
              * Creates a new instance of this record.
-             * @param path the path string
-             * @param cache whether the element object referred to by this path should be cached
+             * @param paths the path strings
+             * @param cache whether the element object referred to by this path(s) should be cached
+             * @param isIterable whether the element(s) referred to by the path(s) should be interpreted as an iterable
              */
             public PathInfo {
-                Objects.requireNonNull(path);
+                Objects.requireNonNull(paths);
             }
         }
 

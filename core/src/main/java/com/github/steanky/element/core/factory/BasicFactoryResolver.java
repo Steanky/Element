@@ -15,6 +15,8 @@ import com.github.steanky.element.core.key.Constants;
 import com.github.steanky.element.core.key.KeyParser;
 import com.github.steanky.element.core.util.ReflectionUtils;
 import net.kyori.adventure.key.Key;
+import org.apache.commons.lang3.reflect.MethodUtils;
+import org.apache.commons.lang3.reflect.TypeUtils;
 import org.intellij.lang.annotations.Subst;
 import org.jetbrains.annotations.NotNull;
 
@@ -86,8 +88,8 @@ public class BasicFactoryResolver implements FactoryResolver {
         }
 
         PathFunction.PathInfo pathInfo = pathFunction.apply(data, parameter.id);
-        return pathInfo.cache() ? context.provideAndCache(pathInfo.path(), provider) : context.provide(pathInfo.path(),
-                provider);
+        return null;
+        //return pathInfo.cache() ? context.provideAndCache(pathInfo.path(), provider) : context.provide(pathInfo.path(), provider);
     }
 
     @Override
@@ -107,18 +109,11 @@ public class BasicFactoryResolver implements FactoryResolver {
                         () -> "FactoryMethod does not return an ElementFactory");
                 validateParameterCount(declaredMethod, 0, () -> "FactoryMethod has parameters");
 
-                final ParameterizedType type = validateParameterizedReturnType(declaredMethod,
-                        () -> "FactoryMethod returned raw parameterized class");
-                final Type[] typeArguments = type.getActualTypeArguments();
-                if (typeArguments.length != 2) {
-                    //this is likely unreachable, as we are guaranteed to be an instance of ElementFactory
-                    throw elementException(elementClass,
-                            "unexpected number of type arguments on FactoryMethod return type");
-                }
-
-                validateGenericType(elementClass, elementClass, typeArguments[1], () -> "FactoryMethod returned a " +
-                        "factory whose constructed type is not assignable to this class");
-
+                final Type requiredType = TypeUtils.parameterize(ElementFactory.class, TypeUtils.WILDCARD_ALL, TypeUtils
+                        .wildcardType().withUpperBounds(elementClass).build());
+                validateGenericType(elementClass, requiredType, declaredMethod.getGenericReturnType(),
+                        () -> "FactoryMethod returned type not assignable to ElementFactory<?, ? extends T> where T " +
+                                "is the element type");
                 factoryMethod = declaredMethod;
             }
         }

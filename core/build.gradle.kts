@@ -7,6 +7,7 @@ repositories {
 }
 
 dependencies {
+    implementation(libs.apache.commons.lang3)
     api(libs.ethylene.core)
     api(libs.adventure.key)
 }
