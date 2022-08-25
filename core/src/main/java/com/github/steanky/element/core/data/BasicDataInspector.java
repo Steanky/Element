@@ -20,12 +20,6 @@ import static com.github.steanky.element.core.util.Validate.*;
  * Basic implementation of {@link DataInspector}.
  */
 public class BasicDataInspector implements DataInspector {
-    private static final Type ITERABLE_TYPE = TypeUtils.parameterize(Iterable.class, TypeUtils.wildcardType()
-            .withUpperBounds(String.class).build());
-    private static final Type STRING_TYPE = String.class;
-
-    private record MethodInfo(Method method, DataPath annotation, boolean isIterable) {}
-
     private final KeyParser keyParser;
 
     /**
@@ -37,10 +31,11 @@ public class BasicDataInspector implements DataInspector {
         this.keyParser = Objects.requireNonNull(idParser);
     }
 
+    @SuppressWarnings("unchecked")
     @Override
-    public @NotNull PathFunction pathFunction(final @NotNull Class<?> dataClass) {
+    public @NotNull PathSpec inspectData(final @NotNull Class<?> dataClass) {
         final Method[] declaredMethods = dataClass.getDeclaredMethods();
-        final Map<Key, MethodInfo> accessorMap = new HashMap<>(2);
+        final Map<Key, PathFunction.PathInfo> infoMap = new HashMap<>(2);
 
         for (final Method method : declaredMethods) {
             final DataPath dataPathAnnotation = method.getDeclaredAnnotation(DataPath.class);
@@ -51,33 +46,38 @@ public class BasicDataInspector implements DataInspector {
 
                 final Type returnType = method.getGenericReturnType();
                 final boolean isIterable;
-                if (TypeUtils.isAssignable(returnType, ITERABLE_TYPE)) {
+                if (TypeUtils.isAssignable(returnType, COLLECTION_TYPE)) {
                     isIterable = true;
                 }
                 else  {
-                    validateGenericType(dataClass, STRING_TYPE, returnType, () -> "DataPath accessor return value " +
-                            "must be assignable to String or Iterable");
+                    validateType(dataClass, STRING_TYPE, returnType, () -> "DataPath accessor return value " +
+                            "must be assignable to String or Collection<? extends String>");
                     isIterable = false;
                 }
 
                 @Subst(Constants.NAMESPACE_OR_KEY) final String idString = dataPathAnnotation.value();
                 final Key idKey = keyParser.parseKey(idString);
-                final MethodInfo info = new MethodInfo(method, dataPathAnnotation, isIterable);
-                if (accessorMap.putIfAbsent(idKey, info) != null) {
+                final PathFunction.PathInfo info = new PathFunction.PathInfo(method, dataPathAnnotation, isIterable);
+                if (infoMap.putIfAbsent(idKey, info) != null) {
                     throw elementException(dataClass, "multiple DataPath accessors with name '" + idKey + "'");
                 }
             }
         }
 
-        return (data, id) -> {
-            final MethodInfo methodInfo = accessorMap.get(id);
-            if (methodInfo == null) {
+        final PathFunction function = (data, id) -> {
+            final PathFunction.PathInfo pathInfo = infoMap.get(id);
+            if (pathInfo == null) {
                 throw elementException(dataClass, "no DataPath accessor for '" + id + "'");
             }
 
-            final String path = ReflectionUtils.invokeMethod(methodInfo.method, data);
-            return new PathFunction.PathInfo(Collections.singleton(path), methodInfo.annotation.cache(),
-                    methodInfo.isIterable);
+            final Object path = ReflectionUtils.invokeMethod(pathInfo.accessorMethod(), data);
+            if (path instanceof Collection<?> collection) {
+                return (Collection<? extends String>) collection;
+            }
+
+            return Collections.singleton((String) path);
         };
+
+        return new PathSpec(function, Map.copyOf(infoMap));
     }
 }

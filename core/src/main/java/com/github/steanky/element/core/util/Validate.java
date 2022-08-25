@@ -88,7 +88,7 @@ public final class Validate {
      * @param actualType       the actual type object
      * @param exceptionMessage the message supplier which provides the error message
      */
-    public static void validateGenericType(final @NotNull Class<?> owner, final @NotNull Type requiredType,
+    public static void validateType(final @NotNull Class<?> owner, final @NotNull Type requiredType,
             final @NotNull Type actualType, final @NotNull Supplier<String> exceptionMessage) {
         if (!TypeUtils.isAssignable(actualType, requiredType)) {
             throw elementException(owner, exceptionMessage.get());

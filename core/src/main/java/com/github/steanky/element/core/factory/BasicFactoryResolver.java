@@ -15,15 +15,12 @@ import com.github.steanky.element.core.key.Constants;
 import com.github.steanky.element.core.key.KeyParser;
 import com.github.steanky.element.core.util.ReflectionUtils;
 import net.kyori.adventure.key.Key;
-import org.apache.commons.lang3.reflect.MethodUtils;
 import org.apache.commons.lang3.reflect.TypeUtils;
 import org.intellij.lang.annotations.Subst;
 import org.jetbrains.annotations.NotNull;
 
 import java.lang.reflect.*;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Objects;
+import java.util.*;
 
 import static com.github.steanky.element.core.util.Validate.*;
 
@@ -61,7 +58,7 @@ public class BasicFactoryResolver implements FactoryResolver {
         if (spec.dataIndex == -1) {
             args = new Object[spec.parameters.size()];
             for (int i = 0; i < spec.parameters.size(); i++) {
-                args[i] = processParameter(spec.parameters.get(i), context, provider, spec.pathFunction, objectData);
+                args[i] = processParameter(spec.parameters.get(i), context, provider, spec.pathSpec, objectData);
             }
 
             return args;
@@ -71,25 +68,37 @@ public class BasicFactoryResolver implements FactoryResolver {
         args[spec.dataIndex] = objectData;
 
         for (int i = 0; i < spec.dataIndex; i++) {
-            args[i] = processParameter(spec.parameters.get(i), context, provider, spec.pathFunction, objectData);
+            args[i] = processParameter(spec.parameters.get(i), context, provider, spec.pathSpec, objectData);
         }
 
         for (int i = spec.dataIndex + 1; i < args.length; i++) {
-            args[i] = processParameter(spec.parameters.get(i - 1), context, provider, spec.pathFunction, objectData);
+            args[i] = processParameter(spec.parameters.get(i - 1), context, provider, spec.pathSpec, objectData);
         }
 
         return args;
     }
 
     private Object processParameter(final ElementParameter parameter, final ElementContext context,
-            final DependencyProvider provider, final PathFunction pathFunction, final Object data) {
+            final DependencyProvider provider, final DataInspector.PathSpec pathSpec, final Object data) {
         if (parameter.isDependency) {
             return provider.provide(parameter.type, parameter.id);
         }
 
-        PathFunction.PathInfo pathInfo = pathFunction.apply(data, parameter.id);
-        return null;
-        //return pathInfo.cache() ? context.provideAndCache(pathInfo.path(), provider) : context.provide(pathInfo.path(), provider);
+        final PathFunction.PathInfo info = pathSpec.infoMap().get(parameter.id);
+        final Collection<? extends String> path = pathSpec.pathFunction().apply(data, parameter.id);
+        if (info.isCollection()) {
+            final Collection<Object> collection = new ArrayList<>(path.size());
+            for (final String elementPath : path) {
+                collection.add(info.annotation().cache() ? context.provideAndCache(elementPath, provider) : context
+                        .provide(elementPath, provider));
+            }
+
+            return collection;
+        }
+
+        final String onlyPath = path.iterator().next();
+        return info.annotation().cache() ? context.provideAndCache(onlyPath, provider) : context.provide(onlyPath,
+                provider);
     }
 
     @Override
@@ -111,7 +120,7 @@ public class BasicFactoryResolver implements FactoryResolver {
 
                 final Type requiredType = TypeUtils.parameterize(ElementFactory.class, TypeUtils.WILDCARD_ALL, TypeUtils
                         .wildcardType().withUpperBounds(elementClass).build());
-                validateGenericType(elementClass, requiredType, declaredMethod.getGenericReturnType(),
+                validateType(elementClass, requiredType, declaredMethod.getGenericReturnType(),
                         () -> "FactoryMethod returned type not assignable to ElementFactory<?, ? extends T> where T " +
                                 "is the element type");
                 factoryMethod = declaredMethod;
@@ -198,13 +207,13 @@ public class BasicFactoryResolver implements FactoryResolver {
                     name = parseKey(keyParser, nameAnnotation.value());
                 }
 
-                elementParameters.add(new ElementParameter(null, name, false));
+                elementParameters.add(new ElementParameter(parameter, null, name, false));
                 hasComposite = true;
                 continue;
             }
 
             final String name = dependency.name();
-            elementParameters.add(new ElementParameter(parseKey(keyParser, dependency.value()),
+            elementParameters.add(new ElementParameter(parameter, parseKey(keyParser, dependency.value()),
                     name.equals(Constants.DEFAULT) ? null : parseKey(keyParser, name), true));
         }
 
@@ -224,15 +233,47 @@ public class BasicFactoryResolver implements FactoryResolver {
 
         elementParameters.trimToSize();
 
-        final DataInspector.PathFunction pathFunction =
-                dataClass == null ? null : dataInspector.pathFunction(dataClass);
-        final ElementSpec elementSpec = new ElementSpec(elementParameters, dataParameterIndex, pathFunction);
+        final DataInspector.PathSpec pathSpec = dataClass == null ? null : dataInspector.inspectData(dataClass);
+        if (pathSpec != null) {
+            final Map<Key, PathFunction.PathInfo> infoMap = pathSpec.infoMap();
+
+            int nonDependencyCount = 0;
+            for (final ElementParameter parameter : elementParameters) {
+                if (!parameter.isDependency) {
+                    final PathFunction.PathInfo info = infoMap.get(parameter.id);
+                    if (info == null) {
+                        throw elementException(elementClass, "missing element dependency with parameter name '" +
+                                parameter.id + "'");
+                    }
+
+                    if (info.isCollection()) {
+                        validateType(elementClass, DataInspector.COLLECTION_TYPE, parameter.parameter
+                                .getParameterizedType(), () -> "parameter with name '" + parameter.id + "' must " +
+                                "be assignable to Collection<? extends String>");
+                    }
+                    else {
+                        validateType(elementClass, String.class, parameter.parameter.getType(), () -> "parameter " +
+                                "with name '" + parameter.id + "' must be assignable to String");
+                    }
+
+                    nonDependencyCount++;
+                }
+            }
+
+            final int size = infoMap.size();
+            if (nonDependencyCount != size) {
+                throw elementException(elementClass, "unexpected number of element dependency parameters, needed " +
+                        size + ", was " + nonDependencyCount);
+            }
+        }
+
+        final ElementSpec elementSpec = new ElementSpec(elementParameters, dataParameterIndex, pathSpec);
         return (objectData, data, dependencyProvider) -> ReflectionUtils.invokeConstructor(finalFactoryConstructor,
                 resolveArguments(objectData, data, dependencyProvider, elementSpec));
     }
 
     private record ElementSpec(List<ElementParameter> parameters, int dataIndex,
-            DataInspector.PathFunction pathFunction) {}
+            DataInspector.PathSpec pathSpec) {}
 
-    private record ElementParameter(Key type, Key id, boolean isDependency) {}
+    private record ElementParameter(Parameter parameter, Key type, Key id, boolean isDependency) {}
 }

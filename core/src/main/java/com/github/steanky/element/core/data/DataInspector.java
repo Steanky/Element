@@ -1,23 +1,36 @@
 package com.github.steanky.element.core.data;
 
+import com.github.steanky.element.core.annotation.DataPath;
 import net.kyori.adventure.key.Key;
+import org.apache.commons.lang3.reflect.TypeUtils;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Unmodifiable;
 
+import java.lang.reflect.Method;
+import java.lang.reflect.Type;
 import java.util.Collection;
-import java.util.Objects;
+import java.util.Map;
 
 /**
  * An object capable of extracting {@link PathFunction}s from the classes of data objects.
  */
 @FunctionalInterface
 public interface DataInspector {
+    Type COLLECTION_TYPE = TypeUtils.parameterize(Collection.class, TypeUtils.wildcardType()
+            .withUpperBounds(String.class).build());
+
+    Type STRING_TYPE = String.class;
+
     /**
      * Returns a computed {@link PathFunction}.
      *
      * @param dataClass the data class to extract a PathFunction from
      * @return the computed PathFunction
      */
-    @NotNull PathFunction pathFunction(final @NotNull Class<?> dataClass);
+    @NotNull PathSpec inspectData(final @NotNull Class<?> dataClass);
+
+    record PathSpec (@NotNull PathFunction pathFunction,
+            @Unmodifiable @NotNull Map<Key, PathFunction.PathInfo> infoMap) {}
 
     /**
      * A function that can extract the actual path of a data object.
@@ -27,17 +40,7 @@ public interface DataInspector {
         /**
          * Represents some info for a path.
          */
-        record PathInfo(@NotNull Iterable<String> paths, boolean cache, boolean isIterable) {
-            /**
-             * Creates a new instance of this record.
-             * @param paths the path strings
-             * @param cache whether the element object referred to by this path(s) should be cached
-             * @param isIterable whether the element(s) referred to by the path(s) should be interpreted as an iterable
-             */
-            public PathInfo {
-                Objects.requireNonNull(paths);
-            }
-        }
+        record PathInfo(@NotNull Method accessorMethod, @NotNull DataPath annotation, boolean isCollection) {}
 
         /**
          * Extracts a path key from a data object.
@@ -46,6 +49,6 @@ public interface DataInspector {
          * @param id         the identifier used to locate the right accessor
          * @return the path key
          */
-        @NotNull PathInfo apply(final @NotNull Object dataObject, final @NotNull Key id);
+        @NotNull Collection<? extends String> apply(final @NotNull Object dataObject, final @NotNull Key id);
     }
 }
