@@ -20,6 +20,8 @@ import static com.github.steanky.element.core.util.Validate.*;
  * Basic implementation of {@link DataInspector}.
  */
 public class BasicDataInspector implements DataInspector {
+    private record MethodInfo(Method method, DataPath annotation) {}
+
     private final KeyParser keyParser;
 
     /**
@@ -34,7 +36,7 @@ public class BasicDataInspector implements DataInspector {
     @Override
     public @NotNull PathFunction pathFunction(final @NotNull Class<?> dataClass) {
         final Method[] declaredMethods = dataClass.getDeclaredMethods();
-        final Map<Key, Method> accessorMap = new HashMap<>(2);
+        final Map<Key, MethodInfo> accessorMap = new HashMap<>(2);
 
         for (final Method method : declaredMethods) {
             final DataPath dataPathAnnotation = method.getDeclaredAnnotation(DataPath.class);
@@ -48,19 +50,21 @@ public class BasicDataInspector implements DataInspector {
                 @Subst(Constants.NAMESPACE_OR_KEY) final String idString = dataPathAnnotation.value();
                 final Key idKey = keyParser.parseKey(idString);
 
-                if (accessorMap.putIfAbsent(idKey, method) != null) {
+                final MethodInfo info = new MethodInfo(method, dataPathAnnotation);
+                if (accessorMap.putIfAbsent(idKey, info) != null) {
                     throw elementException(dataClass, "multiple DataPath accessors with name '" + idKey + "'");
                 }
             }
         }
 
         return (data, id) -> {
-            final Method method = accessorMap.get(id);
-            if (method == null) {
+            final MethodInfo methodInfo = accessorMap.get(id);
+            if (methodInfo == null) {
                 throw elementException(dataClass, "no DataPath accessor for '" + id + "'");
             }
 
-            return ReflectionUtils.invokeMethod(method, data);
+            final String path = ReflectionUtils.invokeMethod(methodInfo.method, data);
+            return new PathFunction.PathInfo(path, methodInfo.annotation.cache());
         };
     }
 }
