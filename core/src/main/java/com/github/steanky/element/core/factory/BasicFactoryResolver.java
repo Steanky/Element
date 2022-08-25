@@ -58,7 +58,7 @@ public class BasicFactoryResolver implements FactoryResolver {
         if (spec.dataIndex == -1) {
             args = new Object[spec.parameters.size()];
             for (int i = 0; i < spec.parameters.size(); i++) {
-                args[i] = processParameter(spec.parameters.get(i), context, provider, spec.pathSpec, objectData);
+                args[i] = processParameter(spec.parameters.get(i), context, provider, spec.dataInformation, objectData);
             }
 
             return args;
@@ -68,24 +68,24 @@ public class BasicFactoryResolver implements FactoryResolver {
         args[spec.dataIndex] = objectData;
 
         for (int i = 0; i < spec.dataIndex; i++) {
-            args[i] = processParameter(spec.parameters.get(i), context, provider, spec.pathSpec, objectData);
+            args[i] = processParameter(spec.parameters.get(i), context, provider, spec.dataInformation, objectData);
         }
 
         for (int i = spec.dataIndex + 1; i < args.length; i++) {
-            args[i] = processParameter(spec.parameters.get(i - 1), context, provider, spec.pathSpec, objectData);
+            args[i] = processParameter(spec.parameters.get(i - 1), context, provider, spec.dataInformation, objectData);
         }
 
         return args;
     }
 
     private Object processParameter(final ElementParameter parameter, final ElementContext context,
-            final DependencyProvider provider, final DataInspector.PathSpec pathSpec, final Object data) {
+            final DependencyProvider provider, final DataInspector.DataInformation dataInformation, final Object data) {
         if (parameter.isDependency) {
             return provider.provide(parameter.type, parameter.id);
         }
 
-        final PathFunction.PathInfo info = pathSpec.infoMap().get(parameter.id);
-        final Collection<? extends String> path = pathSpec.pathFunction().apply(data, parameter.id);
+        final PathFunction.PathInfo info = dataInformation.infoMap().get(parameter.id);
+        final Collection<? extends String> path = dataInformation.pathFunction().apply(data, parameter.id);
         if (info.isCollection()) {
             final Collection<Object> collection = new ArrayList<>(path.size());
             for (final String elementPath : path) {
@@ -233,9 +233,9 @@ public class BasicFactoryResolver implements FactoryResolver {
 
         elementParameters.trimToSize();
 
-        final DataInspector.PathSpec pathSpec = dataClass == null ? null : dataInspector.inspectData(dataClass);
-        if (pathSpec != null) {
-            final Map<Key, PathFunction.PathInfo> infoMap = pathSpec.infoMap();
+        final DataInspector.DataInformation dataInformation = dataClass == null ? null : dataInspector.inspectData(dataClass);
+        if (dataInformation != null) {
+            final Map<Key, PathFunction.PathInfo> infoMap = dataInformation.infoMap();
 
             int nonDependencyCount = 0;
             for (final ElementParameter parameter : elementParameters) {
@@ -262,13 +262,13 @@ public class BasicFactoryResolver implements FactoryResolver {
             }
         }
 
-        final ElementSpec elementSpec = new ElementSpec(elementParameters, dataParameterIndex, pathSpec);
+        final ElementSpec elementSpec = new ElementSpec(elementParameters, dataParameterIndex, dataInformation);
         return (objectData, data, dependencyProvider) -> ReflectionUtils.invokeConstructor(finalFactoryConstructor,
                 resolveArguments(objectData, data, dependencyProvider, elementSpec));
     }
 
     private record ElementSpec(List<ElementParameter> parameters, int dataIndex,
-            DataInspector.PathSpec pathSpec) {}
+            DataInspector.DataInformation dataInformation) {}
 
     private record ElementParameter(Parameter parameter, Key type, Key id, boolean isDependency) {}
 }

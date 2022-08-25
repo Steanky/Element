@@ -2,7 +2,6 @@ package com.github.steanky.element.core.data;
 
 import com.github.steanky.element.core.annotation.DataPath;
 import net.kyori.adventure.key.Key;
-import org.apache.commons.lang3.reflect.TypeUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Unmodifiable;
 
@@ -21,9 +20,14 @@ public interface DataInspector {
      * @param dataClass the data class to extract a PathFunction from
      * @return the computed PathFunction
      */
-    @NotNull PathSpec inspectData(final @NotNull Class<?> dataClass);
+    @NotNull DataInformation inspectData(final @NotNull Class<?> dataClass);
 
-    record PathSpec (@NotNull PathFunction pathFunction,
+    /**
+     * Information about a path.
+     * @param pathFunction the {@link PathFunction} for this data object
+     * @param infoMap an unmodifiable map of id {@link Key}s to {@link PathFunction.PathInfo} objects.
+     */
+    record DataInformation(@NotNull PathFunction pathFunction,
             @Unmodifiable @NotNull Map<Key, PathFunction.PathInfo> infoMap) {}
 
     /**
@@ -32,7 +36,10 @@ public interface DataInspector {
     @FunctionalInterface
     interface PathFunction {
         /**
-         * Represents some info for a path.
+         * Represents some info about a specific path.
+         * @param accessorMethod the method used to access the path
+         * @param annotation the {@link DataPath} annotation
+         * @param isCollection whether this path represents a collection of data paths
          */
         record PathInfo(@NotNull Method accessorMethod, @NotNull DataPath annotation, boolean isCollection) {}
 

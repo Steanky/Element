@@ -36,7 +36,7 @@ public class BasicDataInspector implements DataInspector {
 
     @SuppressWarnings("unchecked")
     @Override
-    public @NotNull PathSpec inspectData(final @NotNull Class<?> dataClass) {
+    public @NotNull DataInspector.DataInformation inspectData(final @NotNull Class<?> dataClass) {
         final Method[] declaredMethods = dataClass.getDeclaredMethods();
         final Map<Key, PathFunction.PathInfo> infoMap = new HashMap<>(2);
 
@@ -81,6 +81,6 @@ public class BasicDataInspector implements DataInspector {
             return Collections.singleton((String) path);
         };
 
-        return new PathSpec(function, Map.copyOf(infoMap));
+        return new DataInformation(function, Map.copyOf(infoMap));
     }
 }
