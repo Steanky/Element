@@ -22,6 +22,8 @@ import java.util.Objects;
  * Basic implementation of {@link ElementContext}.
  */
 public class BasicElementContext implements ElementContext {
+    private record DataInfo(Object data, Key type) {}
+
     private final Registry<ConfigProcessor<?>> processorRegistry;
     private final Registry<ElementFactory<?, ?>> factoryRegistry;
     private final PathSplitter pathSplitter;
@@ -29,6 +31,7 @@ public class BasicElementContext implements ElementContext {
     private final KeyExtractor typeKeyExtractor;
     private final ConfigNode rootNode;
 
+    private final Map<String, DataInfo> dataObjects;
     private final Map<String, Object> elementObjects;
 
     /**
@@ -54,34 +57,55 @@ public class BasicElementContext implements ElementContext {
         this.typeKeyExtractor = Objects.requireNonNull(typeKeyExtractor);
         this.rootNode = Objects.requireNonNull(rootNode);
 
+        this.dataObjects = new HashMap<>(4);
         this.elementObjects = new HashMap<>(4);
     }
 
-    @SuppressWarnings("unchecked")
     @Override
-    public <TElement> @NotNull TElement provide(final @Nullable String path,
+    public <TElement> @NotNull TElement provide(@Nullable String path, @NotNull DependencyProvider dependencyProvider) {
+        return provideInternal(path, dependencyProvider, false);
+    }
+
+    @Override
+    public <TElement> @NotNull TElement provideAndCache(final @Nullable String path,
             final @NotNull DependencyProvider dependencyProvider) {
+        return provideInternal(path, dependencyProvider, true);
+    }
+
+    @SuppressWarnings("unchecked")
+    private <TElement> @NotNull TElement provideInternal(final @Nullable String path,
+            final @NotNull DependencyProvider dependencyProvider, final boolean cacheElements) {
         final String normalizedPath = path == null ? null : pathSplitter.normalize(path);
 
         //don't use computeIfAbsent because the map may be modified by the mapping function
-        if (elementObjects.containsKey(normalizedPath)) {
+        if (cacheElements && elementObjects.containsKey(normalizedPath)) {
             return (TElement) elementObjects.get(normalizedPath);
         }
 
-        final ConfigNode dataNode = dataLocator.locate(rootNode, normalizedPath);
-        final Key objectType = typeKeyExtractor.extractKey(dataNode);
-
-        final Object dataObject;
-        try {
-            dataObject = processorRegistry.contains(objectType) ?
-                    processorRegistry.lookup(objectType).dataFromElement(dataNode) : null;
-        } catch (ConfigProcessException e) {
-            throw new ElementException("error deserializing data node at path '" + normalizedPath + "'", e);
+        final DataInfo dataInfo;
+        if (dataObjects.containsKey(normalizedPath)) {
+            dataInfo = dataObjects.get(normalizedPath);
+        }
+        else {
+            final ConfigNode dataNode = dataLocator.locate(rootNode, normalizedPath);
+            final Key objectType = typeKeyExtractor.extractKey(dataNode);
+            try {
+                Object data = processorRegistry.contains(objectType) ?
+                        processorRegistry.lookup(objectType).dataFromElement(dataNode) : null;
+                dataInfo = new DataInfo(data, objectType);
+                dataObjects.put(normalizedPath, dataInfo);
+            } catch (ConfigProcessException e) {
+                throw new ElementException("error deserializing data node at path '" + normalizedPath + "'", e);
+            }
         }
 
-        final TElement element = (TElement) ((ElementFactory<Object, Object>) factoryRegistry.lookup(objectType)).make(
-                dataObject, this, dependencyProvider);
-        elementObjects.put(normalizedPath, element);
+        final TElement element = (TElement) ((ElementFactory<Object, Object>) factoryRegistry.lookup(dataInfo.type))
+                .make(dataInfo.data, this, dependencyProvider);
+
+        if (cacheElements) {
+            elementObjects.put(normalizedPath, element);
+        }
+
         return element;
     }
 

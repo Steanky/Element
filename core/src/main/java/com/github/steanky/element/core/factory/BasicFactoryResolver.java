@@ -85,7 +85,7 @@ public class BasicFactoryResolver implements FactoryResolver {
             return provider.provide(parameter.type, parameter.id);
         }
 
-        return context.provide(pathFunction.apply(data, parameter.id), provider);
+        return context.provideAndCache(pathFunction.apply(data, parameter.id), provider);
     }
 
     @Override

@@ -57,7 +57,7 @@ public class BasicContextManagerIntegrationTest {
         final ConfigNode node = ConfigNode.of("type", "simple_data", "value", 10);
 
         final ElementContext data = contextManager.makeContext(node);
-        final SimpleData element = data.provide(null, DependencyProvider.EMPTY);
+        final SimpleData element = data.provideAndCache(null, DependencyProvider.EMPTY);
 
         assertNotNull(element);
         assertEquals(10, element.data.value);
@@ -70,7 +70,7 @@ public class BasicContextManagerIntegrationTest {
         node.put("simple_data", nested);
 
         final ElementContext data = contextManager.makeContext(node);
-        final Nested nestedElement = data.provide(null, DependencyProvider.EMPTY);
+        final Nested nestedElement = data.provideAndCache(null, DependencyProvider.EMPTY);
 
         assertNotNull(nestedElement);
         assertEquals(10, nestedElement.simpleElement.data.value);
