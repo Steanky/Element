@@ -8,7 +8,9 @@ import com.github.steanky.element.core.context.ContextManager;
 import com.github.steanky.element.core.context.ElementContext;
 import com.github.steanky.element.core.data.*;
 import com.github.steanky.element.core.dependency.DependencyProvider;
+import com.github.steanky.element.core.factory.BasicCollectionCreator;
 import com.github.steanky.element.core.factory.BasicFactoryResolver;
+import com.github.steanky.element.core.factory.CollectionCreator;
 import com.github.steanky.element.core.factory.FactoryResolver;
 import com.github.steanky.element.core.key.*;
 import com.github.steanky.element.core.processor.BasicProcessorResolver;
@@ -37,9 +39,10 @@ public class BasicContextManagerIntegrationTest {
         final KeyExtractor typeExtractor = new BasicKeyExtractor("type", keyParser);
         final ElementTypeIdentifier elementTypeIdentifier = new BasicElementTypeIdentifier(keyParser);
         final DataInspector dataInspector = new BasicDataInspector(keyParser);
+        final CollectionCreator collectionCreator = new BasicCollectionCreator();
 
         final FactoryResolver factoryResolver = new BasicFactoryResolver(keyParser, elementTypeIdentifier,
-                dataInspector);
+                dataInspector, collectionCreator);
         final ProcessorResolver processorResolver = new BasicProcessorResolver();
         final ElementInspector elementInspector = new BasicElementInspector(factoryResolver, processorResolver);
 

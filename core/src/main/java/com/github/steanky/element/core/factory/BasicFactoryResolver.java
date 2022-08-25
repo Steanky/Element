@@ -32,6 +32,7 @@ public class BasicFactoryResolver implements FactoryResolver {
     private final KeyParser keyParser;
     private final ElementTypeIdentifier elementTypeIdentifier;
     private final DataInspector dataInspector;
+    private final CollectionCreator typeResolver;
 
     /**
      * Creates a new instance of this class.
@@ -40,12 +41,16 @@ public class BasicFactoryResolver implements FactoryResolver {
      * @param elementTypeIdentifier the {@link ElementTypeIdentifier} used to extract type keys from element classes
      * @param dataInspector         the {@link DataInspector} object used to extract {@link PathFunction}s from data
      *                              classes
+     * @param collectionCreator          the {@link CollectionCreator} used to reflectively create collection instances when
+     *                              necessary, when requiring multiple element dependencies
      */
     public BasicFactoryResolver(final @NotNull KeyParser keyParser,
-            final @NotNull ElementTypeIdentifier elementTypeIdentifier, final @NotNull DataInspector dataInspector) {
+            final @NotNull ElementTypeIdentifier elementTypeIdentifier, final @NotNull DataInspector dataInspector,
+            final @NotNull CollectionCreator collectionCreator) {
         this.keyParser = Objects.requireNonNull(keyParser);
         this.elementTypeIdentifier = Objects.requireNonNull(elementTypeIdentifier);
         this.dataInspector = Objects.requireNonNull(dataInspector);
+        this.typeResolver = Objects.requireNonNull(collectionCreator);
     }
 
     private static Key parseKey(final KeyParser parser, final @Subst(Constants.NAMESPACE_OR_KEY) String keyString) {
@@ -87,7 +92,7 @@ public class BasicFactoryResolver implements FactoryResolver {
         final PathFunction.PathInfo info = dataInformation.infoMap().get(parameter.id);
         final Collection<? extends String> path = dataInformation.pathFunction().apply(data, parameter.id);
         if (info.isCollection()) {
-            final Collection<Object> collection = new ArrayList<>(path.size());
+            final Collection<Object> collection = typeResolver.createCollection(parameter.parameter.getType(), path.size());
             for (final String elementPath : path) {
                 collection.add(info.annotation().cache() ? context.provideAndCache(elementPath, provider) : context
                         .provide(elementPath, provider));
