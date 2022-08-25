@@ -14,11 +14,16 @@ import com.github.steanky.element.core.key.*;
 import com.github.steanky.element.core.processor.BasicProcessorResolver;
 import com.github.steanky.element.core.processor.ProcessorResolver;
 import com.github.steanky.ethylene.core.ConfigElement;
+import com.github.steanky.ethylene.core.collection.ArrayConfigList;
+import com.github.steanky.ethylene.core.collection.ConfigList;
 import com.github.steanky.ethylene.core.collection.ConfigNode;
 import com.github.steanky.ethylene.core.processor.ConfigProcessException;
 import com.github.steanky.ethylene.core.processor.ConfigProcessor;
 import org.jetbrains.annotations.NotNull;
 import org.junit.jupiter.api.Test;
+
+import java.util.Collection;
+import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
@@ -50,6 +55,7 @@ public class BasicContextManagerIntegrationTest {
         contextManager.registerElementClass(SimpleElement.class);
         contextManager.registerElementClass(SimpleData.class);
         contextManager.registerElementClass(Nested.class);
+        contextManager.registerElementClass(MultiElement.class);
     }
 
     @Test
@@ -75,6 +81,62 @@ public class BasicContextManagerIntegrationTest {
         assertNotNull(nestedElement);
         assertEquals(10, nestedElement.simpleElement.data.value);
         assertEquals("simple_data", nestedElement.data.key);
+    }
+
+    @Test
+    void multi() {
+        final ConfigList keys = new ArrayConfigList(2);
+        keys.addString("simple_data");
+        keys.addString("simple_data_2");
+
+        final ConfigNode node = ConfigNode.of("type", "multi_element", "simpleElements", keys);
+        final ConfigNode simpleData = ConfigNode.of("type", "simple_data", "value", 1);
+        final ConfigNode simpleData2 = ConfigNode.of("type", "simple_data", "value", 2);
+
+        node.put("simple_data", simpleData);
+        node.put("simple_data_2", simpleData2);
+
+        final ElementContext data = contextManager.makeContext(node);
+        final MultiElement multiElement = data.provideAndCache();
+
+        assertNotNull(multiElement);
+        assertEquals(1, multiElement.elements.get(0).data.value);
+        assertEquals(2, multiElement.elements.get(1).data.value);
+    }
+
+    @Model("multi_element")
+    public static class MultiElement {
+        private final Data data;
+        private final List<SimpleData> elements;
+
+        @ProcessorMethod
+        public static ConfigProcessor<Data> processor() {
+            return new ConfigProcessor<>() {
+                @Override
+                public Data dataFromElement(@NotNull ConfigElement element) throws ConfigProcessException {
+                    List<String> simpleElements = ConfigProcessor.STRING.listProcessor().dataFromElement(element
+                            .getElementOrThrow("simpleElements"));
+                    return new Data(simpleElements);
+                }
+
+                @Override
+                public @NotNull ConfigElement elementFromData(Data data) throws ConfigProcessException {
+                    return ConfigNode.of("simpleElements", ConfigProcessor.STRING.listProcessor()
+                            .elementFromData(data.simpleElements));
+                }
+            };
+        }
+
+        @FactoryMethod
+        public MultiElement(@NotNull Data data, @DataName("data") @NotNull List<SimpleData> elements) {
+            this.data = data;
+            this.elements = elements;
+        }
+
+        @DataObject
+        public record Data(@DataPath("data") List<String> simpleElements) {
+
+        }
     }
 
     @Model("simple_element")
