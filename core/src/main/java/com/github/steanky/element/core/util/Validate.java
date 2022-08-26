@@ -1,6 +1,7 @@
 package com.github.steanky.element.core.util;
 
 import com.github.steanky.element.core.ElementException;
+import org.apache.commons.lang3.reflect.TypeUtils;
 import org.jetbrains.annotations.NotNull;
 
 import java.lang.reflect.*;
@@ -80,17 +81,16 @@ public final class Validate {
     }
 
     /**
-     * Validates that the given Type object is assignable to the given class. Uses
-     * {@link ReflectionUtils#getUnderlyingClass(Type)} to convert the Type to a {@link Class} object.
+     * Validates that the actual Type object is assignable to the required type.
      *
      * @param owner            the owner class, displayed in the error message (if any)
      * @param requiredType     the upper bound of the required type
      * @param actualType       the actual type object
      * @param exceptionMessage the message supplier which provides the error message
      */
-    public static void validateGenericType(final @NotNull Class<?> owner, final @NotNull Class<?> requiredType,
+    public static void validateType(final @NotNull Class<?> owner, final @NotNull Type requiredType,
             final @NotNull Type actualType, final @NotNull Supplier<String> exceptionMessage) {
-        if (!requiredType.isAssignableFrom(ReflectionUtils.getUnderlyingClass(actualType))) {
+        if (!TypeUtils.isAssignable(actualType, requiredType)) {
             throw elementException(owner, exceptionMessage.get());
         }
     }
