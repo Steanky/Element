@@ -8,13 +8,15 @@ import com.github.steanky.ethylene.core.processor.ConfigProcessor;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import com.github.steanky.element.core.annotation.Cache;
+
 /**
  * Object holding contextual elements.
  */
 public interface ElementContext {
     /**
-     * Provides a contextual element object given a path key. This will perform no caching of element objects, and will
-     * always create a fresh instance.
+     * Provides a contextual element object given a path key. This prefers to perform no caching of element objects, but
+     * will do so if the element object itself specifies the {@link Cache} annotation.
      *
      * @param path               the path key
      * @param dependencyProvider the {@link DependencyProvider} used to provide dependencies
@@ -60,9 +62,8 @@ public interface ElementContext {
     }
 
     /**
-     * Provides a contextual element object given a path key. If null, will attempt to provide the root node. If the
-     * object at the given path has already been created, it is cached and the same object will be returned if it is
-     * requested again.
+     * Provides a contextual element object given a path key. If null, will attempt to provide the root node. This
+     * attempts to perform caching, if allowed to do so by the element object.
      *
      * @param path               the path key
      * @param dependencyProvider the {@link DependencyProvider} used to provide dependencies
@@ -139,5 +140,11 @@ public interface ElementContext {
          * @return a Registry of ElementFactories
          */
         @NotNull Registry<ElementFactory<?, ?>> factoryRegistry();
+
+        /**
+         * Returns the {@link Registry} object holding information about which element types should be always cached.
+         * @return a Registry of {@link Boolean}s
+         */
+        @NotNull Registry<Boolean> cacheRegistry();
     }
 }
