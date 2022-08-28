@@ -44,6 +44,14 @@ public class BasicContextManager implements ContextManager {
         }
 
         elementContextSource.factoryRegistry().register(elementKey, elementInformation.factory());
+
+        final ElementInspector.CachePreference preference = elementInformation.cachePreference();
+
+        //don't bother to register if we are cache-unspecified
+        if (preference != ElementInspector.CachePreference.UNSPECIFIED) {
+            elementContextSource.cacheRegistry().register(elementKey,
+                    preference == ElementInspector.CachePreference.CACHE);
+        }
     }
 
     @Override

@@ -26,6 +26,7 @@ public class BasicElementContext implements ElementContext {
 
     private final Registry<ConfigProcessor<?>> processorRegistry;
     private final Registry<ElementFactory<?, ?>> factoryRegistry;
+    private final Registry<Boolean> cacheRegistry;
     private final PathSplitter pathSplitter;
     private final DataLocator dataLocator;
     private final KeyExtractor typeKeyExtractor;
@@ -41,6 +42,7 @@ public class BasicElementContext implements ElementContext {
      *                          to deserialize element object data
      * @param factoryRegistry   the Registry used to hold references to {@link ElementFactory} instances needed to
      *                          construct element objects
+     * @param cacheRegistry     the Registry used to determine if element types request caching or not
      * @param pathSplitter   the {@link PathSplitter} used to split path keys
      * @param dataLocator       the {@link DataLocator} implementation used to locate data objects from identifiers
      * @param typeKeyExtractor  the {@link KeyExtractor} implementation used to extract type keys from nodes
@@ -48,10 +50,12 @@ public class BasicElementContext implements ElementContext {
      */
     public BasicElementContext(final @NotNull Registry<ConfigProcessor<?>> processorRegistry,
             final @NotNull Registry<ElementFactory<?, ?>> factoryRegistry,
+            final @NotNull Registry<Boolean> cacheRegistry,
             final @NotNull PathSplitter pathSplitter, final @NotNull DataLocator dataLocator,
             final @NotNull KeyExtractor typeKeyExtractor, final @NotNull ConfigNode rootNode) {
         this.processorRegistry = Objects.requireNonNull(processorRegistry);
         this.factoryRegistry = Objects.requireNonNull(factoryRegistry);
+        this.cacheRegistry = Objects.requireNonNull(cacheRegistry);
         this.pathSplitter = Objects.requireNonNull(pathSplitter);
         this.dataLocator = Objects.requireNonNull(dataLocator);
         this.typeKeyExtractor = Objects.requireNonNull(typeKeyExtractor);
@@ -74,11 +78,23 @@ public class BasicElementContext implements ElementContext {
 
     @SuppressWarnings("unchecked")
     private <TElement> @NotNull TElement provideInternal(final @Nullable String path,
-            final @NotNull DependencyProvider dependencyProvider, final boolean cacheElements) {
+            final @NotNull DependencyProvider dependencyProvider, final boolean provideCache) {
+        final boolean cacheElement;
+
+        final ConfigNode dataNode = dataLocator.locate(rootNode, path);
+        final Key objectType = typeKeyExtractor.extractKey(dataNode);
+
+        if (cacheRegistry.contains(objectType)) {
+            cacheElement = cacheRegistry.lookup(objectType);
+        }
+        else {
+            cacheElement = provideCache;
+        }
+
         final String normalizedPath = path == null ? null : pathSplitter.normalize(path);
 
         //don't use computeIfAbsent because the map may be modified by the mapping function
-        if (cacheElements && elementObjects.containsKey(normalizedPath)) {
+        if (cacheElement && elementObjects.containsKey(normalizedPath)) {
             return (TElement) elementObjects.get(normalizedPath);
         }
 
@@ -87,8 +103,6 @@ public class BasicElementContext implements ElementContext {
             dataInfo = dataObjects.get(normalizedPath);
         }
         else {
-            final ConfigNode dataNode = dataLocator.locate(rootNode, normalizedPath);
-            final Key objectType = typeKeyExtractor.extractKey(dataNode);
             try {
                 Object data = processorRegistry.contains(objectType) ?
                         processorRegistry.lookup(objectType).dataFromElement(dataNode) : null;
@@ -102,7 +116,7 @@ public class BasicElementContext implements ElementContext {
         final TElement element = (TElement) ((ElementFactory<Object, Object>) factoryRegistry.lookup(dataInfo.type))
                 .make(dataInfo.data, this, dependencyProvider);
 
-        if (cacheElements) {
+        if (cacheElement) {
             elementObjects.put(normalizedPath, element);
         }
 
@@ -120,6 +134,7 @@ public class BasicElementContext implements ElementContext {
     public static class Source implements ElementContext.Source {
         private final Registry<ConfigProcessor<?>> processorRegistry;
         private final Registry<ElementFactory<?, ?>> factoryRegistry;
+        private final Registry<Boolean> cacheRegistry;
         private final PathSplitter pathSplitter;
         private final DataLocator dataLocator;
         private final KeyExtractor keyExtractor;
@@ -131,6 +146,8 @@ public class BasicElementContext implements ElementContext {
          *                          this source, used for referencing {@link ConfigProcessor} objects
          * @param factoryRegistry   the {@link Registry} passed to all BasicElementContext instances created by this
          *                          source, used for referencing {@link ElementFactory} objects
+         * @param cacheRegistry     the Registry passed to all BasicElementContext instances created by this source,
+         *                          used to determine whether element objects should be cached.
          * @param pathSplitter   the {@link PathSplitter} used to split path keys
          * @param dataLocator       the {@link DataLocator} passed to all BasicDataContext instances created by this
          *                          source
@@ -139,10 +156,12 @@ public class BasicElementContext implements ElementContext {
          */
         public Source(final @NotNull Registry<ConfigProcessor<?>> processorRegistry,
                 final @NotNull Registry<ElementFactory<?, ?>> factoryRegistry,
+                final @NotNull Registry<Boolean> cacheRegistry,
                 final @NotNull PathSplitter pathSplitter, final @NotNull DataLocator dataLocator,
                 final @NotNull KeyExtractor keyExtractor) {
             this.processorRegistry = Objects.requireNonNull(processorRegistry);
             this.factoryRegistry = Objects.requireNonNull(factoryRegistry);
+            this.cacheRegistry = Objects.requireNonNull(cacheRegistry);
             this.pathSplitter = Objects.requireNonNull(pathSplitter);
             this.dataLocator = Objects.requireNonNull(dataLocator);
             this.keyExtractor = Objects.requireNonNull(keyExtractor);
@@ -150,7 +169,7 @@ public class BasicElementContext implements ElementContext {
 
         @Override
         public @NotNull BasicElementContext make(final @NotNull ConfigNode node) {
-            return new BasicElementContext(processorRegistry, factoryRegistry, pathSplitter, dataLocator,
+            return new BasicElementContext(processorRegistry, factoryRegistry, cacheRegistry, pathSplitter, dataLocator,
                     keyExtractor, node);
         }
 
@@ -162,6 +181,11 @@ public class BasicElementContext implements ElementContext {
         @Override
         public @NotNull Registry<ElementFactory<?, ?>> factoryRegistry() {
             return factoryRegistry;
+        }
+
+        @Override
+        public @NotNull Registry<Boolean> cacheRegistry() {
+            return cacheRegistry;
         }
     }
 }

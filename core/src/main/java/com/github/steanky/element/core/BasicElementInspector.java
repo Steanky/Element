@@ -1,5 +1,6 @@
 package com.github.steanky.element.core;
 
+import com.github.steanky.element.core.annotation.Cache;
 import com.github.steanky.element.core.factory.FactoryResolver;
 import com.github.steanky.element.core.processor.ProcessorResolver;
 import com.github.steanky.ethylene.core.processor.ConfigProcessor;
@@ -44,6 +45,10 @@ public class BasicElementInspector implements ElementInspector {
         final ConfigProcessor<?> processor = processorResolver.resolveProcessor(elementClass);
         final ElementFactory<?, ?> factory = factoryResolver.resolveFactory(elementClass, processor != null);
 
-        return new Information(processor, factory);
+        final Cache cacheAnnotation = elementClass.getDeclaredAnnotation(Cache.class);
+        final CachePreference cachePreference = cacheAnnotation == null ? CachePreference.UNSPECIFIED :
+                (cacheAnnotation.value() ? CachePreference.CACHE : CachePreference.NO_CACHE);
+
+        return new Information(processor, factory, cachePreference);
     }
 }

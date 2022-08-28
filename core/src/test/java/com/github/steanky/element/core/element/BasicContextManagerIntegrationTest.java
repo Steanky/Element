@@ -47,11 +47,12 @@ public class BasicContextManagerIntegrationTest {
         final ElementInspector elementInspector = new BasicElementInspector(factoryResolver, processorResolver);
 
         final Registry<ConfigProcessor<?>> configRegistry = new HashRegistry<>();
+        final Registry<Boolean> cacheRegistry = new HashRegistry<>();
         final Registry<ElementFactory<?, ?>> factoryRegistry = new HashRegistry<>();
 
         final PathSplitter pathSplitter = new BasicPathSplitter();
         final DataLocator dataLocator = new BasicDataLocator(pathSplitter);
-        final ElementContext.Source source = new BasicElementContext.Source(configRegistry, factoryRegistry,
+        final ElementContext.Source source = new BasicElementContext.Source(configRegistry, factoryRegistry, cacheRegistry,
                 pathSplitter, dataLocator, typeExtractor);
 
         this.contextManager = new BasicContextManager(elementInspector, elementTypeIdentifier, source);
