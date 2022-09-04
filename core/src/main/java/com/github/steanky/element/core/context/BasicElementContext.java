@@ -118,6 +118,11 @@ public class BasicElementContext implements ElementContext {
         return rootNode;
     }
 
+    @Override
+    public @NotNull PathSplitter pathSplitter() {
+        return pathSplitter;
+    }
+
     /**
      * Basic implementation of {@link ElementContext.Source}.
      */

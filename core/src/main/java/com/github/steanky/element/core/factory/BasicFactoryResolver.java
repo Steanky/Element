@@ -14,6 +14,7 @@ import com.github.steanky.element.core.dependency.DependencyProvider;
 import com.github.steanky.element.core.key.Constants;
 import com.github.steanky.element.core.key.KeyParser;
 import com.github.steanky.element.core.util.ReflectionUtils;
+import com.github.steanky.ethylene.core.collection.ConfigNode;
 import net.kyori.adventure.key.Key;
 import org.apache.commons.lang3.reflect.TypeUtils;
 import org.intellij.lang.annotations.Subst;

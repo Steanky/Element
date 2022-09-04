@@ -4,7 +4,9 @@ import com.github.steanky.element.core.ElementException;
 import com.github.steanky.element.core.ElementFactory;
 import com.github.steanky.element.core.Registry;
 import com.github.steanky.element.core.dependency.DependencyProvider;
+import com.github.steanky.element.core.key.PathSplitter;
 import com.github.steanky.ethylene.core.ConfigElement;
+import com.github.steanky.ethylene.core.collection.ConfigEntry;
 import com.github.steanky.ethylene.core.collection.ConfigList;
 import com.github.steanky.ethylene.core.collection.ConfigNode;
 import com.github.steanky.ethylene.core.processor.ConfigProcessor;
@@ -13,13 +15,18 @@ import org.jetbrains.annotations.Nullable;
 
 import com.github.steanky.element.core.annotation.Cache;
 
-import java.util.Collection;
+import java.util.*;
+import java.util.function.Consumer;
 import java.util.function.IntFunction;
 
 /**
  * Object holding contextual elements.
  */
 public interface ElementContext {
+    Consumer<? super ElementException> DEFAULT_EXCEPTION_HANDLER = e -> {
+        throw e;
+    };
+
     /**
      * Provides a contextual element object given a path key, dependency provider, and caching preference. If true, the
      * element will attempt to be cached (if it does not specify otherwise using the {@link Cache} annotation). If
@@ -71,21 +78,197 @@ public interface ElementContext {
     }
 
     default @NotNull <TElement, TCollection extends Collection<TElement>> TCollection provideCollection(
-            final @NotNull String listPath, final @NotNull DependencyProvider dependencyProvider,
-            final @NotNull IntFunction<? extends TCollection> collectionSupplier, final boolean cache) {
-        ConfigElement listElement = rootNode().getElement(listPath);
+            final @NotNull String listPath, final @NotNull DependencyProvider dependencyProvider, final boolean cache,
+            final @NotNull IntFunction<? extends TCollection> collectionSupplier,
+            final @NotNull Consumer<? super ElementException> exceptionHandler) {
+        Objects.requireNonNull(listPath);
+        Objects.requireNonNull(dependencyProvider);
+        Objects.requireNonNull(collectionSupplier);
+        Objects.requireNonNull(exceptionHandler);
+
+        PathSplitter pathSplitter = pathSplitter();
+
+        Object[] ethylenePath = pathSplitter.splitPathKey(listPath);
+        String normalized = pathSplitter.normalize(listPath);
+
+        ConfigElement listElement = rootNode().getElement(ethylenePath);
+
         if (listElement == null || !listElement.isList()) {
-            throw new ElementException("expected ConfigList at '" + listPath + "', found " + listElement);
+            throw new ElementException("expected ConfigList at '" + normalized + "', found " + listElement);
         }
 
         ConfigList list = listElement.asList();
         TCollection elementCollection = collectionSupplier.apply(list.size());
+
+        ElementException exception = null;
         for (int i = 0; i < list.size(); i++) {
-            String path = listPath + "/" + i;
-            elementCollection.add(provide(path, dependencyProvider, cache));
+            try {
+                elementCollection.add(provide(pathSplitter.append(normalized, i), dependencyProvider, cache));
+            }
+            catch (ElementException e) {
+                if (exception == null) {
+                    exception = e;
+                }
+                else {
+                    exception.addSuppressed(e);
+                }
+            }
+        }
+
+        if (exception != null) {
+            exceptionHandler.accept(exception);
         }
 
         return elementCollection;
+    }
+
+    default @NotNull <TElement> List<TElement> provideCollection(final @NotNull String listPath,
+            final @NotNull DependencyProvider dependencyProvider, final boolean cache,
+            final @NotNull Consumer<? super ElementException> exceptionHandler) {
+        return provideCollection(listPath, dependencyProvider, cache, ArrayList::new, exceptionHandler);
+    }
+
+    default @NotNull <TElement> List<TElement> provideCollection(final @NotNull String listPath,
+            final boolean cache, final @NotNull Consumer<? super ElementException> exceptionHandler) {
+        return provideCollection(listPath, DependencyProvider.EMPTY, cache, ArrayList::new, exceptionHandler);
+    }
+
+    default @NotNull <TElement> List<TElement> provideCollection(final @NotNull String listPath,
+            final @NotNull DependencyProvider dependencyProvider,
+            final @NotNull Consumer<? super ElementException> exceptionHandler) {
+        return provideCollection(listPath, dependencyProvider, false, ArrayList::new, exceptionHandler);
+    }
+
+    default @NotNull <TElement> List<TElement> provideCollection(final @NotNull String listPath,
+            final @NotNull Consumer<? super ElementException> exceptionHandler) {
+        return provideCollection(listPath, DependencyProvider.EMPTY, false, ArrayList::new, exceptionHandler);
+    }
+
+    default @NotNull <TElement, TCollection extends Collection<TElement>> TCollection provideCollection(
+            final @NotNull String listPath, final @NotNull DependencyProvider dependencyProvider, final boolean cache,
+            final @NotNull IntFunction<? extends TCollection> collectionSupplier) {
+        return provideCollection(listPath, dependencyProvider, cache, collectionSupplier, DEFAULT_EXCEPTION_HANDLER);
+    }
+
+    default @NotNull <TElement, TCollection extends Collection<TElement>> TCollection provideCollection(
+            final @NotNull String listPath, final boolean cache,
+            final @NotNull IntFunction<? extends TCollection> collectionSupplier) {
+        return provideCollection(listPath, DependencyProvider.EMPTY, cache, collectionSupplier, DEFAULT_EXCEPTION_HANDLER);
+    }
+
+    default @NotNull <TElement> List<TElement> provideCollection(final @NotNull String listPath,
+            final @NotNull DependencyProvider dependencyProvider, final boolean cache) {
+        return provideCollection(listPath, dependencyProvider, cache, ArrayList::new, DEFAULT_EXCEPTION_HANDLER);
+    }
+
+    default @NotNull <TElement> List<TElement> provideCollection(final @NotNull String listPath, final boolean cache) {
+        return provideCollection(listPath, DependencyProvider.EMPTY, cache, ArrayList::new, DEFAULT_EXCEPTION_HANDLER);
+    }
+
+    default @NotNull <TElement> List<TElement> provideCollection(final @NotNull String listPath,
+            final @NotNull DependencyProvider dependencyProvider) {
+        return provideCollection(listPath, dependencyProvider, false, ArrayList::new, DEFAULT_EXCEPTION_HANDLER);
+    }
+
+    default @NotNull <TElement> List<TElement> provideCollection(final @NotNull String listPath) {
+        return provideCollection(listPath, DependencyProvider.EMPTY, false, ArrayList::new, DEFAULT_EXCEPTION_HANDLER);
+    }
+
+    default @NotNull <TElement, TMap extends Map<String, TElement>> TMap provideMap(final @NotNull String nodePath,
+            final @NotNull DependencyProvider dependencyProvider, final boolean cache,
+            final @NotNull IntFunction<? extends TMap> mapSupplier,
+            final @NotNull Consumer<? super ElementException> exceptionHandler) {
+        Objects.requireNonNull(nodePath);
+        Objects.requireNonNull(dependencyProvider);
+        Objects.requireNonNull(mapSupplier);
+        Objects.requireNonNull(exceptionHandler);
+
+        PathSplitter pathSplitter = pathSplitter();
+
+        Object[] ethylenePath = pathSplitter.splitPathKey(nodePath);
+        String normalized = pathSplitter.normalize(nodePath);
+
+        ConfigElement nodeElement = rootNode().getElement(ethylenePath);
+        if (nodeElement == null || !nodeElement.isNode()) {
+            throw new ElementException("expected ConfigNode at '" + normalized + "', found " + nodeElement);
+        }
+
+        ConfigNode node = nodeElement.asNode();
+        TMap elementMap = mapSupplier.apply(node.size());
+
+        ElementException exception = null;
+        for (ConfigEntry entry : node.entryCollection()) {
+            try {
+                elementMap.put(entry.getKey(), provide(pathSplitter.append(normalized, entry.getKey()), dependencyProvider,
+                        cache));
+            }
+            catch (ElementException e) {
+                if (exception == null) {
+                    exception = e;
+                }
+                else {
+                    exception.addSuppressed(e);
+                }
+            }
+        }
+
+        if (exception != null) {
+            exceptionHandler.accept(exception);
+        }
+
+        return elementMap;
+    }
+
+    default @NotNull <TElement> Map<String, TElement> provideMap(final @NotNull String nodePath,
+            final @NotNull DependencyProvider dependencyProvider, final boolean cache,
+            final @NotNull Consumer<? super ElementException> exceptionHandler) {
+        return provideMap(nodePath, dependencyProvider, cache, LinkedHashMap::new, exceptionHandler);
+    }
+
+    default @NotNull <TElement> Map<String, TElement> provideMap(final @NotNull String nodePath,
+            final boolean cache, final @NotNull Consumer<? super ElementException> exceptionHandler) {
+        return provideMap(nodePath, DependencyProvider.EMPTY, cache, LinkedHashMap::new, exceptionHandler);
+    }
+
+    default @NotNull <TElement> Map<String, TElement> provideMap(final @NotNull String nodePath,
+            final @NotNull DependencyProvider dependencyProvider,
+            final @NotNull Consumer<? super ElementException> exceptionHandler) {
+        return provideMap(nodePath, dependencyProvider, false, LinkedHashMap::new, exceptionHandler);
+    }
+
+    default @NotNull <TElement> Map<String, TElement> provideMap(final @NotNull String nodePath,
+            final @NotNull Consumer<? super ElementException> exceptionHandler) {
+        return provideMap(nodePath, DependencyProvider.EMPTY, false, LinkedHashMap::new, exceptionHandler);
+    }
+
+    default @NotNull <TElement, TMap extends Map<String, TElement>> TMap provideMap(
+            final @NotNull String nodePath, final @NotNull DependencyProvider dependencyProvider, final boolean cache,
+            final @NotNull IntFunction<? extends TMap> mapSupplier) {
+        return provideMap(nodePath, dependencyProvider, cache, mapSupplier, DEFAULT_EXCEPTION_HANDLER);
+    }
+
+    default @NotNull <TElement, TMap extends Map<String, TElement>> TMap provideMap(
+            final @NotNull String nodePath, final boolean cache,
+            final @NotNull IntFunction<? extends TMap> mapSupplier) {
+        return provideMap(nodePath, DependencyProvider.EMPTY, cache, mapSupplier, DEFAULT_EXCEPTION_HANDLER);
+    }
+
+    default @NotNull <TElement> Map<String, TElement> provideMap(final @NotNull String nodePath,
+            final @NotNull DependencyProvider dependencyProvider, final boolean cache) {
+        return provideMap(nodePath, dependencyProvider, cache, LinkedHashMap::new, DEFAULT_EXCEPTION_HANDLER);
+    }
+
+    default @NotNull <TElement> Map<String, TElement> provideMap(final @NotNull String nodePath, final boolean cache) {
+        return provideMap(nodePath, DependencyProvider.EMPTY, cache, LinkedHashMap::new, DEFAULT_EXCEPTION_HANDLER);
+    }
+
+    default @NotNull <TElement> Map<String, TElement> provideMap(final @NotNull String nodePath,
+            final @NotNull DependencyProvider dependencyProvider) {
+        return provideMap(nodePath, dependencyProvider, false, LinkedHashMap::new, DEFAULT_EXCEPTION_HANDLER);
+    }
+
+    default @NotNull <TElement> Map<String, TElement> provideMap(final @NotNull String nodePath) {
+        return provideMap(nodePath, DependencyProvider.EMPTY, false, LinkedHashMap::new, DEFAULT_EXCEPTION_HANDLER);
     }
 
     /**
@@ -94,6 +277,12 @@ public interface ElementContext {
      * @return the root node of this context
      */
     @NotNull ConfigNode rootNode();
+
+    /**
+     * The {@link PathSplitter} used by this context.
+     * @return the PathSplitter used by this context
+     */
+    @NotNull PathSplitter pathSplitter();
 
     /**
      * A source of {@link ElementContext} objects.

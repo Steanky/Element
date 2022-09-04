@@ -23,4 +23,12 @@ public interface PathSplitter {
      * @return the normalized string
      */
     @NotNull String normalize(final @NotNull String pathKey);
+
+    /**
+     * Appends a new element onto the given path string.
+     *
+     * @param element the element to append
+     * @return the new path string
+     */
+    @NotNull String append(final @NotNull String pathString, final @NotNull Object element);
 }

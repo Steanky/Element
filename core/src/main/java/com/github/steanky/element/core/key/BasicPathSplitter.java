@@ -55,4 +55,9 @@ public class BasicPathSplitter implements PathSplitter {
 
         return builder.toString();
     }
+
+    @Override
+    public @NotNull String append(final @NotNull String pathString, final @NotNull Object element) {
+        return normalize(pathString) + SPLIT_STRING + element;
+    }
 }
