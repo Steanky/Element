@@ -49,8 +49,8 @@ public class BasicContextManager implements ContextManager {
 
         //don't bother to register if we are cache-unspecified
         if (preference != ElementInspector.CachePreference.UNSPECIFIED) {
-            elementContextSource.cacheRegistry().register(elementKey,
-                    preference == ElementInspector.CachePreference.CACHE);
+            elementContextSource.cacheRegistry()
+                    .register(elementKey, preference == ElementInspector.CachePreference.CACHE);
         }
     }
 

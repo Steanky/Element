@@ -8,17 +8,16 @@ import java.lang.reflect.Modifier;
 import java.util.*;
 import java.util.function.Function;
 
-import static com.github.steanky.element.core.util.Validate.*;
+import static com.github.steanky.element.core.util.Validate.elementException;
 
 /**
  * Basic implementation of {@link CollectionCreator}.
  */
 public class BasicCollectionCreator implements CollectionCreator {
     private static final Function<? super Class<?>, ? extends Class<?>> DEFAULT_RESOLVER = type -> {
-        if(type.equals(List.class) || type.equals(Collection.class)) {
+        if (type.equals(List.class) || type.equals(Collection.class)) {
             return ArrayList.class;
-        }
-        else if (type.equals(Set.class)) {
+        } else if (type.equals(Set.class)) {
             return HashSet.class;
         }
 
@@ -29,6 +28,7 @@ public class BasicCollectionCreator implements CollectionCreator {
 
     /**
      * Creates a new instance of this class given the provided resolver {@link Function}.
+     *
      * @param resolverFunction the resolver function used to resolve concrete classes from abstract types.
      */
     public BasicCollectionCreator(final @NotNull Function<? super Class<?>, ? extends Class<?>> resolverFunction) {
@@ -64,7 +64,8 @@ public class BasicCollectionCreator implements CollectionCreator {
 
         try {
             return (Collection<T>) desiredClass.getConstructor(int.class).newInstance(initialSize);
-        } catch (InstantiationException | IllegalAccessException | InvocationTargetException | NoSuchMethodException e) {
+        } catch (InstantiationException | IllegalAccessException | InvocationTargetException |
+                NoSuchMethodException e) {
             throw elementException(type, "failed to instantiate collection", e);
         }
     }

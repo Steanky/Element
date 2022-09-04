@@ -1,4 +1,5 @@
 package com.github.steanky.element.core.key;
+
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
@@ -6,8 +7,8 @@ import java.util.List;
 import java.util.regex.Pattern;
 
 /**
- * Basic implementation of {@link PathSplitter}. A forward slash '/' is interpreted as a delimiter character. Empty
- * path nodes are ignored.
+ * Basic implementation of {@link PathSplitter}. A forward slash '/' is interpreted as a delimiter character. Empty path
+ * nodes are ignored.
  */
 public class BasicPathSplitter implements PathSplitter {
     private static final String SPLIT_STRING = "/";
@@ -31,7 +32,8 @@ public class BasicPathSplitter implements PathSplitter {
                 try {
                     objects.add(Integer.parseInt(entry));
                     continue;
-                } catch (NumberFormatException ignored) {}
+                } catch (NumberFormatException ignored) {
+                }
             }
 
             objects.add(entry);

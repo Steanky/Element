@@ -14,7 +14,6 @@ import com.github.steanky.element.core.dependency.DependencyProvider;
 import com.github.steanky.element.core.key.Constants;
 import com.github.steanky.element.core.key.KeyParser;
 import com.github.steanky.element.core.util.ReflectionUtils;
-import com.github.steanky.ethylene.core.collection.ConfigNode;
 import net.kyori.adventure.key.Key;
 import org.apache.commons.lang3.reflect.TypeUtils;
 import org.intellij.lang.annotations.Subst;
@@ -42,7 +41,7 @@ public class BasicFactoryResolver implements FactoryResolver {
      * @param elementTypeIdentifier the {@link ElementTypeIdentifier} used to extract type keys from element classes
      * @param dataInspector         the {@link DataInspector} object used to extract {@link PathFunction}s from data
      *                              classes
-     * @param collectionCreator          the {@link CollectionCreator} used to reflectively create collection instances when
+     * @param collectionCreator     the {@link CollectionCreator} used to reflectively create collection instances when
      *                              necessary, when requiring multiple element dependencies
      */
     public BasicFactoryResolver(final @NotNull KeyParser keyParser,
@@ -93,7 +92,8 @@ public class BasicFactoryResolver implements FactoryResolver {
         final PathFunction.PathInfo info = dataInformation.infoMap().get(parameter.id);
         final Collection<? extends String> path = dataInformation.pathFunction().apply(data, parameter.id);
         if (info.isCollection()) {
-            final Collection<Object> collection = typeResolver.createCollection(parameter.parameter.getType(), path.size());
+            final Collection<Object> collection = typeResolver.createCollection(parameter.parameter.getType(),
+                    path.size());
             for (final String elementPath : path) {
                 collection.add(context.provide(elementPath, provider, info.annotation().cache()));
             }
@@ -122,8 +122,8 @@ public class BasicFactoryResolver implements FactoryResolver {
                         () -> "FactoryMethod does not return an ElementFactory");
                 validateParameterCount(declaredMethod, 0, () -> "FactoryMethod has parameters");
 
-                final Type requiredType = TypeUtils.parameterize(ElementFactory.class, TypeUtils.WILDCARD_ALL, TypeUtils
-                        .wildcardType().withUpperBounds(elementClass).build());
+                final Type requiredType = TypeUtils.parameterize(ElementFactory.class, TypeUtils.WILDCARD_ALL,
+                        TypeUtils.wildcardType().withUpperBounds(elementClass).build());
                 validateType(elementClass, requiredType, declaredMethod.getGenericReturnType(),
                         () -> "FactoryMethod returned type not assignable to ElementFactory<?, ? extends T> where T " +
                                 "is the element type");
@@ -237,7 +237,8 @@ public class BasicFactoryResolver implements FactoryResolver {
 
         elementParameters.trimToSize();
 
-        final DataInspector.DataInformation dataInformation = dataClass == null ? null : dataInspector.inspectData(dataClass);
+        final DataInspector.DataInformation dataInformation =
+                dataClass == null ? null : dataInspector.inspectData(dataClass);
         if (dataInformation != null) {
             final Map<Key, PathFunction.PathInfo> infoMap = dataInformation.infoMap();
 
@@ -246,13 +247,14 @@ public class BasicFactoryResolver implements FactoryResolver {
                 if (!parameter.isDependency) {
                     final PathFunction.PathInfo info = infoMap.get(parameter.id);
                     if (info == null) {
-                        throw elementException(elementClass, "missing element dependency with parameter name '" +
-                                parameter.id + "'");
+                        throw elementException(elementClass,
+                                "missing element dependency with parameter name '" + parameter.id + "'");
                     }
 
                     if (info.isCollection()) {
-                        validateType(elementClass, Collection.class, parameter.parameter.getType(), () -> "parameter" +
-                                " with name '" + parameter.id + "' must be assignable to Collection<?>");
+                        validateType(elementClass, Collection.class, parameter.parameter.getType(),
+                                () -> "parameter" + " with name '" + parameter.id +
+                                        "' must be assignable to Collection<?>");
                     }
 
                     nonDependencyCount++;
@@ -261,8 +263,9 @@ public class BasicFactoryResolver implements FactoryResolver {
 
             final int size = infoMap.size();
             if (nonDependencyCount != size) {
-                throw elementException(elementClass, "unexpected number of element dependency parameters, needed " +
-                        size + ", was " + nonDependencyCount);
+                throw elementException(elementClass,
+                        "unexpected number of element dependency parameters, needed " + size + ", was " +
+                                nonDependencyCount);
             }
         }
 

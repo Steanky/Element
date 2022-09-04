@@ -1,7 +1,7 @@
 package com.github.steanky.element.core.key;
 
-import org.jetbrains.annotations.NotNull;
 import com.github.steanky.ethylene.core.ConfigElement;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * Splits "path strings" into object arrays that can be passed to {@link ConfigElement#getElement(Object...)}.
@@ -28,7 +28,7 @@ public interface PathSplitter {
      * Appends a new element onto the given path string.
      *
      * @param pathString the current path string
-     * @param element the element to append to the path string
+     * @param element    the element to append to the path string
      * @return the new path string
      */
     @NotNull String append(final @NotNull String pathString, final @NotNull Object element);

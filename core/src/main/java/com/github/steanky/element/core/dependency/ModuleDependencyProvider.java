@@ -80,7 +80,7 @@ public class ModuleDependencyProvider implements DependencyProvider {
             if (supplierParameters.length == 0) {
                 memoize = declaredMethod.isAnnotationPresent(Memoize.class);
 
-                if(dependencyFunctionMap.put(dependencyName, new DependencyFunction(false) {
+                if (dependencyFunctionMap.put(dependencyName, new DependencyFunction(false) {
                     private Object value = null;
 
                     @Override
@@ -96,7 +96,8 @@ public class ModuleDependencyProvider implements DependencyProvider {
                         return value = ReflectionUtils.invokeMethod(declaredMethod, module);
                     }
                 }) != null) {
-                    throw elementException(moduleClass, "registered multiple DependencySuppliers under key '" + dependencyName + "'");
+                    throw elementException(moduleClass,
+                            "registered multiple DependencySuppliers under key '" + dependencyName + "'");
                 }
 
                 continue;

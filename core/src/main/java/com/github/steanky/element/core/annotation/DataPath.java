@@ -25,6 +25,7 @@ public @interface DataPath {
      * If the element object referred to by this path should be cached or not. If true, the element object for this path
      * will only be created once, and the same instance will be shared across all cache-enabled dependencies. Defaults
      * to {@code true}.
+     *
      * @return true if this element object should be cached, false otherwise
      */
     boolean cache() default true;
