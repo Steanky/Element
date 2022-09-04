@@ -27,7 +27,8 @@ public interface PathSplitter {
     /**
      * Appends a new element onto the given path string.
      *
-     * @param element the element to append
+     * @param pathString the current path string
+     * @param element the element to append to the path string
      * @return the new path string
      */
     @NotNull String append(final @NotNull String pathString, final @NotNull Object element);
