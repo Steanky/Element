@@ -65,20 +65,10 @@ public class BasicElementContext implements ElementContext {
         this.elementObjects = new HashMap<>(4);
     }
 
-    @Override
-    public <TElement> @NotNull TElement provide(@Nullable String path, @NotNull DependencyProvider dependencyProvider) {
-        return provideInternal(path, dependencyProvider, false);
-    }
-
-    @Override
-    public <TElement> @NotNull TElement provideAndCache(final @Nullable String path,
-            final @NotNull DependencyProvider dependencyProvider) {
-        return provideInternal(path, dependencyProvider, true);
-    }
-
     @SuppressWarnings("unchecked")
-    private <TElement> @NotNull TElement provideInternal(final @Nullable String path,
-            final @NotNull DependencyProvider dependencyProvider, final boolean provideCache) {
+    @Override
+    public <TElement> @NotNull TElement provide(@Nullable String path, @NotNull DependencyProvider dependencyProvider,
+            final boolean cache) {
         final boolean cacheElement;
 
         final ConfigNode dataNode = dataLocator.locate(rootNode, path);
@@ -88,7 +78,7 @@ public class BasicElementContext implements ElementContext {
             cacheElement = cacheRegistry.lookup(objectType);
         }
         else {
-            cacheElement = provideCache;
+            cacheElement = cache;
         }
 
         final String normalizedPath = path == null ? null : pathSplitter.normalize(path);

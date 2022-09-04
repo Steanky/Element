@@ -15,57 +15,59 @@ import com.github.steanky.element.core.annotation.Cache;
 
 import java.util.Collection;
 import java.util.function.IntFunction;
-import java.util.function.Supplier;
 
 /**
  * Object holding contextual elements.
  */
 public interface ElementContext {
     /**
-     * Provides a contextual element object given a path key. This prefers to perform no caching of element objects, but
-     * will do so if the element object itself specifies the {@link Cache} annotation.
+     * Provides a contextual element object given a path key, dependency provider, and caching preference. If true, the
+     * element will attempt to be cached (if it does not specify otherwise using the {@link Cache} annotation). If
+     * false, no caching will be performed, unless overridden by the element itself (again using {@link Cache}).
      *
      * @param path               the path key
      * @param dependencyProvider the {@link DependencyProvider} used to provide dependencies
+     * @param cache              true if this element should be cached, false otherwise
      * @param <TElement>         the type of the element object
      * @return the contextual element object
      */
     <TElement> @NotNull TElement provide(final @Nullable String path,
-            final @NotNull DependencyProvider dependencyProvider);
+            final @NotNull DependencyProvider dependencyProvider, final boolean cache);
 
     /**
-     * Convenience overload for {@link ElementContext#provide(String, DependencyProvider)}. This will provide the root
-     * element using the given {@link DependencyProvider}.
+     * Convenience overload for {@link ElementContext#provide(String, DependencyProvider, boolean)}. This will provide
+     * the root element using the given {@link DependencyProvider}, and no caching.
      *
      * @param dependencyProvider the DependencyProvider used to provide dependencies
      * @param <TElement>         the type of the contextual element object
      * @return the root element object
      */
     default <TElement> @NotNull TElement provide(final @NotNull DependencyProvider dependencyProvider) {
-        return provide(null, dependencyProvider);
+        return provide(null, dependencyProvider, false);
     }
 
     /**
-     * Convenience overload for {@link ElementContext#provide(String, DependencyProvider)}. This will provide the
-     * element specified by the path, using an empty dependency provider ({@link DependencyProvider#EMPTY}).
+     * Convenience overload for {@link ElementContext#provide(String, DependencyProvider, boolean)}. This will provide
+     * the element specified by the path, using an empty dependency provider ({@link DependencyProvider#EMPTY}), and no
+     * caching.
      *
      * @param path       the data path
      * @param <TElement> the type of the contextual element object
      * @return the element object
      */
     default <TElement> @NotNull TElement provide(final @Nullable String path) {
-        return provide(path, DependencyProvider.EMPTY);
+        return provide(path, DependencyProvider.EMPTY, false);
     }
 
     /**
-     * Convenience overload for {@link ElementContext#provide(String, DependencyProvider)}. This will provide the root
-     * element using an empty dependency provider ({@link DependencyProvider#EMPTY}).
+     * Convenience overload for {@link ElementContext#provide(String, DependencyProvider, boolean)}. This will provide
+     * the root element using an empty dependency provider ({@link DependencyProvider#EMPTY}), without caching.
      *
      * @param <TElement> the type of the contextual element object
      * @return the element object
      */
     default <TElement> @NotNull TElement provide() {
-        return provide(null, DependencyProvider.EMPTY);
+        return provide(null, DependencyProvider.EMPTY, false);
     }
 
     default @NotNull <TElement, TCollection extends Collection<TElement>> TCollection provideCollection(
@@ -80,57 +82,10 @@ public interface ElementContext {
         TCollection elementCollection = collectionSupplier.apply(list.size());
         for (int i = 0; i < list.size(); i++) {
             String path = listPath + "/" + i;
-            elementCollection.add(cache ? provideAndCache(path, dependencyProvider) : provide(path, dependencyProvider));
+            elementCollection.add(provide(path, dependencyProvider, cache));
         }
 
         return elementCollection;
-    }
-
-    /**
-     * Provides a contextual element object given a path key. If null, will attempt to provide the root node. This
-     * attempts to perform caching, if allowed to do so by the element object.
-     *
-     * @param path               the path key
-     * @param dependencyProvider the {@link DependencyProvider} used to provide dependencies
-     * @param <TElement>         the type of the element object
-     * @return the contextual element object
-     */
-    <TElement> @NotNull TElement provideAndCache(final @Nullable String path,
-            final @NotNull DependencyProvider dependencyProvider);
-
-    /**
-     * Convenience overload for {@link ElementContext#provideAndCache(String, DependencyProvider)}. This will provide the root
-     * element using the given {@link DependencyProvider}.
-     *
-     * @param dependencyProvider the DependencyProvider used to provide dependencies
-     * @param <TElement>         the type of the contextual element object
-     * @return the root element object
-     */
-    default <TElement> @NotNull TElement provideAndCache(final @NotNull DependencyProvider dependencyProvider) {
-        return provideAndCache(null, dependencyProvider);
-    }
-
-    /**
-     * Convenience overload for {@link ElementContext#provideAndCache(String, DependencyProvider)}. This will provide the element
-     * specified by the path, using an empty dependency provider ({@link DependencyProvider#EMPTY}).
-     *
-     * @param path       the data path
-     * @param <TElement> the type of the contextual element object
-     * @return the element object
-     */
-    default <TElement> @NotNull TElement provideAndCache(final @Nullable String path) {
-        return provideAndCache(path, DependencyProvider.EMPTY);
-    }
-
-    /**
-     * Convenience overload for {@link ElementContext#provideAndCache(String, DependencyProvider)}. This will provide the root
-     * element using an empty dependency provider ({@link DependencyProvider#EMPTY}).
-     *
-     * @param <TElement> the type of the contextual element object
-     * @return the element object
-     */
-    default <TElement> @NotNull TElement provideAndCache() {
-        return provideAndCache(null, DependencyProvider.EMPTY);
     }
 
     /**

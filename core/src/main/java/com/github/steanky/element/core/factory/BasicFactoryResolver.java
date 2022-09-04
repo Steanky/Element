@@ -94,16 +94,14 @@ public class BasicFactoryResolver implements FactoryResolver {
         if (info.isCollection()) {
             final Collection<Object> collection = typeResolver.createCollection(parameter.parameter.getType(), path.size());
             for (final String elementPath : path) {
-                collection.add(info.annotation().cache() ? context.provideAndCache(elementPath, provider) : context
-                        .provide(elementPath, provider));
+                collection.add(context.provide(elementPath, provider, info.annotation().cache()));
             }
 
             return collection;
         }
 
         final String onlyPath = path.iterator().next();
-        return info.annotation().cache() ? context.provideAndCache(onlyPath, provider) : context.provide(onlyPath,
-                provider);
+        return context.provide(onlyPath, provider, info.annotation().cache());
     }
 
     @Override
