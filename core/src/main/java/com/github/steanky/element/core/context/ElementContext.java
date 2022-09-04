@@ -1,14 +1,21 @@
 package com.github.steanky.element.core.context;
 
+import com.github.steanky.element.core.ElementException;
 import com.github.steanky.element.core.ElementFactory;
 import com.github.steanky.element.core.Registry;
 import com.github.steanky.element.core.dependency.DependencyProvider;
+import com.github.steanky.ethylene.core.ConfigElement;
+import com.github.steanky.ethylene.core.collection.ConfigList;
 import com.github.steanky.ethylene.core.collection.ConfigNode;
 import com.github.steanky.ethylene.core.processor.ConfigProcessor;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import com.github.steanky.element.core.annotation.Cache;
+
+import java.util.Collection;
+import java.util.function.IntFunction;
+import java.util.function.Supplier;
 
 /**
  * Object holding contextual elements.
@@ -59,6 +66,24 @@ public interface ElementContext {
      */
     default <TElement> @NotNull TElement provide() {
         return provide(null, DependencyProvider.EMPTY);
+    }
+
+    default @NotNull <TElement, TCollection extends Collection<TElement>> TCollection provideCollection(
+            final @NotNull String listPath, final @NotNull DependencyProvider dependencyProvider,
+            final @NotNull IntFunction<? extends TCollection> collectionSupplier, final boolean cache) {
+        ConfigElement listElement = rootNode().getElement(listPath);
+        if (listElement == null || !listElement.isList()) {
+            throw new ElementException("expected ConfigList at '" + listPath + "', found " + listElement);
+        }
+
+        ConfigList list = listElement.asList();
+        TCollection elementCollection = collectionSupplier.apply(list.size());
+        for (int i = 0; i < list.size(); i++) {
+            String path = listPath + "/" + i;
+            elementCollection.add(cache ? provideAndCache(path, dependencyProvider) : provide(path, dependencyProvider));
+        }
+
+        return elementCollection;
     }
 
     /**
