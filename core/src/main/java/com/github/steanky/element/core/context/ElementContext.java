@@ -10,6 +10,7 @@ import com.github.steanky.ethylene.core.ConfigElement;
 import com.github.steanky.ethylene.core.collection.ConfigEntry;
 import com.github.steanky.ethylene.core.collection.ConfigList;
 import com.github.steanky.ethylene.core.collection.ConfigNode;
+import com.github.steanky.ethylene.core.processor.ConfigProcessException;
 import com.github.steanky.ethylene.core.processor.ConfigProcessor;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -109,10 +110,12 @@ public interface ElementContext {
         Object[] ethylenePath = pathSplitter.splitPathKey(listPath);
         String normalized = pathSplitter.normalize(listPath);
 
-        ConfigElement listElement = rootNode().getElement(ethylenePath);
-
-        if (listElement == null || !listElement.isList()) {
-            throw new ElementException("expected ConfigList at '" + normalized + "', found " + listElement);
+        ConfigElement listElement;
+        try {
+            listElement = rootNode().getElementOrThrow(ethylenePath);
+        }
+        catch (ConfigProcessException e) {
+            throw new ElementException("expected ConfigList at '" + normalized + "'", e);
         }
 
         ConfigList list = listElement.asList();
@@ -335,9 +338,12 @@ public interface ElementContext {
         Object[] ethylenePath = pathSplitter.splitPathKey(nodePath);
         String normalized = pathSplitter.normalize(nodePath);
 
-        ConfigElement nodeElement = rootNode().getElement(ethylenePath);
-        if (nodeElement == null || !nodeElement.isNode()) {
-            throw new ElementException("expected ConfigNode at '" + normalized + "', found " + nodeElement);
+        ConfigNode nodeElement;
+        try {
+            nodeElement = rootNode().getNodeOrThrow(ethylenePath);
+        }
+        catch (ConfigProcessException e) {
+            throw new ElementException("expected ConfigNode at '" + normalized + "'", e);
         }
 
         ConfigNode node = nodeElement.asNode();
