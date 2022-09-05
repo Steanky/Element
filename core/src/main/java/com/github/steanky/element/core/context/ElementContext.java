@@ -110,19 +110,18 @@ public interface ElementContext {
         Object[] ethylenePath = pathSplitter.splitPathKey(listPath);
         String normalized = pathSplitter.normalize(listPath);
 
-        ConfigElement listElement;
+        ConfigList listElement;
         try {
-            listElement = rootNode().getElementOrThrow(ethylenePath);
+            listElement = rootNode().getListOrThrow(ethylenePath);
         }
         catch (ConfigProcessException e) {
             throw new ElementException("expected ConfigList at '" + normalized + "'", e);
         }
 
-        ConfigList list = listElement.asList();
-        TCollection elementCollection = collectionSupplier.apply(list.size());
+        TCollection elementCollection = collectionSupplier.apply(listElement.size());
 
         ElementException exception = null;
-        for (int i = 0; i < list.size(); i++) {
+        for (int i = 0; i < listElement.size(); i++) {
             try {
                 elementCollection.add(provide(pathSplitter.append(normalized, i), dependencyProvider, cache));
             } catch (ElementException e) {
@@ -346,11 +345,10 @@ public interface ElementContext {
             throw new ElementException("expected ConfigNode at '" + normalized + "'", e);
         }
 
-        ConfigNode node = nodeElement.asNode();
-        TMap elementMap = mapSupplier.apply(node.size());
+        TMap elementMap = mapSupplier.apply(nodeElement.size());
 
         ElementException exception = null;
-        for (ConfigEntry entry : node.entryCollection()) {
+        for (ConfigEntry entry : nodeElement.entryCollection()) {
             try {
                 elementMap.put(entry.getKey(),
                         provide(pathSplitter.append(normalized, entry.getKey()), dependencyProvider, cache));
