@@ -11,6 +11,7 @@ import java.lang.annotation.*;
 public @interface Cache {
     /**
      * Whether this element object should always be cached. Defaults to true.
+     *
      * @return true if this element should be cached, false otherwise
      */
     boolean value() default true;

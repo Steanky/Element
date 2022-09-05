@@ -6,7 +6,10 @@ import com.github.steanky.element.core.context.BasicContextManager;
 import com.github.steanky.element.core.context.BasicElementContext;
 import com.github.steanky.element.core.context.ContextManager;
 import com.github.steanky.element.core.context.ElementContext;
-import com.github.steanky.element.core.data.*;
+import com.github.steanky.element.core.data.BasicDataInspector;
+import com.github.steanky.element.core.data.BasicDataLocator;
+import com.github.steanky.element.core.data.DataInspector;
+import com.github.steanky.element.core.data.DataLocator;
 import com.github.steanky.element.core.dependency.DependencyProvider;
 import com.github.steanky.element.core.factory.BasicCollectionCreator;
 import com.github.steanky.element.core.factory.BasicFactoryResolver;
@@ -24,7 +27,6 @@ import com.github.steanky.ethylene.core.processor.ConfigProcessor;
 import org.jetbrains.annotations.NotNull;
 import org.junit.jupiter.api.Test;
 
-import java.util.Collection;
 import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -52,8 +54,8 @@ public class BasicContextManagerIntegrationTest {
 
         final PathSplitter pathSplitter = new BasicPathSplitter();
         final DataLocator dataLocator = new BasicDataLocator(pathSplitter);
-        final ElementContext.Source source = new BasicElementContext.Source(configRegistry, factoryRegistry, cacheRegistry,
-                pathSplitter, dataLocator, typeExtractor);
+        final ElementContext.Source source = new BasicElementContext.Source(configRegistry, factoryRegistry,
+                cacheRegistry, pathSplitter, dataLocator, typeExtractor);
 
         this.contextManager = new BasicContextManager(elementInspector, elementTypeIdentifier, source);
         contextManager.registerElementClass(SimpleElement.class);
@@ -67,7 +69,7 @@ public class BasicContextManagerIntegrationTest {
         final ConfigNode node = ConfigNode.of("type", "simple_data", "value", 10);
 
         final ElementContext data = contextManager.makeContext(node);
-        final SimpleData element = data.provideAndCache(null, DependencyProvider.EMPTY);
+        final SimpleData element = data.provide(null, DependencyProvider.EMPTY, false);
 
         assertNotNull(element);
         assertEquals(10, element.data.value);
@@ -80,7 +82,7 @@ public class BasicContextManagerIntegrationTest {
         node.put("simple_data", nested);
 
         final ElementContext data = contextManager.makeContext(node);
-        final Nested nestedElement = data.provideAndCache(null, DependencyProvider.EMPTY);
+        final Nested nestedElement = data.provide(null, DependencyProvider.EMPTY, false);
 
         assertNotNull(nestedElement);
         assertEquals(10, nestedElement.simpleElement.data.value);
@@ -101,7 +103,7 @@ public class BasicContextManagerIntegrationTest {
         node.put("simple_data_2", simpleData2);
 
         final ElementContext data = contextManager.makeContext(node);
-        final MultiElement multiElement = data.provideAndCache();
+        final MultiElement multiElement = data.provide();
 
         assertNotNull(multiElement);
         assertEquals(1, multiElement.elements.get(0).data.value);
@@ -113,28 +115,28 @@ public class BasicContextManagerIntegrationTest {
         private final Data data;
         private final List<SimpleData> elements;
 
+        @FactoryMethod
+        public MultiElement(@NotNull Data data, @DataName("data") @NotNull List<SimpleData> elements) {
+            this.data = data;
+            this.elements = elements;
+        }
+
         @ProcessorMethod
         public static ConfigProcessor<Data> processor() {
             return new ConfigProcessor<>() {
                 @Override
                 public Data dataFromElement(@NotNull ConfigElement element) throws ConfigProcessException {
-                    List<String> simpleElements = ConfigProcessor.STRING.listProcessor().dataFromElement(element
-                            .getElementOrThrow("simpleElements"));
+                    List<String> simpleElements = ConfigProcessor.STRING.listProcessor()
+                            .dataFromElement(element.getElementOrThrow("simpleElements"));
                     return new Data(simpleElements);
                 }
 
                 @Override
                 public @NotNull ConfigElement elementFromData(Data data) throws ConfigProcessException {
-                    return ConfigNode.of("simpleElements", ConfigProcessor.STRING.listProcessor()
-                            .elementFromData(data.simpleElements));
+                    return ConfigNode.of("simpleElements",
+                            ConfigProcessor.STRING.listProcessor().elementFromData(data.simpleElements));
                 }
             };
-        }
-
-        @FactoryMethod
-        public MultiElement(@NotNull Data data, @DataName("data") @NotNull List<SimpleData> elements) {
-            this.data = data;
-            this.elements = elements;
         }
 
         @DataObject

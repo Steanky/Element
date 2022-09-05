@@ -33,8 +33,7 @@ public class BasicDataLocator implements DataLocator {
         final Object[] path = pathSplitter.splitPathKey(dataPath);
         try {
             return rootNode.getNodeOrThrow(path);
-        }
-        catch (ConfigProcessException e) {
+        } catch (ConfigProcessException e) {
             throw new ElementException("invalid or missing data path '" + dataPath + "'", e);
         }
     }

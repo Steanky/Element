@@ -32,7 +32,7 @@ public class BasicKeyParser implements KeyParser {
      */
     public BasicKeyParser(final @NotNull @NamespaceString String defaultNamespace) {
         if (!namespaceValid(defaultNamespace)) {
-            throw new IllegalArgumentException("invalid default namespace '" + defaultNamespace +  "'");
+            throw new IllegalArgumentException("invalid default namespace '" + defaultNamespace + "'");
         }
 
         this.defaultNamespace = defaultNamespace;

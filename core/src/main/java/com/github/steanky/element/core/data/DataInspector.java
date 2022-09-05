@@ -23,26 +23,10 @@ public interface DataInspector {
     @NotNull DataInformation inspectData(final @NotNull Class<?> dataClass);
 
     /**
-     * Information about a path.
-     * @param pathFunction the {@link PathFunction} for this data object
-     * @param infoMap an unmodifiable map of id {@link Key}s to {@link PathFunction.PathInfo} objects.
-     */
-    record DataInformation(@NotNull PathFunction pathFunction,
-            @Unmodifiable @NotNull Map<Key, PathFunction.PathInfo> infoMap) {}
-
-    /**
      * A function that can extract the actual path of a data object.
      */
     @FunctionalInterface
     interface PathFunction {
-        /**
-         * Represents some info about a specific path.
-         * @param accessorMethod the method used to access the path
-         * @param annotation the {@link DataPath} annotation
-         * @param isCollection whether this path represents a collection of data paths
-         */
-        record PathInfo(@NotNull Method accessorMethod, @NotNull DataPath annotation, boolean isCollection) {}
-
         /**
          * Extracts a path key from a data object.
          *
@@ -51,5 +35,23 @@ public interface DataInspector {
          * @return the path key
          */
         @NotNull Collection<? extends String> apply(final @NotNull Object dataObject, final @NotNull Key id);
+
+        /**
+         * Represents some info about a specific path.
+         *
+         * @param accessorMethod the method used to access the path
+         * @param annotation     the {@link DataPath} annotation
+         * @param isCollection   whether this path represents a collection of data paths
+         */
+        record PathInfo(@NotNull Method accessorMethod, @NotNull DataPath annotation, boolean isCollection) {}
     }
+
+    /**
+     * Information about a path.
+     *
+     * @param pathFunction the {@link PathFunction} for this data object
+     * @param infoMap      an unmodifiable map of id {@link Key}s to {@link PathFunction.PathInfo} objects.
+     */
+    record DataInformation(@NotNull PathFunction pathFunction,
+            @Unmodifiable @NotNull Map<Key, PathFunction.PathInfo> infoMap) {}
 }

@@ -20,8 +20,8 @@ import static com.github.steanky.element.core.util.Validate.*;
  * Basic implementation of {@link DataInspector}.
  */
 public class BasicDataInspector implements DataInspector {
-    private static final Type COLLECTION_TYPE = TypeUtils.parameterize(Collection.class, TypeUtils.wildcardType()
-            .withUpperBounds(String.class).build());
+    private static final Type COLLECTION_TYPE = TypeUtils.parameterize(Collection.class,
+            TypeUtils.wildcardType().withUpperBounds(String.class).build());
 
     private final KeyParser keyParser;
 
@@ -51,8 +51,7 @@ public class BasicDataInspector implements DataInspector {
                 final boolean isIterable;
                 if (TypeUtils.isAssignable(returnType, COLLECTION_TYPE)) {
                     isIterable = true;
-                }
-                else  {
+                } else {
                     validateType(dataClass, String.class, returnType, () -> "DataPath accessor return value must be " +
                             "assignable to String or Collection<? extends String>");
                     isIterable = false;
