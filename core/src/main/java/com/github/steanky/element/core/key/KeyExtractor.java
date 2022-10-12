@@ -26,4 +26,11 @@ public interface KeyExtractor {
      * exception), false otherwise
      */
     boolean hasKey(final @NotNull ConfigNode node);
+
+    /**
+     * Removes the type key from the provided node.
+     *
+     * @param node the node from which to remove a type key, if present
+     */
+    void removeKey(final @NotNull ConfigNode node);
 }

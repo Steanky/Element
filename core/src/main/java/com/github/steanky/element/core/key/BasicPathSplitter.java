@@ -26,6 +26,29 @@ public class BasicPathSplitter implements PathSplitter {
 
     private BasicPathSplitter() {}
 
+    private static void handleNode(final Collection<? super Object> objects, final String substring) {
+        if (substring.isEmpty()) {
+            objects.add(substring);
+            return;
+        }
+
+        final char first = substring.charAt(0);
+        if (first == INTEGER_INDICATOR) {
+            final String numberPart = substring.substring(1);
+            try {
+                objects.add(Integer.parseInt(numberPart));
+                return;
+            } catch (NumberFormatException ignored) {
+            }
+
+            objects.add(numberPart);
+        } else if (substring.length() > 1 && first == ESCAPE && substring.charAt(1) == INTEGER_INDICATOR) {
+            objects.add(substring.substring(1));
+        } else {
+            objects.add(substring);
+        }
+    }
+
     @Override
     public @NotNull Object @NotNull [] splitPathKey(final @NotNull String pathString) {
         if (pathString.isEmpty()) {
@@ -49,17 +72,14 @@ public class BasicPathSplitter implements PathSplitter {
 
                 nodeBuffer.append(current);
                 escape = false;
-            }
-            else if (current == ESCAPE) {
+            } else if (current == ESCAPE) {
                 escape = true;
-            }
-            else if (current == DELIMITER) {
+            } else if (current == DELIMITER) {
                 if (i != 0) {
                     handleNode(objects, nodeBuffer.toString());
                     nodeBuffer.setLength(0);
                 }
-            }
-            else {
+            } else {
                 nodeBuffer.append(current);
             }
         }
@@ -69,31 +89,6 @@ public class BasicPathSplitter implements PathSplitter {
         }
 
         return objects.toArray();
-    }
-
-    private static void handleNode(final Collection<? super Object> objects, final String substring) {
-        if (substring.isEmpty()) {
-            objects.add(substring);
-            return;
-        }
-
-        final char first = substring.charAt(0);
-        if (first == INTEGER_INDICATOR) {
-            final String numberPart = substring.substring(1);
-            try {
-                objects.add(Integer.parseInt(numberPart));
-                return;
-            }
-            catch (NumberFormatException ignored) {}
-
-            objects.add(numberPart);
-        }
-        else if (substring.length() > 1 && first == ESCAPE && substring.charAt(1) == INTEGER_INDICATOR) {
-            objects.add(substring.substring(1));
-        }
-        else {
-            objects.add(substring);
-        }
     }
 
     @Override

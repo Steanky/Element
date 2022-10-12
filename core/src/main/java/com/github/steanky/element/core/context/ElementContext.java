@@ -6,7 +6,6 @@ import com.github.steanky.element.core.Registry;
 import com.github.steanky.element.core.annotation.Cache;
 import com.github.steanky.element.core.dependency.DependencyProvider;
 import com.github.steanky.element.core.key.PathSplitter;
-import com.github.steanky.ethylene.core.ConfigElement;
 import com.github.steanky.ethylene.core.collection.ConfigEntry;
 import com.github.steanky.ethylene.core.collection.ConfigList;
 import com.github.steanky.ethylene.core.collection.ConfigNode;
@@ -113,8 +112,7 @@ public interface ElementContext {
         ConfigList listElement;
         try {
             listElement = rootNode().getListOrThrow(ethylenePath);
-        }
-        catch (ConfigProcessException e) {
+        } catch (ConfigProcessException e) {
             throw new ElementException("expected ConfigList at '" + normalized + "'", e);
         }
 
@@ -340,8 +338,7 @@ public interface ElementContext {
         ConfigNode nodeElement;
         try {
             nodeElement = rootNode().getNodeOrThrow(ethylenePath);
-        }
-        catch (ConfigProcessException e) {
+        } catch (ConfigProcessException e) {
             throw new ElementException("expected ConfigNode at '" + normalized + "'", e);
         }
 

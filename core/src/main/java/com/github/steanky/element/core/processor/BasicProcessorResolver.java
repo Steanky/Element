@@ -3,13 +3,11 @@ package com.github.steanky.element.core.processor;
 import com.github.steanky.element.core.annotation.ProcessorMethod;
 import com.github.steanky.element.core.util.ReflectionUtils;
 import com.github.steanky.ethylene.core.processor.ConfigProcessor;
-import com.github.steanky.ethylene.mapper.MappingProcessorSource;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
-import java.util.Objects;
 
 import static com.github.steanky.element.core.util.Validate.*;
 

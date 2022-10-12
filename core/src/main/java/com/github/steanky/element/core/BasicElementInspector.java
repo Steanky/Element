@@ -44,8 +44,8 @@ public class BasicElementInspector implements ElementInspector {
             throw elementException(elementClass, "not public");
         }
 
-        final Mutable<ConfigProcessor<?>> mutable = new MutableObject<>(processorResolver
-                .resolveProcessor(elementClass));
+        final Mutable<ConfigProcessor<?>> mutable = new MutableObject<>(
+                processorResolver.resolveProcessor(elementClass));
         final ElementFactory<?, ?> factory = factoryResolver.resolveFactory(elementClass, mutable);
 
         final Cache cacheAnnotation = elementClass.getDeclaredAnnotation(Cache.class);

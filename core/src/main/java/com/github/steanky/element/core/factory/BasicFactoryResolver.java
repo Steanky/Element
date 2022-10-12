@@ -22,7 +22,6 @@ import org.apache.commons.lang3.mutable.Mutable;
 import org.apache.commons.lang3.reflect.TypeUtils;
 import org.intellij.lang.annotations.Subst;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.lang.reflect.*;
 import java.util.*;
@@ -49,6 +48,8 @@ public class BasicFactoryResolver implements FactoryResolver {
      *                              classes
      * @param collectionCreator     the {@link CollectionCreator} used to reflectively create collection instances when
      *                              necessary, when requiring multiple element dependencies
+     * @param processorSource       the {@link MappingProcessorSource} used to create {@link ConfigProcessor}
+     *                              implementations on-demand for data classes
      */
     public BasicFactoryResolver(final @NotNull KeyParser keyParser,
             final @NotNull ElementTypeIdentifier elementTypeIdentifier, final @NotNull DataInspector dataInspector,
@@ -238,12 +239,10 @@ public class BasicFactoryResolver implements FactoryResolver {
             if (dataClass != null) {
                 processor.setValue(processorSource.processorFor(Token.ofClass(dataClass)));
                 hasProcessor = true;
-            }
-            else {
+            } else {
                 hasProcessor = false;
             }
-        }
-        else {
+        } else {
             hasProcessor = true;
         }
 
@@ -275,8 +274,7 @@ public class BasicFactoryResolver implements FactoryResolver {
 
                     if (info.isCollection()) {
                         validateType(elementClass, Collection.class, parameter.parameter.getType(),
-                                () -> "parameter" + " with name '" + parameter.id +
-                                        "' must be assignable to Collection<?>");
+                                () -> "parameter with name '" + parameter.id + "' must be assignable to Collection<?>");
                     }
 
                     nonDependencyCount++;

@@ -50,4 +50,9 @@ public class BasicKeyExtractor implements KeyExtractor {
 
         return false;
     }
+
+    @Override
+    public void removeKey(final @NotNull ConfigNode node) {
+        node.remove(keyName);
+    }
 }

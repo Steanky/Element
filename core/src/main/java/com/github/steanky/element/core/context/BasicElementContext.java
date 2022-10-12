@@ -15,6 +15,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.HashMap;
+import java.util.IdentityHashMap;
 import java.util.Map;
 import java.util.Objects;
 
@@ -31,6 +32,8 @@ public class BasicElementContext implements ElementContext {
     private final ConfigNode rootNode;
     private final Map<String, DataInfo> dataObjects;
     private final Map<String, Object> elementObjects;
+    private final Map<ConfigNode, Key> typeMap;
+
     /**
      * Creates a new instance of this class.
      *
@@ -55,10 +58,11 @@ public class BasicElementContext implements ElementContext {
         this.pathSplitter = Objects.requireNonNull(pathSplitter);
         this.dataLocator = Objects.requireNonNull(dataLocator);
         this.typeKeyExtractor = Objects.requireNonNull(typeKeyExtractor);
-        this.rootNode = Objects.requireNonNull(rootNode);
+        this.rootNode = Objects.requireNonNull(rootNode.copy());
 
         this.dataObjects = new HashMap<>(4);
         this.elementObjects = new HashMap<>(4);
+        this.typeMap = new IdentityHashMap<>(4);
     }
 
     @SuppressWarnings("unchecked")
@@ -68,7 +72,13 @@ public class BasicElementContext implements ElementContext {
         final boolean cacheElement;
 
         final ConfigNode dataNode = dataLocator.locate(rootNode, path);
-        final Key objectType = typeKeyExtractor.extractKey(dataNode);
+
+        Key objectType = typeMap.get(dataNode);
+        if (objectType == null) {
+            objectType = typeKeyExtractor.extractKey(dataNode);
+            typeKeyExtractor.removeKey(dataNode);
+            typeMap.put(dataNode, objectType);
+        }
 
         if (cacheRegistry.contains(objectType)) {
             cacheElement = cacheRegistry.lookup(objectType);

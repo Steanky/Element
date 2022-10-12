@@ -63,6 +63,7 @@ public class BasicContextManagerIntegrationTest {
         contextManager.registerElementClass(SimpleData.class);
         contextManager.registerElementClass(Nested.class);
         contextManager.registerElementClass(MultiElement.class);
+        contextManager.registerElementClass(InferredProcessor.class);
     }
 
     @Test
@@ -109,6 +110,33 @@ public class BasicContextManagerIntegrationTest {
         assertNotNull(multiElement);
         assertEquals(1, multiElement.elements.get(0).data.value);
         assertEquals(2, multiElement.elements.get(1).data.value);
+    }
+
+    @Test
+    void inferredProcessor() {
+        final ConfigNode data = ConfigNode.of("type", "inferred_processor", "number", 69, "string", "this is a string");
+
+        final ElementContext context = contextManager.makeContext(data);
+        final InferredProcessor model = context.provide();
+
+        assertNotNull(model);
+        assertEquals(69, model.data.number);
+        assertEquals("this is a string", model.data.string);
+    }
+
+    @Model("inferred_processor")
+    public static class InferredProcessor {
+        private final Data data;
+
+        @FactoryMethod
+        public InferredProcessor(@NotNull Data data) {
+            this.data = data;
+        }
+
+        @DataObject
+        public record Data(int number, String string) {
+
+        }
     }
 
     @SuppressWarnings("FieldCanBeLocal")
