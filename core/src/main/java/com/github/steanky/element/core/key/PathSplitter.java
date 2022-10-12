@@ -13,7 +13,7 @@ public interface PathSplitter {
      * @param pathString the path to split
      * @return the path's components
      */
-    Object @NotNull [] splitPathKey(final @NotNull String pathString);
+    @NotNull Object @NotNull [] splitPathKey(final @NotNull String pathString);
 
     /**
      * "Normalizes" the given path string. This is done so that different path string representations that point to the
