@@ -34,7 +34,7 @@ public class BasicElementInspectorIntegrationTest {
         final CollectionCreator collectionCreator = new BasicCollectionCreator();
         final FactoryResolver factoryResolver = new BasicFactoryResolver(parser, elementTypeIdentifier, dataInspector,
                 collectionCreator, MappingProcessorSource.builder().build());
-        final ProcessorResolver processorResolver = new BasicProcessorResolver();
+        final ProcessorResolver processorResolver = BasicProcessorResolver.INSTANCE;
         this.inspector = new BasicElementInspector(factoryResolver, processorResolver);
     }
 

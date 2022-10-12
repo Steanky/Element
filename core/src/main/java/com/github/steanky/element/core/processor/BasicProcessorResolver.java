@@ -12,9 +12,17 @@ import java.lang.reflect.Modifier;
 import static com.github.steanky.element.core.util.Validate.*;
 
 /**
- * Basic implementation of {@link ProcessorResolver}.
+ * Basic implementation of {@link ProcessorResolver}. This class is a singleton whose instance is provided by
+ * {@link BasicProcessorResolver#INSTANCE}.
  */
 public class BasicProcessorResolver implements ProcessorResolver {
+    /**
+     * This singleton instance.
+     */
+    public static final ProcessorResolver INSTANCE = new BasicProcessorResolver();
+
+    private BasicProcessorResolver() {}
+
     @Override
     public @Nullable ConfigProcessor<?> resolveProcessor(final @NotNull Class<?> elementClass) {
         final Method[] declaredMethods = elementClass.getDeclaredMethods();

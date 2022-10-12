@@ -46,7 +46,7 @@ public class BasicContextManagerIntegrationTest {
 
         final FactoryResolver factoryResolver = new BasicFactoryResolver(keyParser, elementTypeIdentifier,
                 dataInspector, collectionCreator, MappingProcessorSource.builder().build());
-        final ProcessorResolver processorResolver = new BasicProcessorResolver();
+        final ProcessorResolver processorResolver = BasicProcessorResolver.INSTANCE;
         final ElementInspector elementInspector = new BasicElementInspector(factoryResolver, processorResolver);
 
         final Registry<ConfigProcessor<?>> configRegistry = new HashRegistry<>();
