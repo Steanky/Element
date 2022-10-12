@@ -4,6 +4,8 @@ import com.github.steanky.element.core.annotation.Cache;
 import com.github.steanky.element.core.factory.FactoryResolver;
 import com.github.steanky.element.core.processor.ProcessorResolver;
 import com.github.steanky.ethylene.core.processor.ConfigProcessor;
+import org.apache.commons.lang3.mutable.Mutable;
+import org.apache.commons.lang3.mutable.MutableObject;
 import org.jetbrains.annotations.NotNull;
 
 import java.lang.reflect.Modifier;
@@ -42,13 +44,14 @@ public class BasicElementInspector implements ElementInspector {
             throw elementException(elementClass, "not public");
         }
 
-        final ConfigProcessor<?> processor = processorResolver.resolveProcessor(elementClass);
-        final ElementFactory<?, ?> factory = factoryResolver.resolveFactory(elementClass, processor != null);
+        final Mutable<ConfigProcessor<?>> mutable = new MutableObject<>(processorResolver
+                .resolveProcessor(elementClass));
+        final ElementFactory<?, ?> factory = factoryResolver.resolveFactory(elementClass, mutable);
 
         final Cache cacheAnnotation = elementClass.getDeclaredAnnotation(Cache.class);
         final CachePreference cachePreference = cacheAnnotation == null ? CachePreference.UNSPECIFIED :
                 (cacheAnnotation.value() ? CachePreference.CACHE : CachePreference.NO_CACHE);
 
-        return new Information(processor, factory, cachePreference);
+        return new Information(mutable.getValue(), factory, cachePreference);
     }
 }

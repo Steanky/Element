@@ -24,6 +24,7 @@ import com.github.steanky.ethylene.core.collection.ConfigList;
 import com.github.steanky.ethylene.core.collection.ConfigNode;
 import com.github.steanky.ethylene.core.processor.ConfigProcessException;
 import com.github.steanky.ethylene.core.processor.ConfigProcessor;
+import com.github.steanky.ethylene.mapper.MappingProcessorSource;
 import org.jetbrains.annotations.NotNull;
 import org.junit.jupiter.api.Test;
 
@@ -44,7 +45,7 @@ public class BasicContextManagerIntegrationTest {
         final CollectionCreator collectionCreator = new BasicCollectionCreator();
 
         final FactoryResolver factoryResolver = new BasicFactoryResolver(keyParser, elementTypeIdentifier,
-                dataInspector, collectionCreator);
+                dataInspector, collectionCreator, MappingProcessorSource.builder().build());
         final ProcessorResolver processorResolver = new BasicProcessorResolver();
         final ElementInspector elementInspector = new BasicElementInspector(factoryResolver, processorResolver);
 
@@ -110,6 +111,7 @@ public class BasicContextManagerIntegrationTest {
         assertEquals(2, multiElement.elements.get(1).data.value);
     }
 
+    @SuppressWarnings("FieldCanBeLocal")
     @Model("multi_element")
     public static class MultiElement {
         private final Data data;

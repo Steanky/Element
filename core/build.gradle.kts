@@ -8,6 +8,6 @@ repositories {
 
 dependencies {
     implementation(libs.commons.lang3)
-    api(libs.ethylene.core)
+    api(libs.ethylene.mapper)
     api(libs.adventure.key)
 }

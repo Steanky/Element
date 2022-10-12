@@ -14,10 +14,15 @@ import com.github.steanky.element.core.dependency.DependencyProvider;
 import com.github.steanky.element.core.key.Constants;
 import com.github.steanky.element.core.key.KeyParser;
 import com.github.steanky.element.core.util.ReflectionUtils;
+import com.github.steanky.ethylene.core.processor.ConfigProcessor;
+import com.github.steanky.ethylene.mapper.MappingProcessorSource;
+import com.github.steanky.ethylene.mapper.type.Token;
 import net.kyori.adventure.key.Key;
+import org.apache.commons.lang3.mutable.Mutable;
 import org.apache.commons.lang3.reflect.TypeUtils;
 import org.intellij.lang.annotations.Subst;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.lang.reflect.*;
 import java.util.*;
@@ -33,6 +38,7 @@ public class BasicFactoryResolver implements FactoryResolver {
     private final ElementTypeIdentifier elementTypeIdentifier;
     private final DataInspector dataInspector;
     private final CollectionCreator typeResolver;
+    private final MappingProcessorSource processorSource;
 
     /**
      * Creates a new instance of this class.
@@ -46,11 +52,12 @@ public class BasicFactoryResolver implements FactoryResolver {
      */
     public BasicFactoryResolver(final @NotNull KeyParser keyParser,
             final @NotNull ElementTypeIdentifier elementTypeIdentifier, final @NotNull DataInspector dataInspector,
-            final @NotNull CollectionCreator collectionCreator) {
+            final @NotNull CollectionCreator collectionCreator, final @NotNull MappingProcessorSource processorSource) {
         this.keyParser = Objects.requireNonNull(keyParser);
         this.elementTypeIdentifier = Objects.requireNonNull(elementTypeIdentifier);
         this.dataInspector = Objects.requireNonNull(dataInspector);
         this.typeResolver = Objects.requireNonNull(collectionCreator);
+        this.processorSource = Objects.requireNonNull(processorSource);
     }
 
     private static Key parseKey(final KeyParser parser, final @Subst(Constants.NAMESPACE_OR_KEY) String keyString) {
@@ -107,7 +114,7 @@ public class BasicFactoryResolver implements FactoryResolver {
 
     @Override
     public @NotNull ElementFactory<?, ?> resolveFactory(final @NotNull Class<?> elementClass,
-            final boolean hasProcessor) {
+            final @NotNull Mutable<ConfigProcessor<?>> processor) {
         final Method[] declaredMethods = elementClass.getDeclaredMethods();
         Method factoryMethod = null;
         for (final Method declaredMethod : declaredMethods) {
@@ -223,6 +230,21 @@ public class BasicFactoryResolver implements FactoryResolver {
 
         if (hasComposite && dataClass == null) {
             throw elementException(elementClass, "found composite dependency, but no data class");
+        }
+
+        final ConfigProcessor<?> existingProcessor = processor.getValue();
+        final boolean hasProcessor;
+        if (existingProcessor == null) {
+            if (dataClass != null) {
+                processor.setValue(processorSource.processorFor(Token.ofClass(dataClass)));
+                hasProcessor = true;
+            }
+            else {
+                hasProcessor = false;
+            }
+        }
+        else {
+            hasProcessor = true;
         }
 
         if (dataParameterIndex == -1 && hasProcessor) {

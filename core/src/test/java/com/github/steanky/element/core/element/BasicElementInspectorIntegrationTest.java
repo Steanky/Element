@@ -15,6 +15,7 @@ import com.github.steanky.element.core.processor.ProcessorResolver;
 import com.github.steanky.ethylene.core.ConfigElement;
 import com.github.steanky.ethylene.core.collection.LinkedConfigNode;
 import com.github.steanky.ethylene.core.processor.ConfigProcessor;
+import com.github.steanky.ethylene.mapper.MappingProcessorSource;
 import net.kyori.adventure.key.Key;
 import net.kyori.adventure.key.Keyed;
 import org.jetbrains.annotations.NotNull;
@@ -32,7 +33,7 @@ public class BasicElementInspectorIntegrationTest {
         final DataInspector dataInspector = new BasicDataInspector(parser);
         final CollectionCreator collectionCreator = new BasicCollectionCreator();
         final FactoryResolver factoryResolver = new BasicFactoryResolver(parser, elementTypeIdentifier, dataInspector,
-                collectionCreator);
+                collectionCreator, MappingProcessorSource.builder().build());
         final ProcessorResolver processorResolver = new BasicProcessorResolver();
         this.inspector = new BasicElementInspector(factoryResolver, processorResolver);
     }
@@ -56,11 +57,6 @@ public class BasicElementInspectorIntegrationTest {
     @Test
     void missingFactoryAnnotation() {
         assertThrows(ElementException.class, () -> inspector.inspect(MissingFactoryAnnotation.class));
-    }
-
-    @Test
-    void missingProcessorAnnotation() {
-        assertThrows(ElementException.class, () -> inspector.inspect(MissingProcessorAnnotation.class));
     }
 
     @Test

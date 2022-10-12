@@ -9,7 +9,7 @@ import java.util.Objects;
 import java.util.concurrent.ConcurrentHashMap;
 
 /**
- * A {@link Map}-based Registry implementation. Uses a {@link ConcurrentHashMap} to ensure synchronous access.
+ * A {@link Map}-based Registry implementation. Uses a {@link ConcurrentHashMap} internally to ensure thread safety.
  *
  * @param <TRegistrant> the kind of object stored as a registrant
  */
