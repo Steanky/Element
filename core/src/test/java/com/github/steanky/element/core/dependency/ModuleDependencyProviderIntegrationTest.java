@@ -13,8 +13,8 @@ import static org.junit.jupiter.api.Assertions.*;
 class ModuleDependencyProviderIntegrationTest {
     @Test
     void simpleModule() {
-        final DependencyProvider dependencyProvider = new ModuleDependencyProvider(new SimpleModule(),
-                new BasicKeyParser());
+        final DependencyProvider dependencyProvider = new ModuleDependencyProvider(new BasicKeyParser(),
+                new SimpleModule());
         final int first = dependencyProvider.provide(Key.key("test:non_static_method"));
         final int second = dependencyProvider.provide(Key.key("test:static_method"));
 
@@ -25,13 +25,13 @@ class ModuleDependencyProviderIntegrationTest {
     @Test
     void nonPublicModule() {
         assertThrows(ElementException.class,
-                () -> new ModuleDependencyProvider(new NonPublicModule(), new BasicKeyParser()));
+                () -> new ModuleDependencyProvider(new BasicKeyParser(), new NonPublicModule()));
     }
 
     @Test
     void namedDependencies() {
-        final DependencyProvider dependencyProvider = new ModuleDependencyProvider(new KeyedModule(),
-                new BasicKeyParser());
+        final DependencyProvider dependencyProvider = new ModuleDependencyProvider(new BasicKeyParser(),
+                new KeyedModule());
         final Key nonStatic = Key.key("test:non_static_method");
         final Key staticKey = Key.key("test:static_method");
 
@@ -44,8 +44,8 @@ class ModuleDependencyProviderIntegrationTest {
 
     @Test
     void nullKey() {
-        final DependencyProvider dependencyProvider = new ModuleDependencyProvider(new KeyedModule(),
-                new BasicKeyParser());
+        final DependencyProvider dependencyProvider = new ModuleDependencyProvider(new BasicKeyParser(),
+                new KeyedModule());
         final Key nonStatic = Key.key("test:non_static_method");
 
         assertThrows(ElementException.class, () -> dependencyProvider.provide(nonStatic));
@@ -53,8 +53,8 @@ class ModuleDependencyProviderIntegrationTest {
 
     @Test
     void nonNullKey() {
-        final DependencyProvider dependencyProvider = new ModuleDependencyProvider(new SimpleModule(),
-                new BasicKeyParser());
+        final DependencyProvider dependencyProvider = new ModuleDependencyProvider(new BasicKeyParser(),
+                new SimpleModule());
         final Key nonStatic = Key.key("test:non_static_method");
 
         assertThrows(ElementException.class, () -> dependencyProvider.provide(nonStatic, nonStatic));
@@ -63,24 +63,24 @@ class ModuleDependencyProviderIntegrationTest {
     @Test
     void voidMethod() {
         assertThrows(ElementException.class,
-                () -> new ModuleDependencyProvider(new VoidMethod(), new BasicKeyParser()));
+                () -> new ModuleDependencyProvider(new BasicKeyParser(), new VoidMethod()));
     }
 
     @Test
     void tooManyParameters() {
         assertThrows(ElementException.class,
-                () -> new ModuleDependencyProvider(new TooManyParameters(), new BasicKeyParser()));
+                () -> new ModuleDependencyProvider(new BasicKeyParser(), new TooManyParameters()));
     }
 
     @Test
     void wrongType() {
-        assertThrows(ElementException.class, () -> new ModuleDependencyProvider(new WrongType(), new BasicKeyParser()));
+        assertThrows(ElementException.class, () -> new ModuleDependencyProvider(new BasicKeyParser(), new WrongType()));
     }
 
     @Test
     void memoized() {
-        final DependencyProvider dependencyProvider = new ModuleDependencyProvider(new MemoizingModule(),
-                new BasicKeyParser());
+        final DependencyProvider dependencyProvider = new ModuleDependencyProvider(new BasicKeyParser(),
+                new MemoizingModule());
         final Key key = Key.key("test:memoized");
         final Object object = dependencyProvider.provide(key);
         assertSame(dependencyProvider.provide(key), object);
@@ -92,8 +92,8 @@ class ModuleDependencyProviderIntegrationTest {
 
     @Test
     void notMemoized() {
-        final DependencyProvider dependencyProvider = new ModuleDependencyProvider(new NotMemoizing(),
-                new BasicKeyParser());
+        final DependencyProvider dependencyProvider = new ModuleDependencyProvider(new BasicKeyParser(),
+                new NotMemoizing());
 
         final Key key = Key.key("test:non_static");
         final Object object = dependencyProvider.provide(key);
@@ -106,8 +106,8 @@ class ModuleDependencyProviderIntegrationTest {
 
     @Test
     void namedMemoizing() {
-        final DependencyProvider dependencyProvider = new ModuleDependencyProvider(new NamedMemoizing(),
-                new BasicKeyParser());
+        final DependencyProvider dependencyProvider = new ModuleDependencyProvider(new BasicKeyParser(),
+                new NamedMemoizing());
         final Key key = Key.key("test:memoized");
         final Key first = Key.key("test:first");
         final Key second = Key.key("test:second");
