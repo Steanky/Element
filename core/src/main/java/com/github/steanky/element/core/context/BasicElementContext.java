@@ -30,6 +30,7 @@ public class BasicElementContext implements ElementContext {
     private final DataLocator dataLocator;
     private final KeyExtractor typeKeyExtractor;
     private final ConfigNode rootNode;
+    private final ConfigNode rootNodeCopy;
     private final Map<String, DataInfo> dataObjects;
     private final Map<String, Object> elementObjects;
     private final Map<ConfigNode, Key> typeMap;
@@ -59,6 +60,7 @@ public class BasicElementContext implements ElementContext {
         this.dataLocator = Objects.requireNonNull(dataLocator);
         this.typeKeyExtractor = Objects.requireNonNull(typeKeyExtractor);
         this.rootNode = Objects.requireNonNull(rootNode.copy());
+        this.rootNodeCopy = rootNode.immutableCopy();
 
         this.dataObjects = new HashMap<>(4);
         this.elementObjects = new HashMap<>(4);
@@ -69,8 +71,6 @@ public class BasicElementContext implements ElementContext {
     @Override
     public <TElement> @NotNull TElement provide(@Nullable String path, @NotNull DependencyProvider dependencyProvider,
             final boolean cache) {
-        final boolean cacheElement;
-
         final ConfigNode dataNode = dataLocator.locate(rootNode, path);
 
         Key objectType = typeMap.get(dataNode);
@@ -80,6 +80,7 @@ public class BasicElementContext implements ElementContext {
             typeMap.put(dataNode, objectType);
         }
 
+        final boolean cacheElement;
         if (cacheRegistry.contains(objectType)) {
             cacheElement = cacheRegistry.lookup(objectType);
         } else {
@@ -98,12 +99,12 @@ public class BasicElementContext implements ElementContext {
             dataInfo = dataObjects.get(normalizedPath);
         } else {
             try {
-                Object data = processorRegistry.contains(objectType) ?
+                final Object data = processorRegistry.contains(objectType) ?
                         processorRegistry.lookup(objectType).dataFromElement(dataNode) : null;
                 dataInfo = new DataInfo(data, objectType);
                 dataObjects.put(normalizedPath, dataInfo);
             } catch (ConfigProcessException e) {
-                throw new ElementException("error deserializing data node at path '" + normalizedPath + "'", e);
+                throw new ElementException("configuration error deserializing data at path '" + normalizedPath + "'", e);
             }
         }
 
@@ -119,7 +120,7 @@ public class BasicElementContext implements ElementContext {
 
     @Override
     public @NotNull ConfigNode rootNode() {
-        return rootNode;
+        return rootNodeCopy;
     }
 
     @Override
