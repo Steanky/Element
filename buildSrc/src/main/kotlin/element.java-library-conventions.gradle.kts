@@ -21,7 +21,7 @@ publishing {
     repositories {
         maven {
             name = project.name
-            url = URI.create("https://maven.cloudsmith.io/steank-f1g/element/")
+            url = URI.create("https://maven.cloudsmith.io/steanky/element/")
 
             credentials {
                 username = System.getenv("CLOUDSMITH_USERNAME")
