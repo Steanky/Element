@@ -125,7 +125,7 @@ public class BasicPathSplitter implements PathSplitter {
 
     @Override
     public @NotNull String append(final @NotNull String pathString, final @NotNull Object element) {
-        String elementString = element.toString();
+        final String elementString = element.toString();
         return normalize(pathString) + DELIMITER + (element instanceof Integer ? INTEGER_INDICATOR + elementString
                 : normalize(elementString));
     }
