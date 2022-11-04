@@ -101,4 +101,22 @@ class BasicPathSplitterTest {
         final String normalized = BasicPathSplitter.INSTANCE.normalize("//a/");
         assertEquals("//a", normalized);
     }
+
+    @Test
+    void appendInteger() {
+        final String result = BasicPathSplitter.INSTANCE.append("a", 10);
+        assertEquals("a/i10", result);
+    }
+
+    @Test
+    void appendString() {
+        final String result = BasicPathSplitter.INSTANCE.append("a", "b");
+        assertEquals("a/b", result);
+    }
+
+    @Test
+    void appendAndNormalize() {
+        final String result = BasicPathSplitter.INSTANCE.append("/a/", "/b/");
+        assertEquals("a/b", result);
+    }
 }
