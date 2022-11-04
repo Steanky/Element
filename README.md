@@ -22,9 +22,9 @@ possible.
 
 ## Install
 
-<a href="https://cloudsmith.io/~steank-f1g/repos/element-QiJ/packages/detail/maven/element-core/latest/a=noarch;xg=com.github.steanky/"><img src="https://api-prd.cloudsmith.io/v1/badges/version/steank-f1g/element-QiJ/maven/element-core/latest/a=noarch;xg=com.github.steanky/?render=true&show_latest=true" alt="Latest version of 'element-core' @ Cloudsmith" /></a>
+<a href="https://cloudsmith.io/~steanky/repos/element/packages/detail/maven/element-core/latest/a=noarch;xg=com.github.steanky/"><img src="https://api-prd.cloudsmith.io/v1/badges/version/steanky/element/maven/element-core/latest/a=noarch;xg=com.github.steanky/?render=true&show_latest=true" alt="Latest version of 'element-core' @ Cloudsmith" /></a>
 
-Element binaries are hosted over on [Cloudsmith](https://cloudsmith.io/~steank-f1g/repos/element-QiJ). You can use
+Element binaries are hosted over on [Cloudsmith](https://cloudsmith.io/~steanky/repos/element). You can use
 Element by adding it as a dependency to your build management system of choice.
 
 For Gradle, add the repository URL like this:
