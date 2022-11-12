@@ -3,8 +3,8 @@ plugins {
 }
 
 repositories {
-    maven("https://dl.cloudsmith.io/public/steank-f1g/ethylene/maven/")
-    maven("https://dl.cloudsmith.io/public/steank-f1g/toolkit/maven/")
+    maven("https://dl.cloudsmith.io/public/steanky/ethylene/maven/")
+    maven("https://dl.cloudsmith.io/public/steanky/toolkit/maven/")
 }
 
 dependencies {
