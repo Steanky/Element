@@ -33,7 +33,7 @@ class BasicPathSplitterTest {
     @Test
     void numberTooLarge() {
         final Object[] path = BasicPathSplitter.INSTANCE.splitPathKey("basic/path/i54987876546579846549879456");
-        assertArrayEquals(new Object[] {"basic", "path", "54987876546579846549879456"}, path);
+        assertArrayEquals(new Object[] {"basic", "path", "i54987876546579846549879456"}, path);
     }
 
     @Test
@@ -118,5 +118,12 @@ class BasicPathSplitterTest {
     void appendAndNormalize() {
         final String result = BasicPathSplitter.INSTANCE.append("/a/", "/b/");
         assertEquals("a/b", result);
+    }
+
+    @Test
+    void startsWithIntegerIndicator() {
+        final Object[] result = BasicPathSplitter.INSTANCE.splitPathKey("iTest");
+        assertEquals(1, result.length);
+        assertEquals("iTest", result[0]);
     }
 }

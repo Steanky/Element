@@ -41,7 +41,7 @@ public class BasicPathSplitter implements PathSplitter {
             } catch (NumberFormatException ignored) {
             }
 
-            objects.add(numberPart);
+            objects.add(substring);
         } else if (substring.length() > 1 && first == ESCAPE && substring.charAt(1) == INTEGER_INDICATOR) {
             objects.add(substring.substring(1));
         } else {

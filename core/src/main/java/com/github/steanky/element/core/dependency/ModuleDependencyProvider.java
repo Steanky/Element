@@ -20,6 +20,7 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.function.BiFunction;
 import java.util.function.Function;
+import java.util.function.Supplier;
 
 import static com.github.steanky.element.core.util.Validate.elementException;
 import static com.github.steanky.element.core.util.Validate.validateModifiersPresent;
@@ -82,17 +83,21 @@ public class ModuleDependencyProvider implements DependencyProvider {
                     memoize = declaredMethod.isAnnotationPresent(Memoize.class);
 
                     if (dependencyFunctionMap.put(dependencyName, new DependencyFunction(false) {
-                        private DependencyResult value = null;
+                        private Object value;
 
                         @Override
                         public DependencyResult apply(final Key key) {
-                            if (!memoize) {
-                                return new DependencyResult(true, ReflectionUtils.invokeMethod(declaredMethod,
-                                        module), null);
-                            }
+                            return new DependencyResult(true, () -> {
+                                if (!memoize) {
+                                    return ReflectionUtils.invokeMethod(declaredMethod, module);
+                                }
 
-                            return Objects.requireNonNullElseGet(value, () -> value = new DependencyResult(true,
-                                    ReflectionUtils.invokeMethod(declaredMethod, module), null));
+                                if (value != null) {
+                                    return value;
+                                }
+
+                                return value = ReflectionUtils.invokeMethod(declaredMethod, module);
+                            }, null);
 
                         }
                     }) != null) {
@@ -110,17 +115,18 @@ public class ModuleDependencyProvider implements DependencyProvider {
 
                 memoize = declaredMethod.isAnnotationPresent(Memoize.class);
                 dependencyFunctionMap.put(dependencyName, new DependencyFunction(true) {
-                    private final Map<Key, DependencyResult> values = memoize ? new HashMap<>(4) : null;
+                    private final Map<Key, Object> values = memoize ? new HashMap<>(4) : null;
 
                     @Override
-                    public DependencyResult apply(Key key) {
-                        if (!memoize) {
-                            return new DependencyResult(true, ReflectionUtils.invokeMethod(declaredMethod,
-                                    module, key), null);
-                        }
+                    public DependencyResult apply(final Key key) {
+                        return new DependencyResult(true, () -> {
+                            if (!memoize) {
+                                return ReflectionUtils.invokeMethod(declaredMethod, module, key);
+                            }
 
-                        return values.computeIfAbsent(key, k -> new DependencyResult(true, ReflectionUtils
-                                .invokeMethod(declaredMethod, module, k), null));
+                            return values.computeIfAbsent(key, k -> ReflectionUtils
+                                    .invokeMethod(declaredMethod, module, k));
+                        }, null);
                     }
                 });
             }
@@ -152,19 +158,20 @@ public class ModuleDependencyProvider implements DependencyProvider {
             throw new ElementException(result.errMessage);
         }
 
-        if (result.dependency == null) {
+        final Object dependency = result.dependency.get();
+        if (dependency == null) {
             throw new ElementException("null dependency for type '" + type + "' and name '" + name + "'");
         }
 
-        return (TDependency) result.dependency;
+        return (TDependency) dependency;
     }
 
     @Override
-    public boolean hasDependency(@NotNull Key type, @Nullable Key name) {
-        return false;
+    public boolean hasDependency(final @NotNull Key type, final @Nullable Key name) {
+        return dependencyFunction.apply(type, name).exists;
     }
 
-    private record DependencyResult(boolean exists, Object dependency, String errMessage) {}
+    private record DependencyResult(boolean exists, Supplier<Object> dependency, String errMessage) {}
 
     private static abstract class DependencyFunction implements Function<Key, DependencyResult> {
         private final boolean requiresKey;
