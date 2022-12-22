@@ -137,9 +137,51 @@ class ModuleDependencyProviderIntegrationTest {
     }
 
     @Test
-    void IdenticalGenericTypesThrows() {
+    void identicalGenericTypesThrows() {
         assertThrows(ElementException.class, () -> new ModuleDependencyProvider(new BasicKeyParser(),
                 new IdenticalGenericTypes()));
+    }
+
+    @Test
+    void primitiveWrapperBoxingAmbiguityThrows() {
+        assertThrows(ElementException.class, () -> new ModuleDependencyProvider(new BasicKeyParser(),
+                new PrimitiveWrapperBoxingAmbiguity()));
+    }
+
+    @Test
+    void wrapperBoxing() {
+        DependencyProvider provider = new ModuleDependencyProvider(new BasicKeyParser(), new WrapperBoxing());
+
+        int value = provider.provide(DependencyProvider.key(Token.INTEGER, Key.key("test:wrapper")));
+
+        assertEquals(WrapperBoxing.wrapper(), value);
+
+        int value2 = provider.provide(DependencyProvider.key(Token.INTEGER, Key.key("test:primitive")));
+        assertEquals(WrapperBoxing.primitive(), value2);
+    }
+
+    public static class WrapperBoxing implements DependencyModule {
+        @DependencySupplier("test:wrapper")
+        public static @NotNull Integer wrapper() {
+            return 10;
+        }
+
+        @DependencySupplier("test:primitive")
+        public static int primitive() {
+            return 20;
+        }
+    }
+
+    public static class PrimitiveWrapperBoxingAmbiguity implements DependencyModule {
+        @DependencySupplier
+        public static @NotNull Integer wrapper() {
+            return 0;
+        }
+
+        @DependencySupplier
+        public static int primitive() {
+            return 0;
+        }
     }
 
     public static class IdenticalGenericTypes implements DependencyModule {
