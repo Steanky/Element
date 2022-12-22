@@ -99,7 +99,17 @@ public class ModuleDependencyProvider implements DependencyProvider {
                 .toArray(EMPTY_ENTRY_ARRAY);
         for (int i = 0; i < array.length; i++) {
             final Map.Entry<Class<?>, Map<String, Supplier<?>>> entry = array[i];
-            array[i] = Map.entry(entry.getKey(), Map.copyOf(entry.getValue()));
+
+            final Map<String, Supplier<?>> supplierMap = entry.getValue();
+            final Map<String, Supplier<?>> immutableMap;
+            if (supplierMap.size() == 1 && !supplierMap.containsKey(Constants.DEFAULT)) {
+                immutableMap = Map.of(Constants.DEFAULT, supplierMap.values().iterator().next());
+            }
+            else {
+                immutableMap = Map.copyOf(supplierMap);
+            }
+
+            array[i] = Map.entry(entry.getKey(), immutableMap);
         }
 
         this.dependencyMap = Map.ofEntries(array);
@@ -118,7 +128,7 @@ public class ModuleDependencyProvider implements DependencyProvider {
 
     @SuppressWarnings("unchecked")
     @Override
-    public <TDependency> @NotNull TDependency provide(final @NotNull TypeKey key) {
+    public <TDependency> TDependency provide(final @NotNull TypeKey<TDependency> key) {
         final Class<?> keyType = key.type();
 
         final Map<String, Supplier<?>> supplierMap = dependencyMap.get(keyType);
@@ -129,7 +139,7 @@ public class ModuleDependencyProvider implements DependencyProvider {
         //if supplierMap contains the default key, it is guaranteed to only be holding a single entry (the default)
         if (supplierMap.containsKey(Constants.DEFAULT)) {
             //ignore the name, as there is only one dependency satisfying this type
-            return (TDependency) supplierMap.get(Constants.DEFAULT);
+            return (TDependency) supplierMap.get(Constants.DEFAULT).get();
         }
 
         final Key name = key.name();
@@ -147,7 +157,7 @@ public class ModuleDependencyProvider implements DependencyProvider {
     }
 
     @Override
-    public boolean hasDependency(final @NotNull TypeKey key) {
+    public boolean hasDependency(final @NotNull TypeKey<?> key) {
         final Class<?> keyType = key.type();
         final Map<String, Supplier<?>> supplierMap = dependencyMap.get(keyType);
         if (supplierMap == null) {

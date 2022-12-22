@@ -18,8 +18,15 @@ public interface DependencyProvider {
      *
      * @param type the type component of this key
      * @param name the name component of this key
+     * @param <T> the dependency type
      */
-    record TypeKey(@NotNull Class<?> type, @Nullable Key name) {
+    record TypeKey<T>(@NotNull Class<T> type, @Nullable Key name) {
+        /**
+         * Creates a new instance of this record.
+         *
+         * @param type the type component of this key
+         * @param name the name component of this key
+         */
         public TypeKey {
             Objects.requireNonNull(type);
         }
@@ -28,10 +35,11 @@ public interface DependencyProvider {
     /**
      * Creates a new {@link TypeKey} from the specified {@link Class}, which will be its type. Its name will be null.
      * @param type the type
+     * @param <T> the dependency type
      * @return a new TypeKey instance
      */
-    static @NotNull TypeKey key(final @NotNull Class<?> type) {
-        return new TypeKey(type, null);
+    static <T> @NotNull TypeKey<T> key(final @NotNull Class<T> type) {
+        return new TypeKey<>(type, null);
     }
 
     /**
@@ -40,10 +48,11 @@ public interface DependencyProvider {
      *
      * @param type the type
      * @param name the name, to disambiguate in cases where there are multiple types
+     * @param <T> the dependency type
      * @return a new TypeKey instance
      */
-    static @NotNull TypeKey key(final @NotNull Class<?> type, final @Nullable Key name) {
-        return new TypeKey(type, name);
+    static <T> @NotNull TypeKey<T> key(final @NotNull Class<T> type, final @Nullable Key name) {
+        return new TypeKey<>(type, name);
     }
 
     /**
@@ -52,13 +61,13 @@ public interface DependencyProvider {
      */
     DependencyProvider EMPTY = new DependencyProvider() {
         @Override
-        public <TDependency> @NotNull TDependency provide(final @NotNull TypeKey key) {
+        public <TDependency> TDependency provide(final @NotNull TypeKey<TDependency> key) {
             throw new ElementException(
                     "unable to resolve dependency named '" + key + "'");
         }
 
         @Override
-        public boolean hasDependency(final @NotNull TypeKey key) {
+        public boolean hasDependency(final @NotNull TypeKey<?> key) {
             return false;
         }
     };
@@ -70,7 +79,7 @@ public interface DependencyProvider {
      * @param <TDependency> the type of the dependency
      * @return the dependency
      */
-    <TDependency> @NotNull TDependency provide(final @NotNull TypeKey key);
+    <TDependency> TDependency provide(final @NotNull TypeKey<TDependency> key);
 
     /**
      * Determines if this provider has the given, named dependency.
@@ -78,7 +87,7 @@ public interface DependencyProvider {
      * @param key the type key for the dependency
      * @return true if this DependencyProvider can provide the given dependency, false otherwise
      */
-    boolean hasDependency(final @NotNull TypeKey key);
+    boolean hasDependency(final @NotNull TypeKey<?> key);
 
     /**
      * Overload of {@link DependencyProvider#composite(DependencyProvider...)} for when no DependencyProviders are
@@ -125,7 +134,7 @@ public interface DependencyProvider {
 
         return new DependencyProvider() {
             @Override
-            public <TDependency> @NotNull TDependency provide(@NotNull TypeKey key) {
+            public <TDependency> TDependency provide(@NotNull TypeKey<TDependency> key) {
                 for (final DependencyProvider provider : providerCopy) {
                     if (provider.hasDependency(key)) {
                         return provider.provide(key);
@@ -136,7 +145,7 @@ public interface DependencyProvider {
             }
 
             @Override
-            public boolean hasDependency(@NotNull TypeKey key) {
+            public boolean hasDependency(@NotNull TypeKey<?> key) {
                 for (final DependencyProvider provider : providerCopy) {
                     if (provider.hasDependency(key)) {
                         return true;

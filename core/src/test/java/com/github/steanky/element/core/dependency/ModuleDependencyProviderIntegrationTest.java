@@ -44,11 +44,11 @@ class ModuleDependencyProviderIntegrationTest {
     void memoized() {
         final DependencyProvider dependencyProvider = new ModuleDependencyProvider(new BasicKeyParser(),
                 new MemoizingModule());
-        final DependencyProvider.TypeKey key = DependencyProvider.key(Object.class, Key.key("test:memoized"));
+        final DependencyProvider.TypeKey<Object> key = DependencyProvider.key(Object.class, Key.key("test:memoized"));
         final Object object = dependencyProvider.provide(key);
         assertSame(dependencyProvider.provide(key), object);
 
-        final DependencyProvider.TypeKey key2 = DependencyProvider.key(Object.class, Key.key("test:memoized_static"));
+        final DependencyProvider.TypeKey<Object> key2 = DependencyProvider.key(Object.class, Key.key("test:memoized_static"));
         final Object object2 = dependencyProvider.provide(key2);
         assertSame(dependencyProvider.provide(key2), object2);
     }
@@ -58,13 +58,126 @@ class ModuleDependencyProviderIntegrationTest {
         final DependencyProvider dependencyProvider = new ModuleDependencyProvider(new BasicKeyParser(),
                 new NotMemoizing());
 
-        final DependencyProvider.TypeKey key = DependencyProvider.key(Object.class, Key.key("test:non_static"));
+        final DependencyProvider.TypeKey<Object> key = DependencyProvider.key(Object.class, Key.key("test:non_static"));
         final Object object = dependencyProvider.provide(key);
         assertNotSame(dependencyProvider.provide(key), object);
 
-        final DependencyProvider.TypeKey key2 = DependencyProvider.key(Object.class, Key.key("test:static"));
+        final DependencyProvider.TypeKey<Object> key2 = DependencyProvider.key(Object.class, Key.key("test:static"));
         final Object object2 = dependencyProvider.provide(key2);
         assertNotSame(dependencyProvider.provide(key2), object2);
+    }
+
+    @Test
+    void ambiguousThrows() {
+        assertThrows(ElementException.class, () -> new ModuleDependencyProvider(new BasicKeyParser(), new Ambiguous()));
+    }
+
+    @Test
+    void resolutionByType() {
+        DependencyProvider provider = new ModuleDependencyProvider(new BasicKeyParser(), new NotAmbiguous());
+        String str = provider.provide(DependencyProvider.key(String.class));
+        int i = provider.provide(DependencyProvider.key(int.class));
+
+        assertEquals("value", str);
+        assertEquals(10, i);
+    }
+
+    @Test
+    void ambiguousSameNameThrows() {
+        assertThrows(ElementException.class, () -> new ModuleDependencyProvider(new BasicKeyParser(), new AmbiguousSameName()));
+    }
+
+    @Test
+    void ambiguityResolvedByName() {
+        DependencyProvider provider = new ModuleDependencyProvider(new BasicKeyParser(), new AmbiguityResolvedByName());
+
+        Object first = provider.provide(DependencyProvider.key(Object.class, Key.key("test:first")));
+        assertEquals("first", first);
+
+        Object second = provider.provide(DependencyProvider.key(Object.class, Key.key("test:second")));
+        assertEquals("second", second);
+    }
+
+    @Test
+    void sameNameDifferentTypesWithKey() {
+        DependencyProvider provider = new ModuleDependencyProvider(new BasicKeyParser(), new SameNameDifferentTypes());
+
+        Object first = provider.provide(DependencyProvider.key(Object.class, Key.key("test:first")));
+        assertEquals("first", first);
+
+        String second = provider.provide(DependencyProvider.key(String.class, Key.key("test:second")));
+        assertEquals("second", second);
+    }
+
+    @Test
+    void sameNameDifferentTypesNoKey() {
+        DependencyProvider provider = new ModuleDependencyProvider(new BasicKeyParser(), new SameNameDifferentTypes());
+
+        Object first = provider.provide(DependencyProvider.key(Object.class));
+        assertEquals("first", first);
+
+        String second = provider.provide(DependencyProvider.key(String.class));
+        assertEquals("second", second);
+    }
+
+    public static class SameNameDifferentTypes implements DependencyModule {
+        @DependencySupplier("test:first")
+        public static @NotNull Object objectReturning() {
+            return "first";
+        }
+
+        @DependencySupplier("test:first")
+        public static @NotNull String stringReturning() {
+            return "second";
+        }
+    }
+
+    public static class AmbiguityResolvedByName implements DependencyModule {
+        @DependencySupplier("test:first")
+        public static @NotNull Object objectReturning() {
+            return "first";
+        }
+
+        @DependencySupplier("test:second")
+        public static @NotNull Object objectReturning2() {
+            return "second";
+        }
+    }
+
+    public static class AmbiguousSameName implements DependencyModule {
+        @DependencySupplier("test:first")
+        public static @NotNull Object objectReturning() {
+            return new Object();
+        }
+
+        @DependencySupplier("test:first")
+        public static @NotNull Object objectReturning2() {
+            return new Object();
+        }
+    }
+
+    public static class NotAmbiguous implements DependencyModule {
+        @DependencySupplier
+        public static @NotNull String string() {
+            return "value";
+        }
+
+        @DependencySupplier
+        public static int integer() {
+            return 10;
+        }
+    }
+
+    public static class Ambiguous implements DependencyModule {
+        @DependencySupplier
+        public static @NotNull Object objectReturning() {
+            return new Object();
+        }
+
+        @DependencySupplier
+        public static @NotNull Object objectReturning2() {
+            return new Object();
+        }
     }
 
     public static class NotMemoizing implements DependencyModule {
