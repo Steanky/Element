@@ -1,7 +1,9 @@
 package com.github.steanky.element.core.dependency;
 
 import com.github.steanky.element.core.ElementException;
+import com.github.steanky.ethylene.mapper.type.Token;
 import net.kyori.adventure.key.Key;
+import org.apache.commons.lang3.ClassUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -20,15 +22,25 @@ public interface DependencyProvider {
      * @param name the name component of this key
      * @param <T> the dependency type
      */
-    record TypeKey<T>(@NotNull Class<T> type, @Nullable Key name) {
+    record TypeKey<T>(@NotNull Token<T> type, @Nullable Key name) {
         /**
          * Creates a new instance of this record.
          *
          * @param type the type component of this key
          * @param name the name component of this key
          */
-        public TypeKey {
-            Objects.requireNonNull(type);
+        @SuppressWarnings("unchecked")
+        public TypeKey(@NotNull Token<T> type, @Nullable Key name) {
+            final Class<?> rawType = type.rawType();
+            if (ClassUtils.isPrimitiveWrapper(rawType)) {
+                //perform unbox conversion
+                this.type = (Token<T>) Token.ofClass(ClassUtils.wrapperToPrimitive(rawType));
+            }
+            else {
+                this.type = type;
+            }
+
+            this.name = name;
         }
     }
 
@@ -38,7 +50,7 @@ public interface DependencyProvider {
      * @param <T> the dependency type
      * @return a new TypeKey instance
      */
-    static <T> @NotNull TypeKey<T> key(final @NotNull Class<T> type) {
+    static <T> @NotNull TypeKey<T> key(final @NotNull Token<T> type) {
         return new TypeKey<>(type, null);
     }
 
@@ -51,7 +63,7 @@ public interface DependencyProvider {
      * @param <T> the dependency type
      * @return a new TypeKey instance
      */
-    static <T> @NotNull TypeKey<T> key(final @NotNull Class<T> type, final @Nullable Key name) {
+    static <T> @NotNull TypeKey<T> key(final @NotNull Token<T> type, final @Nullable Key name) {
         return new TypeKey<>(type, name);
     }
 

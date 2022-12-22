@@ -17,6 +17,7 @@ import com.github.steanky.ethylene.core.ConfigElement;
 import com.github.steanky.ethylene.core.collection.LinkedConfigNode;
 import com.github.steanky.ethylene.core.processor.ConfigProcessor;
 import com.github.steanky.ethylene.mapper.MappingProcessorSource;
+import com.github.steanky.ethylene.mapper.type.Token;
 import net.kyori.adventure.key.Key;
 import net.kyori.adventure.key.Keyed;
 import org.jetbrains.annotations.NotNull;
@@ -586,7 +587,7 @@ public class BasicElementInspectorIntegrationTest {
         };
 
         public static ElementFactory<Data, DataAndDependenciesFactory> FACTORY = (objectData, data, dependencyProvider) -> new DataAndDependenciesFactory(
-                objectData, dependencyProvider.provide(DependencyProvider.key(int.class, Key.key("test:dependency"))));
+                objectData, dependencyProvider.provide(DependencyProvider.key(Token.INTEGER, Key.key("test:dependency"))));
         private final Data data;
 
         @FactoryMethod

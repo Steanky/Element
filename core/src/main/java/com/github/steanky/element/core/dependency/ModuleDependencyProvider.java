@@ -6,13 +6,16 @@ import com.github.steanky.element.core.annotation.Memoize;
 import com.github.steanky.element.core.key.Constants;
 import com.github.steanky.element.core.key.KeyParser;
 import com.github.steanky.element.core.util.ReflectionUtils;
+import com.github.steanky.ethylene.mapper.type.Token;
 import com.github.steanky.toolkit.function.MemoizingSupplier;
 import net.kyori.adventure.key.Key;
+import org.apache.commons.lang3.ClassUtils;
 import org.jetbrains.annotations.NotNull;
 
 import java.lang.reflect.Member;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
+import java.lang.reflect.Type;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
@@ -27,10 +30,10 @@ import static com.github.steanky.element.core.util.Validate.*;
  */
 public class ModuleDependencyProvider implements DependencyProvider {
     @SuppressWarnings({"unchecked"})
-    private static final Map.Entry<Class<?>, Map<String, Supplier<?>>>[] EMPTY_ENTRY_ARRAY = new Map.Entry[0];
+    private static final Map.Entry<Token<?>, Map<String, Supplier<?>>>[] EMPTY_ENTRY_ARRAY = new Map.Entry[0];
 
     private final DependencyModule module;
-    private final Map<Class<?>, Map<String, Supplier<?>>> dependencyMap;
+    private final Map<Token<?>, Map<String, Supplier<?>>> dependencyMap;
 
     /**
      * Creates a new instance of this class.
@@ -50,7 +53,9 @@ public class ModuleDependencyProvider implements DependencyProvider {
         }
 
         final Method[] methods = moduleClass.getMethods();
-        final Map<Class<?>, Map<String, Supplier<?>>> dependencyMap = new HashMap<>();
+
+        //this variable is temporary, will be transformed into an immutable map later
+        final Map<Token<?>, Map<String, Supplier<?>>> dependencyMap = new HashMap<>();
         for (final Method method : methods) {
             final DependencySupplier annotation = method.getAnnotation(DependencySupplier.class);
             if (annotation == null) {
@@ -59,8 +64,8 @@ public class ModuleDependencyProvider implements DependencyProvider {
 
             validateModifiersPresent(method, () -> "DependencySupplier method must be public", Modifier.PUBLIC);
 
-            final Class<?> returnType = method.getReturnType();
-            if (returnType.equals(void.class)) {
+            final Type genericReturnType = method.getGenericReturnType();
+            if (genericReturnType.equals(void.class)) {
                 throw elementException(moduleClass, "DependencySupplier method must not return void");
             }
 
@@ -71,7 +76,17 @@ public class ModuleDependencyProvider implements DependencyProvider {
 
             if (!isAnnotationDefault && !keyParser.isValidKey(annotationValue)) {
                 throw elementException(moduleClass, "DependencySupplier annotation value must be a parseable Key, or " +
-                        "DEFAULT");
+                        Constants.DEFAULT);
+            }
+
+            final Token<?> returnType;
+            final Class<?> rawReturnType = method.getReturnType();
+            if (ClassUtils.isPrimitiveWrapper(rawReturnType)) {
+                //perform unbox conversion
+                returnType = Token.ofClass(ClassUtils.wrapperToPrimitive(rawReturnType));
+            }
+            else {
+                returnType = Token.ofType(method.getGenericReturnType());
             }
 
             final Map<String, Supplier<?>> supplierMap = dependencyMap.get(returnType);
@@ -95,10 +110,10 @@ public class ModuleDependencyProvider implements DependencyProvider {
             putInvoker(supplierMap, annotationValue, method, module);
         }
 
-        final Map.Entry<Class<?>, Map<String, Supplier<?>>>[] array = dependencyMap.entrySet()
+        final Map.Entry<Token<?>, Map<String, Supplier<?>>>[] array = dependencyMap.entrySet()
                 .toArray(EMPTY_ENTRY_ARRAY);
         for (int i = 0; i < array.length; i++) {
-            final Map.Entry<Class<?>, Map<String, Supplier<?>>> entry = array[i];
+            final Map.Entry<Token<?>, Map<String, Supplier<?>>> entry = array[i];
 
             final Map<String, Supplier<?>> supplierMap = entry.getValue();
             final Map<String, Supplier<?>> immutableMap;
@@ -129,15 +144,15 @@ public class ModuleDependencyProvider implements DependencyProvider {
     @SuppressWarnings("unchecked")
     @Override
     public <TDependency> TDependency provide(final @NotNull TypeKey<TDependency> key) {
-        final Class<?> keyType = key.type();
+        final Token<?> keyType = key.type();
 
         final Map<String, Supplier<?>> supplierMap = dependencyMap.get(keyType);
         if (supplierMap == null) {
             throw elementException(module.getClass(), "no dependencies of type " + keyType);
         }
 
-        //if supplierMap contains the default key, it is guaranteed to only be holding a single entry (the default)
-        if (supplierMap.containsKey(Constants.DEFAULT)) {
+        //if supplierMap only contains a single entry, it is guaranteed to use Constants.DEFAULT as a key
+        if (supplierMap.size() == 1) {
             //ignore the name, as there is only one dependency satisfying this type
             return (TDependency) supplierMap.get(Constants.DEFAULT).get();
         }
@@ -158,7 +173,7 @@ public class ModuleDependencyProvider implements DependencyProvider {
 
     @Override
     public boolean hasDependency(final @NotNull TypeKey<?> key) {
-        final Class<?> keyType = key.type();
+        final Token<?> keyType = key.type();
         final Map<String, Supplier<?>> supplierMap = dependencyMap.get(keyType);
         if (supplierMap == null) {
             return false;

@@ -4,6 +4,7 @@ import com.github.steanky.element.core.ElementException;
 import com.github.steanky.element.core.annotation.DependencySupplier;
 import com.github.steanky.element.core.annotation.Memoize;
 import com.github.steanky.element.core.key.BasicKeyParser;
+import com.github.steanky.ethylene.mapper.type.Token;
 import net.kyori.adventure.key.Key;
 import org.jetbrains.annotations.NotNull;
 import org.junit.jupiter.api.Test;
@@ -15,8 +16,8 @@ class ModuleDependencyProviderIntegrationTest {
     void simpleModule() {
         final DependencyProvider dependencyProvider = new ModuleDependencyProvider(new BasicKeyParser(),
                 new SimpleModule());
-        final int first = dependencyProvider.provide(DependencyProvider.key(int.class, Key.key("test:non_static_method")));
-        final int second = dependencyProvider.provide(DependencyProvider.key(int.class, Key.key("test:static_method")));
+        final int first = dependencyProvider.provide(DependencyProvider.key(Token.INTEGER, Key.key("test:non_static_method")));
+        final int second = dependencyProvider.provide(DependencyProvider.key(Token.INTEGER, Key.key("test:static_method")));
 
         assertEquals(69, first);
         assertEquals(69420, second);
@@ -44,11 +45,11 @@ class ModuleDependencyProviderIntegrationTest {
     void memoized() {
         final DependencyProvider dependencyProvider = new ModuleDependencyProvider(new BasicKeyParser(),
                 new MemoizingModule());
-        final DependencyProvider.TypeKey<Object> key = DependencyProvider.key(Object.class, Key.key("test:memoized"));
+        final DependencyProvider.TypeKey<Object> key = DependencyProvider.key(Token.OBJECT, Key.key("test:memoized"));
         final Object object = dependencyProvider.provide(key);
         assertSame(dependencyProvider.provide(key), object);
 
-        final DependencyProvider.TypeKey<Object> key2 = DependencyProvider.key(Object.class, Key.key("test:memoized_static"));
+        final DependencyProvider.TypeKey<Object> key2 = DependencyProvider.key(Token.OBJECT, Key.key("test:memoized_static"));
         final Object object2 = dependencyProvider.provide(key2);
         assertSame(dependencyProvider.provide(key2), object2);
     }
@@ -58,11 +59,11 @@ class ModuleDependencyProviderIntegrationTest {
         final DependencyProvider dependencyProvider = new ModuleDependencyProvider(new BasicKeyParser(),
                 new NotMemoizing());
 
-        final DependencyProvider.TypeKey<Object> key = DependencyProvider.key(Object.class, Key.key("test:non_static"));
+        final DependencyProvider.TypeKey<Object> key = DependencyProvider.key(Token.OBJECT, Key.key("test:non_static"));
         final Object object = dependencyProvider.provide(key);
         assertNotSame(dependencyProvider.provide(key), object);
 
-        final DependencyProvider.TypeKey<Object> key2 = DependencyProvider.key(Object.class, Key.key("test:static"));
+        final DependencyProvider.TypeKey<Object> key2 = DependencyProvider.key(Token.OBJECT, Key.key("test:static"));
         final Object object2 = dependencyProvider.provide(key2);
         assertNotSame(dependencyProvider.provide(key2), object2);
     }
@@ -75,8 +76,8 @@ class ModuleDependencyProviderIntegrationTest {
     @Test
     void resolutionByType() {
         DependencyProvider provider = new ModuleDependencyProvider(new BasicKeyParser(), new NotAmbiguous());
-        String str = provider.provide(DependencyProvider.key(String.class));
-        int i = provider.provide(DependencyProvider.key(int.class));
+        String str = provider.provide(DependencyProvider.key(Token.STRING));
+        int i = provider.provide(DependencyProvider.key(Token.INTEGER));
 
         assertEquals("value", str);
         assertEquals(10, i);
@@ -91,10 +92,10 @@ class ModuleDependencyProviderIntegrationTest {
     void ambiguityResolvedByName() {
         DependencyProvider provider = new ModuleDependencyProvider(new BasicKeyParser(), new AmbiguityResolvedByName());
 
-        Object first = provider.provide(DependencyProvider.key(Object.class, Key.key("test:first")));
+        Object first = provider.provide(DependencyProvider.key(Token.OBJECT, Key.key("test:first")));
         assertEquals("first", first);
 
-        Object second = provider.provide(DependencyProvider.key(Object.class, Key.key("test:second")));
+        Object second = provider.provide(DependencyProvider.key(Token.OBJECT, Key.key("test:second")));
         assertEquals("second", second);
     }
 
@@ -102,10 +103,10 @@ class ModuleDependencyProviderIntegrationTest {
     void sameNameDifferentTypesWithKey() {
         DependencyProvider provider = new ModuleDependencyProvider(new BasicKeyParser(), new SameNameDifferentTypes());
 
-        Object first = provider.provide(DependencyProvider.key(Object.class, Key.key("test:first")));
+        Object first = provider.provide(DependencyProvider.key(Token.OBJECT, Key.key("test:first")));
         assertEquals("first", first);
 
-        String second = provider.provide(DependencyProvider.key(String.class, Key.key("test:second")));
+        String second = provider.provide(DependencyProvider.key(Token.STRING, Key.key("test:second")));
         assertEquals("second", second);
     }
 
@@ -113,10 +114,10 @@ class ModuleDependencyProviderIntegrationTest {
     void sameNameDifferentTypesNoKey() {
         DependencyProvider provider = new ModuleDependencyProvider(new BasicKeyParser(), new SameNameDifferentTypes());
 
-        Object first = provider.provide(DependencyProvider.key(Object.class));
+        Object first = provider.provide(DependencyProvider.key(Token.OBJECT));
         assertEquals("first", first);
 
-        String second = provider.provide(DependencyProvider.key(String.class));
+        String second = provider.provide(DependencyProvider.key(Token.STRING));
         assertEquals("second", second);
     }
 
