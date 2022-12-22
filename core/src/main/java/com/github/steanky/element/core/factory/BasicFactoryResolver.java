@@ -95,11 +95,11 @@ public class BasicFactoryResolver implements FactoryResolver {
             final DependencyProvider provider, final DataInspector.DataInformation dataInformation, final Object data) {
         if (parameter.isDependency) {
             return provider.provide(DependencyProvider.key(Token.ofType(parameter.parameter.getParameterizedType()),
-                    parameter.id));
+                    parameter.name));
         }
 
-        final PathFunction.PathInfo info = dataInformation.infoMap().get(parameter.id);
-        final Collection<? extends String> path = dataInformation.pathFunction().apply(data, parameter.id);
+        final PathFunction.PathInfo info = dataInformation.infoMap().get(parameter.name);
+        final Collection<? extends String> path = dataInformation.pathFunction().apply(data, parameter.name);
         if (info.isCollection()) {
             final Collection<Object> collection = typeResolver.createCollection(parameter.parameter.getType(),
                     path.size());
@@ -144,7 +144,7 @@ public class BasicFactoryResolver implements FactoryResolver {
         if (factoryMethod != null) {
             final ElementFactory<?, ?> factory = ReflectionUtils.invokeMethod(factoryMethod, null);
             if (factory == null) {
-                throw elementException(elementClass, "FactoryMethod returned null");
+                throw elementException(elementClass, "explicit FactoryMethod returned null");
             }
 
             return factory;
@@ -220,14 +220,14 @@ public class BasicFactoryResolver implements FactoryResolver {
                     name = parseKey(keyParser, nameAnnotation.value());
                 }
 
-                elementParameters.add(new ElementParameter(parameter, null, name, false));
+                elementParameters.add(new ElementParameter(parameter, name, false));
                 hasComposite = true;
                 continue;
             }
 
-            final String name = dependency.name();
-            elementParameters.add(new ElementParameter(parameter, parseKey(keyParser, dependency.value()),
-                    name.equals(Constants.DEFAULT) ? null : parseKey(keyParser, name), true));
+            final String name = dependency.value();
+            elementParameters.add(new ElementParameter(parameter, name.equals(Constants.DEFAULT) ? null :
+                    parseKey(keyParser, dependency.value()), true));
         }
 
         if (hasComposite && dataClass == null) {
@@ -266,20 +266,22 @@ public class BasicFactoryResolver implements FactoryResolver {
 
             int nonDependencyCount = 0;
             for (final ElementParameter parameter : elementParameters) {
-                if (!parameter.isDependency) {
-                    final PathFunction.PathInfo info = infoMap.get(parameter.id);
-                    if (info == null) {
-                        throw elementException(elementClass,
-                                "missing element dependency with parameter name '" + parameter.id + "'");
-                    }
-
-                    if (info.isCollection()) {
-                        validateType(elementClass, Collection.class, parameter.parameter.getType(),
-                                () -> "parameter with name '" + parameter.id + "' must be assignable to Collection<?>");
-                    }
-
-                    nonDependencyCount++;
+                if (parameter.isDependency) {
+                    continue;
                 }
+
+                final PathFunction.PathInfo info = infoMap.get(parameter.name);
+                if (info == null) {
+                    throw elementException(elementClass,
+                            "missing element dependency with parameter name '" + parameter.name + "'");
+                }
+
+                if (info.isCollection()) {
+                    validateType(elementClass, Collection.class, parameter.parameter.getType(),
+                            () -> "parameter with name '" + parameter.name + "' must be assignable to Collection<?>");
+                }
+
+                nonDependencyCount++;
             }
 
             final int size = infoMap.size();
@@ -298,5 +300,5 @@ public class BasicFactoryResolver implements FactoryResolver {
     private record ElementSpec(List<ElementParameter> parameters, int dataIndex,
             DataInspector.DataInformation dataInformation) {}
 
-    private record ElementParameter(Parameter parameter, Key type, Key id, boolean isDependency) {}
+    private record ElementParameter(Parameter parameter, Key name, boolean isDependency) {}
 }

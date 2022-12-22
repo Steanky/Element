@@ -10,7 +10,9 @@ import com.github.steanky.element.core.data.BasicDataInspector;
 import com.github.steanky.element.core.data.BasicDataLocator;
 import com.github.steanky.element.core.data.DataInspector;
 import com.github.steanky.element.core.data.DataLocator;
+import com.github.steanky.element.core.dependency.DependencyModule;
 import com.github.steanky.element.core.dependency.DependencyProvider;
+import com.github.steanky.element.core.dependency.ModuleDependencyProvider;
 import com.github.steanky.element.core.factory.BasicCollectionCreator;
 import com.github.steanky.element.core.factory.BasicFactoryResolver;
 import com.github.steanky.element.core.factory.CollectionCreator;
@@ -34,10 +36,11 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 
 public class BasicContextManagerIntegrationTest {
+    private final KeyParser keyParser;
     private final ContextManager contextManager;
 
     public BasicContextManagerIntegrationTest() {
-        KeyParser keyParser = new BasicKeyParser("test");
+        this.keyParser = new BasicKeyParser("test");
 
         final KeyExtractor typeExtractor = new BasicKeyExtractor("type", keyParser);
         final ElementTypeIdentifier elementTypeIdentifier = new BasicElementTypeIdentifier(keyParser);
@@ -64,6 +67,7 @@ public class BasicContextManagerIntegrationTest {
         contextManager.registerElementClass(Nested.class);
         contextManager.registerElementClass(MultiElement.class);
         contextManager.registerElementClass(InferredProcessor.class);
+        contextManager.registerElementClass(SimpleDependency.class);
     }
 
     @Test
@@ -122,6 +126,43 @@ public class BasicContextManagerIntegrationTest {
         assertNotNull(model);
         assertEquals(69, model.data.number);
         assertEquals("this is a string", model.data.string);
+    }
+
+    @Test
+    void simpleDependency() {
+        final ConfigNode data = ConfigNode.of("type", "simple_dependency");
+
+        final ElementContext context = contextManager.makeContext(data);
+        final SimpleDependency simpleDependency = context.provide(new ModuleDependencyProvider(keyParser,
+                new SimpleDependency.Module()));
+
+        assertEquals("value", simpleDependency.string);
+    }
+
+    @Model("simple_dependency")
+    public static class SimpleDependency {
+        public static class Module implements DependencyModule {
+            public Module() {}
+
+            @Dependency
+            public static String string() {
+                return "value";
+            }
+
+            @Dependency
+            public static int unused() {
+                return 10;
+            }
+
+            public static void ignored() {}
+        }
+
+        private final String string;
+
+        @FactoryMethod
+        public SimpleDependency(@Dependency String string) {
+            this.string = string;
+        }
     }
 
     @Model("inferred_processor")

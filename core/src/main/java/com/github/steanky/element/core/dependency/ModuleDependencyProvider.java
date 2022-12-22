@@ -1,7 +1,7 @@
 package com.github.steanky.element.core.dependency;
 
 import com.github.steanky.element.core.ElementException;
-import com.github.steanky.element.core.annotation.DependencySupplier;
+import com.github.steanky.element.core.annotation.Dependency;
 import com.github.steanky.element.core.annotation.Memoize;
 import com.github.steanky.element.core.key.Constants;
 import com.github.steanky.element.core.key.KeyParser;
@@ -57,7 +57,7 @@ public class ModuleDependencyProvider implements DependencyProvider {
         //this variable is temporary, will be transformed into an immutable map later
         final Map<Token<?>, Map<String, Supplier<?>>> dependencyMap = new HashMap<>();
         for (final Method method : methods) {
-            final DependencySupplier annotation = method.getAnnotation(DependencySupplier.class);
+            final Dependency annotation = method.getAnnotation(Dependency.class);
             if (annotation == null) {
                 continue;
             }
