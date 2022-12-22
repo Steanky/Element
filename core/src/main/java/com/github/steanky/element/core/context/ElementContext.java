@@ -9,10 +9,9 @@ import com.github.steanky.element.core.key.PathSplitter;
 import com.github.steanky.ethylene.core.collection.ConfigEntry;
 import com.github.steanky.ethylene.core.collection.ConfigList;
 import com.github.steanky.ethylene.core.collection.ConfigNode;
-import com.github.steanky.ethylene.core.processor.ConfigProcessException;
 import com.github.steanky.ethylene.core.processor.ConfigProcessor;
+import org.apache.commons.lang3.StringUtils;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 import java.util.function.Consumer;
@@ -41,7 +40,7 @@ public interface ElementContext {
      * @param <TElement>         the type of the element object
      * @return the contextual element object
      */
-    <TElement> @NotNull TElement provide(final @Nullable String path,
+    <TElement> @NotNull TElement provide(final @NotNull String path,
             final @NotNull DependencyProvider dependencyProvider, final boolean cache);
 
     /**
@@ -53,7 +52,7 @@ public interface ElementContext {
      * @return the root element object
      */
     default <TElement> @NotNull TElement provide(final @NotNull DependencyProvider dependencyProvider) {
-        return provide(null, dependencyProvider, false);
+        return provide(StringUtils.EMPTY, dependencyProvider, false);
     }
 
     /**
@@ -65,7 +64,7 @@ public interface ElementContext {
      * @param <TElement> the type of the contextual element object
      * @return the element object
      */
-    default <TElement> @NotNull TElement provide(final @Nullable String path) {
+    default <TElement> @NotNull TElement provide(final @NotNull String path) {
         return provide(path, DependencyProvider.EMPTY, false);
     }
 
@@ -77,7 +76,7 @@ public interface ElementContext {
      * @return the element object
      */
     default <TElement> @NotNull TElement provide() {
-        return provide(null, DependencyProvider.EMPTY, false);
+        return provide(StringUtils.EMPTY, DependencyProvider.EMPTY, false);
     }
 
     /**
@@ -104,24 +103,15 @@ public interface ElementContext {
         Objects.requireNonNull(collectionSupplier);
         Objects.requireNonNull(exceptionHandler);
 
-        PathSplitter pathSplitter = pathSplitter();
+        final PathSplitter pathSplitter = pathSplitter();
 
-        Object[] ethylenePath = pathSplitter.splitPathKey(listPath);
-        String normalized = pathSplitter.normalize(listPath);
-
-        ConfigList listElement;
-        try {
-            listElement = rootNode().getListOrThrow(ethylenePath);
-        } catch (ConfigProcessException e) {
-            throw new ElementException("expected ConfigList at '" + normalized + "'", e);
-        }
-
-        TCollection elementCollection = collectionSupplier.apply(listElement.size());
+        final ConfigList listElement = pathSplitter.findList(rootNode(), pathSplitter.splitPathKey(listPath));
+        final TCollection elementCollection = collectionSupplier.apply(listElement.size());
 
         ElementException exception = null;
         for (int i = 0; i < listElement.size(); i++) {
             try {
-                elementCollection.add(provide(pathSplitter.append(normalized, i), dependencyProvider, cache));
+                elementCollection.add(provide(pathSplitter.append(listPath, i), dependencyProvider, cache));
             } catch (ElementException e) {
                 if (exception == null) {
                     exception = e;
@@ -330,25 +320,16 @@ public interface ElementContext {
         Objects.requireNonNull(mapSupplier);
         Objects.requireNonNull(exceptionHandler);
 
-        PathSplitter pathSplitter = pathSplitter();
+        final PathSplitter pathSplitter = pathSplitter();
 
-        Object[] ethylenePath = pathSplitter.splitPathKey(nodePath);
-        String normalized = pathSplitter.normalize(nodePath);
-
-        ConfigNode nodeElement;
-        try {
-            nodeElement = rootNode().getNodeOrThrow(ethylenePath);
-        } catch (ConfigProcessException e) {
-            throw new ElementException("expected ConfigNode at '" + normalized + "'", e);
-        }
-
-        TMap elementMap = mapSupplier.apply(nodeElement.size());
+        final ConfigNode nodeElement = pathSplitter.findNode(rootNode(), pathSplitter.splitPathKey(nodePath));
+        final TMap elementMap = mapSupplier.apply(nodeElement.size());
 
         ElementException exception = null;
         for (ConfigEntry entry : nodeElement.entryCollection()) {
             try {
                 elementMap.put(entry.getKey(),
-                        provide(pathSplitter.append(normalized, entry.getKey()), dependencyProvider, cache));
+                        provide(pathSplitter.append(nodePath, entry.getKey()), dependencyProvider, cache));
             } catch (ElementException e) {
                 if (exception == null) {
                     exception = e;

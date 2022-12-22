@@ -94,8 +94,8 @@ public class BasicFactoryResolver implements FactoryResolver {
     private Object processParameter(final ElementParameter parameter, final ElementContext context,
             final DependencyProvider provider, final DataInspector.DataInformation dataInformation, final Object data) {
         if (parameter.isDependency) {
-            return provider.provide(DependencyProvider.key(Token.ofType(parameter.parameter.getParameterizedType()),
-                    parameter.name));
+            return provider.provide(
+                    DependencyProvider.key(Token.ofType(parameter.parameter.getParameterizedType()), parameter.name));
         }
 
         final PathFunction.PathInfo info = dataInformation.infoMap().get(parameter.name);
@@ -226,8 +226,8 @@ public class BasicFactoryResolver implements FactoryResolver {
             }
 
             final String name = dependency.value();
-            elementParameters.add(new ElementParameter(parameter, name.equals(Constants.DEFAULT) ? null :
-                    parseKey(keyParser, dependency.value()), true));
+            elementParameters.add(new ElementParameter(parameter,
+                    name.equals(Constants.DEFAULT) ? null : parseKey(keyParser, dependency.value()), true));
         }
 
         if (hasComposite && dataClass == null) {

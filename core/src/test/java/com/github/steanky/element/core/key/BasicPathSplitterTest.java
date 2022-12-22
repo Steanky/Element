@@ -13,33 +13,21 @@ class BasicPathSplitterTest {
     }
 
     @Test
-    void pathWithMixedNumbers() {
-        final Object[] path = BasicPathSplitter.INSTANCE.splitPathKey("basic/path/i0/i10/abc");
-        assertArrayEquals(new Object[] {"basic", "path", 0, 10, "abc"}, path);
-    }
-
-    @Test
     void emptyPath() {
         final Object[] path = BasicPathSplitter.INSTANCE.splitPathKey("");
-        assertArrayEquals(new Object[] {""}, path);
+        assertArrayEquals(new String[0], path);
     }
 
     @Test
     void emptyPath2() {
-        final Object[] path = BasicPathSplitter.INSTANCE.splitPathKey("//");
-        assertArrayEquals(new Object[] {""}, path);
+        final String[] path = BasicPathSplitter.INSTANCE.splitPathKey("/");
+        assertArrayEquals(new String[0], path);
     }
 
     @Test
-    void numberTooLarge() {
-        final Object[] path = BasicPathSplitter.INSTANCE.splitPathKey("basic/path/i54987876546579846549879456");
-        assertArrayEquals(new Object[] {"basic", "path", "i54987876546579846549879456"}, path);
-    }
-
-    @Test
-    void escapedNumber() {
-        final Object[] path = BasicPathSplitter.INSTANCE.splitPathKey("basic/path/\\i5");
-        assertArrayEquals(new Object[] {"basic", "path", "i5"}, path);
+    void pathWithEmptyElement() {
+        final String[] path = BasicPathSplitter.INSTANCE.splitPathKey("//");
+        assertArrayEquals(new String[] {""}, path);
     }
 
     @Test
@@ -105,7 +93,7 @@ class BasicPathSplitterTest {
     @Test
     void appendInteger() {
         final String result = BasicPathSplitter.INSTANCE.append("a", 10);
-        assertEquals("a/i10", result);
+        assertEquals("a/10", result);
     }
 
     @Test
@@ -121,9 +109,14 @@ class BasicPathSplitterTest {
     }
 
     @Test
-    void startsWithIntegerIndicator() {
-        final Object[] result = BasicPathSplitter.INSTANCE.splitPathKey("iTest");
-        assertEquals(1, result.length);
-        assertEquals("iTest", result[0]);
+    void escapeWithNoSignificantCharacters() {
+        final String result = BasicPathSplitter.INSTANCE.escape("test");
+        assertEquals("test", result);
+    }
+
+    @Test
+    void escapeWithSignificantCharacters() {
+        final String result = BasicPathSplitter.INSTANCE.escape("/test/test/third\\/_node");
+        assertEquals("test\\/test\\/third\\/_node", result);
     }
 }

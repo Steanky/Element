@@ -1,9 +1,9 @@
 package com.github.steanky.element.core.annotation;
 
+import com.github.steanky.element.core.dependency.DependencyModule;
 import com.github.steanky.element.core.key.Constants;
 import com.github.steanky.element.core.key.KeyString;
 import org.jetbrains.annotations.NotNull;
-import com.github.steanky.element.core.dependency.DependencyModule;
 
 import java.lang.annotation.*;
 

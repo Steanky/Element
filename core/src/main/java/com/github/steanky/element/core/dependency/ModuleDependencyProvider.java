@@ -75,8 +75,8 @@ public class ModuleDependencyProvider implements DependencyProvider {
             final boolean isAnnotationDefault = annotationValue.equals(Constants.DEFAULT);
 
             if (!isAnnotationDefault && !keyParser.isValidKey(annotationValue)) {
-                throw elementException(moduleClass, "DependencySupplier annotation value must be a parseable Key, or " +
-                        Constants.DEFAULT);
+                throw elementException(moduleClass,
+                        "DependencySupplier annotation value must be a parseable Key, or " + Constants.DEFAULT);
             }
 
             final Token<?> returnType;
@@ -84,8 +84,7 @@ public class ModuleDependencyProvider implements DependencyProvider {
             if (ClassUtils.isPrimitiveWrapper(rawReturnType)) {
                 //perform unbox conversion
                 returnType = Token.ofClass(ClassUtils.wrapperToPrimitive(rawReturnType));
-            }
-            else {
+            } else {
                 returnType = Token.ofType(method.getGenericReturnType());
             }
 
@@ -98,13 +97,13 @@ public class ModuleDependencyProvider implements DependencyProvider {
             }
 
             if (isAnnotationDefault || supplierMap.containsKey(Constants.DEFAULT)) {
-                throw elementException(moduleClass, "DependencySupplier ambiguity, there may only be a single unnamed" +
-                        " supplier per type");
+                throw elementException(moduleClass,
+                        "DependencySupplier ambiguity, there may only be a single unnamed" + " supplier per type");
             }
 
             if (supplierMap.containsKey(annotationValue)) {
-                throw elementException(moduleClass, "DependencySupplier ambiguity, two suppliers may not have the " +
-                        "same name");
+                throw elementException(moduleClass,
+                        "DependencySupplier ambiguity, two suppliers may not have the " + "same name");
             }
 
             putInvoker(supplierMap, annotationValue, method, module);
@@ -119,8 +118,7 @@ public class ModuleDependencyProvider implements DependencyProvider {
             final Map<String, Supplier<?>> immutableMap;
             if (supplierMap.size() == 1 && !supplierMap.containsKey(Constants.DEFAULT)) {
                 immutableMap = Map.of(Constants.DEFAULT, supplierMap.values().iterator().next());
-            }
-            else {
+            } else {
                 immutableMap = Map.copyOf(supplierMap);
             }
 
@@ -164,8 +162,8 @@ public class ModuleDependencyProvider implements DependencyProvider {
 
         final String nameString = name.asString();
         if (!supplierMap.containsKey(nameString)) {
-            throw new ElementException("DependencySupplier named " + nameString + " with a return type of " + keyType +
-                    " not found");
+            throw new ElementException(
+                    "DependencySupplier named " + nameString + " with a return type of " + keyType + " not found");
         }
 
         return (TDependency) supplierMap.get(nameString).get();

@@ -7,9 +7,7 @@ import com.github.steanky.element.core.context.BasicElementContext;
 import com.github.steanky.element.core.context.ContextManager;
 import com.github.steanky.element.core.context.ElementContext;
 import com.github.steanky.element.core.data.BasicDataInspector;
-import com.github.steanky.element.core.data.BasicDataLocator;
 import com.github.steanky.element.core.data.DataInspector;
-import com.github.steanky.element.core.data.DataLocator;
 import com.github.steanky.element.core.dependency.DependencyModule;
 import com.github.steanky.element.core.dependency.DependencyProvider;
 import com.github.steanky.element.core.dependency.ModuleDependencyProvider;
@@ -57,9 +55,8 @@ public class BasicContextManagerIntegrationTest {
         final Registry<ElementFactory<?, ?>> factoryRegistry = new HashRegistry<>();
 
         final PathSplitter pathSplitter = BasicPathSplitter.INSTANCE;
-        final DataLocator dataLocator = new BasicDataLocator(pathSplitter);
         final ElementContext.Source source = new BasicElementContext.Source(configRegistry, factoryRegistry,
-                cacheRegistry, pathSplitter, dataLocator, typeExtractor);
+                cacheRegistry, pathSplitter, typeExtractor);
 
         this.contextManager = new BasicContextManager(elementInspector, elementTypeIdentifier, source);
         contextManager.registerElementClass(SimpleElement.class);
@@ -75,7 +72,7 @@ public class BasicContextManagerIntegrationTest {
         final ConfigNode node = ConfigNode.of("type", "simple_data", "value", 10);
 
         final ElementContext data = contextManager.makeContext(node);
-        final SimpleData element = data.provide(null, DependencyProvider.EMPTY, false);
+        final SimpleData element = data.provide("", DependencyProvider.EMPTY, false);
 
         assertNotNull(element);
         assertEquals(10, element.data.value);
@@ -88,7 +85,7 @@ public class BasicContextManagerIntegrationTest {
         node.put("simple_data", nested);
 
         final ElementContext data = contextManager.makeContext(node);
-        final Nested nestedElement = data.provide(null, DependencyProvider.EMPTY, false);
+        final Nested nestedElement = data.provide("", DependencyProvider.EMPTY, false);
 
         assertNotNull(nestedElement);
         assertEquals(10, nestedElement.simpleElement.data.value);
@@ -133,14 +130,21 @@ public class BasicContextManagerIntegrationTest {
         final ConfigNode data = ConfigNode.of("type", "simple_dependency");
 
         final ElementContext context = contextManager.makeContext(data);
-        final SimpleDependency simpleDependency = context.provide(new ModuleDependencyProvider(keyParser,
-                new SimpleDependency.Module()));
+        final SimpleDependency simpleDependency = context.provide(
+                new ModuleDependencyProvider(keyParser, new SimpleDependency.Module()));
 
         assertEquals("value", simpleDependency.string);
     }
 
     @Model("simple_dependency")
     public static class SimpleDependency {
+        private final String string;
+
+        @FactoryMethod
+        public SimpleDependency(@Dependency String string) {
+            this.string = string;
+        }
+
         public static class Module implements DependencyModule {
             public Module() {}
 
@@ -155,13 +159,6 @@ public class BasicContextManagerIntegrationTest {
             }
 
             public static void ignored() {}
-        }
-
-        private final String string;
-
-        @FactoryMethod
-        public SimpleDependency(@Dependency String string) {
-            this.string = string;
         }
     }
 

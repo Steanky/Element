@@ -1,14 +1,16 @@
 package com.github.steanky.element.core.key;
 
+import com.github.steanky.element.core.ElementException;
+import com.github.steanky.ethylene.core.ConfigElement;
+import com.github.steanky.ethylene.core.collection.ConfigList;
+import org.apache.commons.lang3.StringUtils;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
+import java.util.*;
 
 /**
  * Basic implementation of {@link PathSplitter}. A forward slash '/' is interpreted as a delimiter character. '\' is
- * interpreted as an escape character. Index nodes are denoted with a preceding 'i'.
+ * interpreted as an escape character.
  * <p>
  * This class is a singleton; its instance can be obtained by calling {@link BasicPathSplitter#INSTANCE}.
  */
@@ -18,46 +20,26 @@ public class BasicPathSplitter implements PathSplitter {
      */
     public static final PathSplitter INSTANCE = new BasicPathSplitter();
 
-    private static final String EMPTY = "";
     private static final char DELIMITER = '/';
     private static final char ESCAPE = '\\';
-    private static final char INTEGER_INDICATOR = 'i';
     private static final int EXPECTED_NODE_WIDTH = 6;
+    private static final String[] EMPTY_STRING_ARRAY = new String[0];
 
     private BasicPathSplitter() {}
 
-    private static void handleNode(final Collection<? super Object> objects, final String substring) {
-        if (substring.isEmpty()) {
-            objects.add(substring);
-            return;
-        }
-
-        final char first = substring.charAt(0);
-        if (first == INTEGER_INDICATOR) {
-            final String numberPart = substring.substring(1);
-            try {
-                objects.add(Integer.parseInt(numberPart));
-                return;
-            } catch (NumberFormatException ignored) {
-            }
-
-            objects.add(substring);
-        } else if (substring.length() > 1 && first == ESCAPE && substring.charAt(1) == INTEGER_INDICATOR) {
-            objects.add(substring.substring(1));
-        } else {
-            objects.add(substring);
-        }
+    private static void handleNode(final Collection<? super String> nodes, final String substring) {
+        nodes.add(substring);
     }
 
     @Override
-    public @NotNull Object @NotNull [] splitPathKey(final @NotNull String pathString) {
+    public @NotNull String @NotNull [] splitPathKey(final @NotNull String pathString) {
         if (pathString.isEmpty()) {
-            return new Object[] {EMPTY};
+            return EMPTY_STRING_ARRAY;
         }
 
         //come up with a reasonable guess for the number of elements in the path string
         final int length = pathString.length();
-        final List<Object> objects = new ArrayList<>(Math.max(4, length / EXPECTED_NODE_WIDTH));
+        final List<String> nodes = new ArrayList<>(Math.max(4, length / EXPECTED_NODE_WIDTH));
 
         final StringBuilder nodeBuffer = new StringBuilder(EXPECTED_NODE_WIDTH);
         boolean escape = false;
@@ -76,7 +58,7 @@ public class BasicPathSplitter implements PathSplitter {
                 escape = true;
             } else if (current == DELIMITER) {
                 if (i != 0) {
-                    handleNode(objects, nodeBuffer.toString());
+                    handleNode(nodes, nodeBuffer.toString());
                     nodeBuffer.setLength(0);
                 }
             } else {
@@ -85,23 +67,23 @@ public class BasicPathSplitter implements PathSplitter {
         }
 
         if (!nodeBuffer.isEmpty()) {
-            handleNode(objects, nodeBuffer.toString());
+            handleNode(nodes, nodeBuffer.toString());
         }
 
-        return objects.toArray();
+        return nodes.toArray(EMPTY_STRING_ARRAY);
     }
 
     @Override
     public @NotNull String normalize(final @NotNull String pathString) {
         if (pathString.isEmpty()) {
-            return EMPTY;
+            return StringUtils.EMPTY;
         }
 
         final int length = pathString.length();
         int startIndex = 0;
         if (pathString.charAt(0) == DELIMITER) {
             if (length == 1) {
-                return EMPTY;
+                return StringUtils.EMPTY;
             }
 
             if (pathString.charAt(1) != DELIMITER) {
@@ -112,7 +94,7 @@ public class BasicPathSplitter implements PathSplitter {
         int endIndex = length - 1;
         if (pathString.charAt(endIndex) == DELIMITER) {
             if (length == 2) {
-                return EMPTY;
+                return StringUtils.EMPTY;
             }
 
             if (pathString.charAt(endIndex - 1) != DELIMITER) {
@@ -124,9 +106,67 @@ public class BasicPathSplitter implements PathSplitter {
     }
 
     @Override
+    public @NotNull String escape(@NotNull String pathNode) {
+        pathNode = normalize(pathNode);
+
+        final StringBuilder builder = new StringBuilder(pathNode.length() + 5);
+
+        boolean escape = false;
+        for (int i = 0; i < pathNode.length(); i++) {
+            final char character = pathNode.charAt(i);
+            if (escape) {
+                if (character != DELIMITER) {
+                    builder.append(ESCAPE);
+                }
+
+                escape = false;
+            } else if (character == DELIMITER) {
+                builder.append(ESCAPE);
+            } else if (character == ESCAPE) {
+                escape = true;
+            }
+
+            builder.append(character);
+        }
+
+        return builder.toString();
+    }
+
+    @Override
     public @NotNull String append(final @NotNull String pathString, final @NotNull Object element) {
-        final String elementString = element.toString();
-        return normalize(pathString) + DELIMITER + (element instanceof Integer ? INTEGER_INDICATOR + elementString
-                : normalize(elementString));
+        return normalize(pathString) + DELIMITER + escape(normalize(element.toString()));
+    }
+
+    @Override
+    public @NotNull ConfigElement findElement(@NotNull ConfigElement root, @NotNull String @NotNull [] path) {
+        ConfigElement current = Objects.requireNonNull(root);
+
+        for (final String node : path) {
+            Objects.requireNonNull(node);
+
+            if (current.isNode()) {
+                current = current.asNode().get(node);
+            } else if (current.isList()) {
+                try {
+                    final int index = Integer.parseInt(node);
+                    final ConfigList list = current.asList();
+
+                    if (index > -1 && index < list.size()) {
+                        current = list.get(index);
+                    } else {
+                        current = null;
+                    }
+                } catch (NumberFormatException e) {
+                    throw new ElementException(
+                            "invalid path array " + Arrays.toString(path) + ", expected index, got " + node, e);
+                }
+            }
+
+            if (current == null) {
+                throw new ElementException("invalid path array " + Arrays.toString(path) + ", no such node " + node);
+            }
+        }
+
+        return current;
     }
 }

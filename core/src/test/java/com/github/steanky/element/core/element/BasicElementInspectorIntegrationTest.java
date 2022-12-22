@@ -587,7 +587,8 @@ public class BasicElementInspectorIntegrationTest {
         };
 
         public static ElementFactory<Data, DataAndDependenciesFactory> FACTORY = (objectData, data, dependencyProvider) -> new DataAndDependenciesFactory(
-                objectData, dependencyProvider.provide(DependencyProvider.key(Token.INTEGER, Key.key("test:dependency"))));
+                objectData,
+                dependencyProvider.provide(DependencyProvider.key(Token.INTEGER, Key.key("test:dependency"))));
         private final Data data;
 
         @FactoryMethod

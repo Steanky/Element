@@ -18,8 +18,10 @@ class ModuleDependencyProviderIntegrationTest {
     void simpleModule() {
         final DependencyProvider dependencyProvider = new ModuleDependencyProvider(new BasicKeyParser(),
                 new SimpleModule());
-        final int first = dependencyProvider.provide(DependencyProvider.key(Token.INTEGER, Key.key("test:non_static_method")));
-        final int second = dependencyProvider.provide(DependencyProvider.key(Token.INTEGER, Key.key("test:static_method")));
+        final int first = dependencyProvider.provide(
+                DependencyProvider.key(Token.INTEGER, Key.key("test:non_static_method")));
+        final int second = dependencyProvider.provide(
+                DependencyProvider.key(Token.INTEGER, Key.key("test:static_method")));
 
         assertEquals(69, first);
         assertEquals(69420, second);
@@ -51,7 +53,8 @@ class ModuleDependencyProviderIntegrationTest {
         final Object object = dependencyProvider.provide(key);
         assertSame(dependencyProvider.provide(key), object);
 
-        final DependencyProvider.TypeKey<Object> key2 = DependencyProvider.key(Token.OBJECT, Key.key("test:memoized_static"));
+        final DependencyProvider.TypeKey<Object> key2 = DependencyProvider.key(Token.OBJECT,
+                Key.key("test:memoized_static"));
         final Object object2 = dependencyProvider.provide(key2);
         assertSame(dependencyProvider.provide(key2), object2);
     }
@@ -87,7 +90,8 @@ class ModuleDependencyProviderIntegrationTest {
 
     @Test
     void ambiguousSameNameThrows() {
-        assertThrows(ElementException.class, () -> new ModuleDependencyProvider(new BasicKeyParser(), new AmbiguousSameName()));
+        assertThrows(ElementException.class,
+                () -> new ModuleDependencyProvider(new BasicKeyParser(), new AmbiguousSameName()));
     }
 
     @Test
@@ -138,14 +142,14 @@ class ModuleDependencyProviderIntegrationTest {
 
     @Test
     void identicalGenericTypesThrows() {
-        assertThrows(ElementException.class, () -> new ModuleDependencyProvider(new BasicKeyParser(),
-                new IdenticalGenericTypes()));
+        assertThrows(ElementException.class,
+                () -> new ModuleDependencyProvider(new BasicKeyParser(), new IdenticalGenericTypes()));
     }
 
     @Test
     void primitiveWrapperBoxingAmbiguityThrows() {
-        assertThrows(ElementException.class, () -> new ModuleDependencyProvider(new BasicKeyParser(),
-                new PrimitiveWrapperBoxingAmbiguity()));
+        assertThrows(ElementException.class,
+                () -> new ModuleDependencyProvider(new BasicKeyParser(), new PrimitiveWrapperBoxingAmbiguity()));
     }
 
     @Test
