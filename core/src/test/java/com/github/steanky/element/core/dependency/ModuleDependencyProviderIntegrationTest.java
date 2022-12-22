@@ -9,6 +9,8 @@ import net.kyori.adventure.key.Key;
 import org.jetbrains.annotations.NotNull;
 import org.junit.jupiter.api.Test;
 
+import java.util.List;
+
 import static org.junit.jupiter.api.Assertions.*;
 
 class ModuleDependencyProviderIntegrationTest {
@@ -119,6 +121,54 @@ class ModuleDependencyProviderIntegrationTest {
 
         String second = provider.provide(DependencyProvider.key(Token.STRING));
         assertEquals("second", second);
+    }
+
+    @Test
+    void typesDifferingByGeneric() {
+        DependencyProvider provider = new ModuleDependencyProvider(new BasicKeyParser(), new TypesDifferingByGeneric());
+
+        List<String> stringList = provider.provide(DependencyProvider.key(new Token<>() {}));
+        List<Integer> integerList = provider.provide(DependencyProvider.key(new Token<>() {}));
+        List<?> wildcardList = provider.provide(DependencyProvider.key(new Token<>() {}));
+
+        assertEquals(TypesDifferingByGeneric.stringList(), stringList);
+        assertEquals(TypesDifferingByGeneric.integerList(), integerList);
+        assertEquals(TypesDifferingByGeneric.wildcardList(), wildcardList);
+    }
+
+    @Test
+    void IdenticalGenericTypesThrows() {
+        assertThrows(ElementException.class, () -> new ModuleDependencyProvider(new BasicKeyParser(),
+                new IdenticalGenericTypes()));
+    }
+
+    public static class IdenticalGenericTypes implements DependencyModule {
+        @DependencySupplier
+        public static @NotNull List<String> stringList() {
+            return List.of("first");
+        }
+
+        @DependencySupplier
+        public static @NotNull List<String> stringList2() {
+            return List.of("first");
+        }
+    }
+
+    public static class TypesDifferingByGeneric implements DependencyModule {
+        @DependencySupplier
+        public static @NotNull List<String> stringList() {
+            return List.of("first");
+        }
+
+        @DependencySupplier
+        public static @NotNull List<Integer> integerList() {
+            return List.of(10);
+        }
+
+        @DependencySupplier
+        public static @NotNull List<?> wildcardList() {
+            return List.of("first", 1, 2);
+        }
     }
 
     public static class SameNameDifferentTypes implements DependencyModule {
