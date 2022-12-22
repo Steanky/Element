@@ -6,24 +6,19 @@ import com.github.steanky.element.core.annotation.Memoize;
 import com.github.steanky.element.core.key.Constants;
 import com.github.steanky.element.core.key.KeyParser;
 import com.github.steanky.element.core.util.ReflectionUtils;
+import com.github.steanky.toolkit.function.MemoizingSupplier;
 import net.kyori.adventure.key.Key;
-import org.intellij.lang.annotations.Subst;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
+import java.lang.reflect.Member;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
-import java.lang.reflect.Parameter;
-import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
-import java.util.function.BiFunction;
-import java.util.function.Function;
 import java.util.function.Supplier;
 
-import static com.github.steanky.element.core.util.Validate.elementException;
-import static com.github.steanky.element.core.util.Validate.validateModifiersPresent;
+import static com.github.steanky.element.core.util.Validate.*;
 
 /**
  * Implementation of DependencyProvider which has a concept of modules. Each module consists of a single object which
@@ -31,153 +26,143 @@ import static com.github.steanky.element.core.util.Validate.validateModifiersPre
  * "named" dependencies by declaring a single {@link Key} object as a parameter.
  */
 public class ModuleDependencyProvider implements DependencyProvider {
-    private final DependencyModule[] modules;
-    private final KeyParser keyParser;
-    private final BiFunction<? super Key, ? super Key, DependencyResult> dependencyFunction;
+    @SuppressWarnings({"unchecked"})
+    private static final Map.Entry<Class<?>, Map<String, Supplier<?>>>[] EMPTY_ENTRY_ARRAY = new Map.Entry[0];
+
+    private final DependencyModule module;
+    private final Map<Class<?>, Map<String, Supplier<?>>> dependencyMap;
 
     /**
      * Creates a new instance of this class.
      *
      * @param keyParser the {@link KeyParser} object used to convert strings to keys
-     * @param modules    the {@link DependencyModule} objects to use
+     * @param module    the {@link DependencyModule} object to use
      */
-    public ModuleDependencyProvider(final @NotNull KeyParser keyParser, final @NotNull DependencyModule... modules) {
-        this.keyParser = Objects.requireNonNull(keyParser);
-        this.modules = Arrays.copyOf(modules, modules.length);
-        this.dependencyFunction = getFunction();
-    }
+    public ModuleDependencyProvider(final @NotNull KeyParser keyParser, final @NotNull DependencyModule module) {
+        Objects.requireNonNull(keyParser);
+        this.module = Objects.requireNonNull(module);
 
-    private BiFunction<? super Key, ? super Key, DependencyResult> getFunction() {
-        final Map<Key, DependencyFunction> dependencyFunctionMap = new HashMap<>();
-        for (DependencyModule module : modules) {
-            final Class<?> moduleClass = module.getClass();
-            final int moduleClassModifiers = moduleClass.getModifiers();
-            if (!Modifier.isPublic(moduleClassModifiers)) {
-                throw new ElementException("Module class must be public");
-            }
+        final Class<?> moduleClass = module.getClass();
 
-            final Method[] declaredMethods = moduleClass.getDeclaredMethods();
-
-            for (final Method declaredMethod : declaredMethods) {
-                final DependencySupplier supplierAnnotation = declaredMethod.getAnnotation(DependencySupplier.class);
-                if (supplierAnnotation == null) {
-                    continue;
-                }
-
-                validateModifiersPresent(declaredMethod, () -> "DependencySupplier method is not public", Modifier.PUBLIC);
-
-                final Class<?> returnType = declaredMethod.getReturnType();
-                if (returnType.equals(void.class)) {
-                    throw elementException(moduleClass, "DependencySupplier method returns void");
-                }
-
-                @Subst(Constants.NAMESPACE_OR_KEY) final String dependencyString = supplierAnnotation.value();
-                final Key dependencyName = keyParser.parseKey(dependencyString);
-                final Parameter[] supplierParameters = declaredMethod.getParameters();
-                if (supplierParameters.length > 1) {
-                    throw elementException(moduleClass, "supplier has too many parameters");
-                }
-
-                final boolean memoize;
-                if (supplierParameters.length == 0) {
-                    memoize = declaredMethod.isAnnotationPresent(Memoize.class);
-
-                    if (dependencyFunctionMap.put(dependencyName, new DependencyFunction(false) {
-                        private Object value;
-
-                        @Override
-                        public DependencyResult apply(final Key key) {
-                            return new DependencyResult(true, () -> {
-                                if (!memoize) {
-                                    return ReflectionUtils.invokeMethod(declaredMethod, module);
-                                }
-
-                                if (value != null) {
-                                    return value;
-                                }
-
-                                return value = ReflectionUtils.invokeMethod(declaredMethod, module);
-                            }, null);
-
-                        }
-                    }) != null) {
-                        throw elementException(moduleClass,
-                                "registered multiple DependencySuppliers under key '" + dependencyName + "'");
-                    }
-
-                    continue;
-                }
-
-                final Class<?> parameterType = supplierParameters[0].getType();
-                if (!Key.class.isAssignableFrom(parameterType)) {
-                    throw elementException(moduleClass, "parameter type was not assignable to Key");
-                }
-
-                memoize = declaredMethod.isAnnotationPresent(Memoize.class);
-                dependencyFunctionMap.put(dependencyName, new DependencyFunction(true) {
-                    private final Map<Key, Object> values = memoize ? new HashMap<>(4) : null;
-
-                    @Override
-                    public DependencyResult apply(final Key key) {
-                        return new DependencyResult(true, () -> {
-                            if (!memoize) {
-                                return ReflectionUtils.invokeMethod(declaredMethod, module, key);
-                            }
-
-                            return values.computeIfAbsent(key, k -> ReflectionUtils
-                                    .invokeMethod(declaredMethod, module, k));
-                        }, null);
-                    }
-                });
-            }
+        int moduleClassModifiers = moduleClass.getModifiers();
+        if (!Modifier.isPublic(moduleClassModifiers)) {
+            throw elementException(moduleClass, "DependencyModule must be public");
         }
 
-        final Map<Key, DependencyFunction> map = Map.copyOf(dependencyFunctionMap);
-        return (type, name) -> {
-            final DependencyFunction function = map.get(type);
-            if (function == null) {
-                return new DependencyResult(false, null, "unable to resolve dependency of" +
-                        " type " + type);
+        final Method[] methods = moduleClass.getMethods();
+        final Map<Class<?>, Map<String, Supplier<?>>> dependencyMap = new HashMap<>();
+        for (final Method method : methods) {
+            final DependencySupplier annotation = method.getAnnotation(DependencySupplier.class);
+            if (annotation == null) {
+                continue;
             }
 
-            if (function.requiresKey == (name == null)) {
-                return new DependencyResult(false, null, name == null ? "dependency supplier needs " +
-                        "a key, but none was provided" :
-                        "dependency supplier takes no arguments, but a key was provided");
+            validateModifiersPresent(method, () -> "DependencySupplier method must be public", Modifier.PUBLIC);
+
+            final Class<?> returnType = method.getReturnType();
+            if (returnType.equals(void.class)) {
+                throw elementException(moduleClass, "DependencySupplier method must not return void");
             }
 
-            return function.apply(name);
-        };
+            validateParameterCount(method, 0, () -> "DependencySupplier method must be parameterless");
+
+            final String annotationValue = annotation.value();
+            final boolean isAnnotationDefault = annotationValue.equals(Constants.DEFAULT);
+
+            if (!isAnnotationDefault && !keyParser.isValidKey(annotationValue)) {
+                throw elementException(moduleClass, "DependencySupplier annotation value must be a parseable Key, or " +
+                        "DEFAULT");
+            }
+
+            final Map<String, Supplier<?>> supplierMap = dependencyMap.get(returnType);
+            if (supplierMap == null) {
+                final Map<String, Supplier<?>> newMap = new HashMap<>(4);
+                putInvoker(newMap, annotationValue, method, module);
+                dependencyMap.put(returnType, newMap);
+                continue;
+            }
+
+            if (isAnnotationDefault || supplierMap.containsKey(Constants.DEFAULT)) {
+                throw elementException(moduleClass, "DependencySupplier ambiguity, there may only be a single unnamed" +
+                        " supplier per type");
+            }
+
+            if (supplierMap.containsKey(annotationValue)) {
+                throw elementException(moduleClass, "DependencySupplier ambiguity, two suppliers may not have the " +
+                        "same name");
+            }
+
+            putInvoker(supplierMap, annotationValue, method, module);
+        }
+
+        final Map.Entry<Class<?>, Map<String, Supplier<?>>>[] array = dependencyMap.entrySet()
+                .toArray(EMPTY_ENTRY_ARRAY);
+        for (int i = 0; i < array.length; i++) {
+            final Map.Entry<Class<?>, Map<String, Supplier<?>>> entry = array[i];
+            array[i] = Map.entry(entry.getKey(), Map.copyOf(entry.getValue()));
+        }
+
+        this.dependencyMap = Map.ofEntries(array);
+    }
+
+    private static void putInvoker(Map<String, Supplier<?>> map, String key, Method method, Object module) {
+        final boolean isMemoizing = method.isAnnotationPresent(Memoize.class);
+        final Supplier<?> invoker = isStatic(method) ? () -> ReflectionUtils.invokeMethod(method, null) :
+                () -> ReflectionUtils.invokeMethod(method, module);
+        map.put(key, isMemoizing ? new MemoizingSupplier<>(invoker) : invoker);
+    }
+
+    private static boolean isStatic(Member member) {
+        return Modifier.isStatic(member.getModifiers());
     }
 
     @SuppressWarnings("unchecked")
     @Override
-    public <TDependency> @NotNull TDependency provide(final @NotNull Key type, final @Nullable Key name) {
-        DependencyResult result = dependencyFunction.apply(type, name);
-        if (!result.exists) {
-            throw new ElementException(result.errMessage);
+    public <TDependency> @NotNull TDependency provide(final @NotNull TypeKey key) {
+        final Class<?> keyType = key.type();
+
+        final Map<String, Supplier<?>> supplierMap = dependencyMap.get(keyType);
+        if (supplierMap == null) {
+            throw elementException(module.getClass(), "no dependencies of type " + keyType);
         }
 
-        final Object dependency = result.dependency.get();
-        if (dependency == null) {
-            throw new ElementException("null dependency for type '" + type + "' and name '" + name + "'");
+        //if supplierMap contains the default key, it is guaranteed to only be holding a single entry (the default)
+        if (supplierMap.containsKey(Constants.DEFAULT)) {
+            //ignore the name, as there is only one dependency satisfying this type
+            return (TDependency) supplierMap.get(Constants.DEFAULT);
         }
 
-        return (TDependency) dependency;
+        final Key name = key.name();
+        if (name == null) {
+            throw new ElementException("supplier of type " + keyType + " needs a name, but no name was provided");
+        }
+
+        final String nameString = name.asString();
+        if (!supplierMap.containsKey(nameString)) {
+            throw new ElementException("DependencySupplier named " + nameString + " with a return type of " + keyType +
+                    " not found");
+        }
+
+        return (TDependency) supplierMap.get(nameString).get();
     }
 
     @Override
-    public boolean hasDependency(final @NotNull Key type, final @Nullable Key name) {
-        return dependencyFunction.apply(type, name).exists;
-    }
-
-    private record DependencyResult(boolean exists, Supplier<Object> dependency, String errMessage) {}
-
-    private static abstract class DependencyFunction implements Function<Key, DependencyResult> {
-        private final boolean requiresKey;
-
-        private DependencyFunction(boolean requiresKey) {
-            this.requiresKey = requiresKey;
+    public boolean hasDependency(final @NotNull TypeKey key) {
+        final Class<?> keyType = key.type();
+        final Map<String, Supplier<?>> supplierMap = dependencyMap.get(keyType);
+        if (supplierMap == null) {
+            return false;
         }
+
+        if (supplierMap.containsKey(Constants.DEFAULT)) {
+            return true;
+        }
+
+        final Key name = key.name();
+        if (name == null) {
+            return false;
+        }
+
+        return supplierMap.containsKey(name.asString());
     }
 }

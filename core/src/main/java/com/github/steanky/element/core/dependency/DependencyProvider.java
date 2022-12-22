@@ -5,7 +5,7 @@ import net.kyori.adventure.key.Key;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Arrays;
+import java.util.Objects;
 
 /**
  * A provider of dependencies. Provides methods to retrieve non-null objects of arbitrary types, as well as test for
@@ -13,18 +13,52 @@ import java.util.Arrays;
  */
 public interface DependencyProvider {
     /**
+     * An object which can be used to access a dependency. Consists of a type (class) and a key used to disambiguate
+     * in the case of multiple dependencies of the same type.
+     *
+     * @param type the type component of this key
+     * @param name the name component of this key
+     */
+    record TypeKey(@NotNull Class<?> type, @Nullable Key name) {
+        public TypeKey {
+            Objects.requireNonNull(type);
+        }
+    }
+
+    /**
+     * Creates a new {@link TypeKey} from the specified {@link Class}, which will be its type. Its name will be null.
+     * @param type the type
+     * @return a new TypeKey instance
+     */
+    static @NotNull TypeKey key(final @NotNull Class<?> type) {
+        return new TypeKey(type, null);
+    }
+
+    /**
+     * Creates a new {@link DependencyProvider.TypeKey} from the specified {@link Class} and {@link Key}. The key may be
+     * null, in which case only the class may be used to determine which supplier to call.
+     *
+     * @param type the type
+     * @param name the name, to disambiguate in cases where there are multiple types
+     * @return a new TypeKey instance
+     */
+    static @NotNull TypeKey key(final @NotNull Class<?> type, final @Nullable Key name) {
+        return new TypeKey(type, name);
+    }
+
+    /**
      * The empty DependencyProvider instance, which cannot provide any dependencies. Useful for instantiating elements
      * which don't have dependencies.
      */
     DependencyProvider EMPTY = new DependencyProvider() {
         @Override
-        public <TDependency> @NotNull TDependency provide(@NotNull Key type, @Nullable Key name) {
+        public <TDependency> @NotNull TDependency provide(final @NotNull TypeKey key) {
             throw new ElementException(
-                    "unable to resolve dependency of type '" + type + "'" + " and name '" + name + "'");
+                    "unable to resolve dependency named '" + key + "'");
         }
 
         @Override
-        public boolean hasDependency(@NotNull Key type, @Nullable Key name) {
+        public boolean hasDependency(final @NotNull TypeKey key) {
             return false;
         }
     };
@@ -32,32 +66,39 @@ public interface DependencyProvider {
     /**
      * Provides a named dependency.
      *
-     * @param type          the type key for the dependency
-     * @param name          the name key for the dependency
+     * @param key           the type key for the dependency
      * @param <TDependency> the type of the dependency
      * @return the dependency
      */
-    <TDependency> @NotNull TDependency provide(final @NotNull Key type, final @Nullable Key name);
+    <TDependency> @NotNull TDependency provide(final @NotNull TypeKey key);
 
     /**
      * Determines if this provider has the given, named dependency.
      *
-     * @param type the type key for the dependency
-     * @param name the name key for the dependency
+     * @param key the type key for the dependency
      * @return true if this DependencyProvider can provide the given dependency, false otherwise
      */
-    boolean hasDependency(final @NotNull Key type, final @Nullable Key name);
+    boolean hasDependency(final @NotNull TypeKey key);
 
     /**
-     * Provides the given dependency, assuming a null name.
+     * Overload of {@link DependencyProvider#composite(DependencyProvider...)} for when no DependencyProviders are
+     * given.
      *
-     * @param type          the dependency type
-     * @param <TDependency> the type of object to depend upon
-     * @return the dependency object
-     * @throws ElementException if the dependency could not be provided
+     * @return {@link DependencyProvider#EMPTY}
      */
-    default <TDependency> @NotNull TDependency provide(final @NotNull Key type) {
-        return provide(type, null);
+    static @NotNull DependencyProvider composite() {
+        return EMPTY;
+    }
+
+    /**
+     * Overload of {@link DependencyProvider#composite(DependencyProvider...)} for when only one DependencyProvider is
+     * given.
+     *
+     * @param dependencyProvider the singular provider
+     * @return {@code dependencyProvider}
+     */
+    static @NotNull DependencyProvider composite(@NotNull DependencyProvider dependencyProvider) {
+        return Objects.requireNonNull(dependencyProvider);
     }
 
     /**
@@ -68,26 +109,36 @@ public interface DependencyProvider {
      * @param providers the providers which make up this composite
      * @return a composite DependencyProvider
      */
-    static @NotNull DependencyProvider composite(final @NotNull DependencyProvider ... providers) {
-        final DependencyProvider[] copy = Arrays.copyOf(providers, providers.length);
+    static @NotNull DependencyProvider composite(final @NotNull DependencyProvider @NotNull ... providers) {
+        if (providers.length == 0) {
+            return composite();
+        }
+
+        if (providers.length == 1) {
+            return composite(providers[0]);
+        }
+
+        final DependencyProvider[] providerCopy = new DependencyProvider[providers.length];
+        for (int i = 0; i < providers.length; i++) {
+            providerCopy[i] = Objects.requireNonNull(providers[i]);
+        }
 
         return new DependencyProvider() {
             @Override
-            public <TDependency> @NotNull TDependency provide(@NotNull Key type, @Nullable Key name) {
-                for (DependencyProvider provider : copy) {
-                    if (provider.hasDependency(type, name)) {
-                        return provider.provide(type, name);
+            public <TDependency> @NotNull TDependency provide(@NotNull TypeKey key) {
+                for (final DependencyProvider provider : providerCopy) {
+                    if (provider.hasDependency(key)) {
+                        return provider.provide(key);
                     }
                 }
 
-                throw new ElementException("unable to resolve dependency of type '" + type + "'" + " and name '" +
-                        name + "'");
+                throw new ElementException("unable to resolve dependency named '" + key + "'");
             }
 
             @Override
-            public boolean hasDependency(@NotNull Key type, @Nullable Key name) {
-                for (DependencyProvider provider : copy) {
-                    if (provider.hasDependency(type, name)) {
+            public boolean hasDependency(@NotNull TypeKey key) {
+                for (final DependencyProvider provider : providerCopy) {
+                    if (provider.hasDependency(key)) {
                         return true;
                     }
                 }

@@ -94,7 +94,7 @@ public class BasicFactoryResolver implements FactoryResolver {
     private Object processParameter(final ElementParameter parameter, final ElementContext context,
             final DependencyProvider provider, final DataInspector.DataInformation dataInformation, final Object data) {
         if (parameter.isDependency) {
-            return provider.provide(parameter.type, parameter.id);
+            return provider.provide(DependencyProvider.key(parameter.parameter.getType(), parameter.id));
         }
 
         final PathFunction.PathInfo info = dataInformation.infoMap().get(parameter.id);

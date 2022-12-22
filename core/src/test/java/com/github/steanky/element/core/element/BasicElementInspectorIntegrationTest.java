@@ -4,6 +4,7 @@ import com.github.steanky.element.core.*;
 import com.github.steanky.element.core.annotation.*;
 import com.github.steanky.element.core.data.BasicDataInspector;
 import com.github.steanky.element.core.data.DataInspector;
+import com.github.steanky.element.core.dependency.DependencyProvider;
 import com.github.steanky.element.core.factory.BasicCollectionCreator;
 import com.github.steanky.element.core.factory.BasicFactoryResolver;
 import com.github.steanky.element.core.factory.CollectionCreator;
@@ -585,7 +586,7 @@ public class BasicElementInspectorIntegrationTest {
         };
 
         public static ElementFactory<Data, DataAndDependenciesFactory> FACTORY = (objectData, data, dependencyProvider) -> new DataAndDependenciesFactory(
-                objectData, dependencyProvider.provide(Key.key("test:dependency"), null));
+                objectData, dependencyProvider.provide(DependencyProvider.key(int.class, Key.key("test:dependency"))));
         private final Data data;
 
         @FactoryMethod
