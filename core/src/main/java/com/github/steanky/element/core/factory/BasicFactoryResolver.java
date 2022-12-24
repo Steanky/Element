@@ -71,7 +71,7 @@ public class BasicFactoryResolver implements FactoryResolver {
         if (spec.dataIndex == -1) {
             args = new Object[spec.parameters.size()];
             for (int i = 0; i < spec.parameters.size(); i++) {
-                args[i] = processParameter(spec.parameters.get(i), context, provider, spec.dataInformation, objectData);
+                args[i] = createParameter(spec.parameters.get(i), context, provider, spec.dataInformation, objectData);
             }
 
             return args;
@@ -81,17 +81,17 @@ public class BasicFactoryResolver implements FactoryResolver {
         args[spec.dataIndex] = objectData;
 
         for (int i = 0; i < spec.dataIndex; i++) {
-            args[i] = processParameter(spec.parameters.get(i), context, provider, spec.dataInformation, objectData);
+            args[i] = createParameter(spec.parameters.get(i), context, provider, spec.dataInformation, objectData);
         }
 
         for (int i = spec.dataIndex + 1; i < args.length; i++) {
-            args[i] = processParameter(spec.parameters.get(i - 1), context, provider, spec.dataInformation, objectData);
+            args[i] = createParameter(spec.parameters.get(i - 1), context, provider, spec.dataInformation, objectData);
         }
 
         return args;
     }
 
-    private Object processParameter(final ElementParameter parameter, final ElementContext context,
+    private Object createParameter(final ElementParameter parameter, final ElementContext context,
             final DependencyProvider provider, final DataInspector.DataInformation dataInformation, final Object data) {
         if (parameter.isDependency) {
             return provider.provide(

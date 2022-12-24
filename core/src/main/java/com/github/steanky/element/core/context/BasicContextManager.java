@@ -2,7 +2,7 @@ package com.github.steanky.element.core.context;
 
 import com.github.steanky.element.core.ElementInspector;
 import com.github.steanky.element.core.ElementTypeIdentifier;
-import com.github.steanky.ethylene.core.collection.ConfigNode;
+import com.github.steanky.ethylene.core.collection.ConfigContainer;
 import com.github.steanky.ethylene.core.processor.ConfigProcessor;
 import net.kyori.adventure.key.Key;
 import org.jetbrains.annotations.NotNull;
@@ -24,7 +24,7 @@ public class BasicContextManager implements ContextManager {
      *                              object class
      * @param elementTypeIdentifier the {@link ElementTypeIdentifier} used to identify the key of element objects
      * @param elementContextSource  the {@link ElementContext.Source} instance used to create {@link ElementContext}
-     *                              instances from {@link ConfigNode}s
+     *                              instances from {@link ConfigContainer}s
      */
     public BasicContextManager(final @NotNull ElementInspector elementInspector,
             final @NotNull ElementTypeIdentifier elementTypeIdentifier,
@@ -55,7 +55,7 @@ public class BasicContextManager implements ContextManager {
     }
 
     @Override
-    public @NotNull ElementContext makeContext(final @NotNull ConfigNode node) {
-        return elementContextSource.make(node);
+    public @NotNull ElementContext makeContext(final @NotNull ConfigContainer container) {
+        return elementContextSource.make(container);
     }
 }

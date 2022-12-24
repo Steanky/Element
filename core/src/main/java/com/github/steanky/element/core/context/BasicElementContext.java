@@ -6,6 +6,7 @@ import com.github.steanky.element.core.Registry;
 import com.github.steanky.element.core.dependency.DependencyProvider;
 import com.github.steanky.element.core.key.KeyExtractor;
 import com.github.steanky.element.core.key.PathSplitter;
+import com.github.steanky.ethylene.core.collection.ConfigContainer;
 import com.github.steanky.ethylene.core.collection.ConfigNode;
 import com.github.steanky.ethylene.core.processor.ConfigProcessException;
 import com.github.steanky.ethylene.core.processor.ConfigProcessor;
@@ -26,8 +27,8 @@ public class BasicElementContext implements ElementContext {
     private final Registry<Boolean> cacheRegistry;
     private final PathSplitter pathSplitter;
     private final KeyExtractor typeKeyExtractor;
-    private final ConfigNode rootNode;
-    private final ConfigNode rootNodeCopy;
+    private final ConfigContainer root;
+    private final ConfigContainer rootCopy;
     private final Map<String, DataInfo> dataObjects;
     private final Map<String, Object> elementObjects;
     private final Map<ConfigNode, Key> typeMap;
@@ -42,19 +43,19 @@ public class BasicElementContext implements ElementContext {
      * @param cacheRegistry     the Registry used to determine if element types request caching or not
      * @param pathSplitter      the {@link PathSplitter} used to split path keys
      * @param typeKeyExtractor  the {@link KeyExtractor} implementation used to extract type keys from nodes
-     * @param rootNode          the {@link ConfigNode} used as the root (may contain additional element data)
+     * @param rootContainer     the {@link ConfigContainer} used as the root (may contain additional element data)
      */
     public BasicElementContext(final @NotNull Registry<ConfigProcessor<?>> processorRegistry,
             final @NotNull Registry<ElementFactory<?, ?>> factoryRegistry,
             final @NotNull Registry<Boolean> cacheRegistry, final @NotNull PathSplitter pathSplitter,
-            final @NotNull KeyExtractor typeKeyExtractor, final @NotNull ConfigNode rootNode) {
+            final @NotNull KeyExtractor typeKeyExtractor, final @NotNull ConfigContainer rootContainer) {
         this.processorRegistry = Objects.requireNonNull(processorRegistry);
         this.factoryRegistry = Objects.requireNonNull(factoryRegistry);
         this.cacheRegistry = Objects.requireNonNull(cacheRegistry);
         this.pathSplitter = Objects.requireNonNull(pathSplitter);
         this.typeKeyExtractor = Objects.requireNonNull(typeKeyExtractor);
-        this.rootNode = Objects.requireNonNull(rootNode.copy());
-        this.rootNodeCopy = rootNode.immutableCopy();
+        this.root = Objects.requireNonNull(rootContainer.copy());
+        this.rootCopy = rootContainer.immutableCopy();
 
         this.dataObjects = new HashMap<>(4);
         this.elementObjects = new HashMap<>(4);
@@ -65,7 +66,7 @@ public class BasicElementContext implements ElementContext {
     @Override
     public <TElement> @NotNull TElement provide(final @NotNull String path,
             final @NotNull DependencyProvider dependencyProvider, final boolean cache) {
-        final ConfigNode dataNode = pathSplitter.findNode(rootNode, pathSplitter.splitPathKey(path));
+        final ConfigNode dataNode = pathSplitter.findNode(root, pathSplitter.splitPathKey(path));
 
         Key objectType = typeMap.get(dataNode);
         if (objectType == null) {
@@ -114,8 +115,8 @@ public class BasicElementContext implements ElementContext {
     }
 
     @Override
-    public @NotNull ConfigNode rootNode() {
-        return rootNodeCopy;
+    public @NotNull ConfigContainer root() {
+        return rootCopy;
     }
 
     @Override
@@ -160,9 +161,9 @@ public class BasicElementContext implements ElementContext {
         }
 
         @Override
-        public @NotNull BasicElementContext make(final @NotNull ConfigNode node) {
+        public @NotNull BasicElementContext make(final @NotNull ConfigContainer container) {
             return new BasicElementContext(processorRegistry, factoryRegistry, cacheRegistry, pathSplitter,
-                    keyExtractor, node);
+                    keyExtractor, container);
         }
 
         @Override

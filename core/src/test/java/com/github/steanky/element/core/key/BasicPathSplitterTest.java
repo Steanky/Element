@@ -119,4 +119,12 @@ class BasicPathSplitterTest {
         final String result = BasicPathSplitter.INSTANCE.escape("/test/test/third\\/_node");
         assertEquals("test\\/test\\/third\\/_node", result);
     }
+
+    @Test
+    void normalizeRoot() {
+        final String result = BasicPathSplitter.INSTANCE.normalize("/");
+        assertEquals("", result);
+
+        assertEquals("", BasicPathSplitter.INSTANCE.normalize(""));
+    }
 }

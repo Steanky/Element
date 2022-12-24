@@ -6,6 +6,7 @@ import com.github.steanky.element.core.Registry;
 import com.github.steanky.element.core.annotation.Cache;
 import com.github.steanky.element.core.dependency.DependencyProvider;
 import com.github.steanky.element.core.key.PathSplitter;
+import com.github.steanky.ethylene.core.collection.ConfigContainer;
 import com.github.steanky.ethylene.core.collection.ConfigEntry;
 import com.github.steanky.ethylene.core.collection.ConfigList;
 import com.github.steanky.ethylene.core.collection.ConfigNode;
@@ -105,7 +106,7 @@ public interface ElementContext {
 
         final PathSplitter pathSplitter = pathSplitter();
 
-        final ConfigList listElement = pathSplitter.findList(rootNode(), pathSplitter.splitPathKey(listPath));
+        final ConfigList listElement = pathSplitter.findList(root(), pathSplitter.splitPathKey(listPath));
         final TCollection elementCollection = collectionSupplier.apply(listElement.size());
 
         ElementException exception = null;
@@ -322,7 +323,7 @@ public interface ElementContext {
 
         final PathSplitter pathSplitter = pathSplitter();
 
-        final ConfigNode nodeElement = pathSplitter.findNode(rootNode(), pathSplitter.splitPathKey(nodePath));
+        final ConfigNode nodeElement = pathSplitter.findNode(root(), pathSplitter.splitPathKey(nodePath));
         final TMap elementMap = mapSupplier.apply(nodeElement.size());
 
         ElementException exception = null;
@@ -511,11 +512,11 @@ public interface ElementContext {
     }
 
     /**
-     * Returns the root node of this context. This might contain data for contextual objects.
+     * Returns the root of this context. This might contain data for contextual objects.
      *
-     * @return the root node of this context
+     * @return the root of this context
      */
-    @NotNull ConfigNode rootNode();
+    @NotNull ConfigContainer root();
 
     /**
      * The {@link PathSplitter} used by this context.
@@ -529,12 +530,12 @@ public interface ElementContext {
      */
     interface Source {
         /**
-         * Creates a new {@link ElementContext} implementation for the given {@link ConfigNode}.
+         * Creates a new {@link ElementContext} implementation for the given {@link ConfigContainer}.
          *
-         * @param node the node used to create the DataContext
+         * @param container the container used to create the ElementContext
          * @return the new DataContext object
          */
-        @NotNull ElementContext make(final @NotNull ConfigNode node);
+        @NotNull ElementContext make(final @NotNull ConfigContainer container);
 
         /**
          * Returns the {@link Registry} object holding {@link ConfigProcessor} objects used to deserialize data.

@@ -158,7 +158,7 @@ public class BasicPathSplitter implements PathSplitter {
                     }
                 } catch (NumberFormatException e) {
                     throw new ElementException(
-                            "invalid path array " + Arrays.toString(path) + ", expected index, got " + node, e);
+                            "invalid path array " + Arrays.toString(path) + ", expected parseable index, got " + node, e);
                 }
             }
 

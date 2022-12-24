@@ -1,7 +1,7 @@
 package com.github.steanky.element.core.context;
 
 import com.github.steanky.element.core.ElementException;
-import com.github.steanky.ethylene.core.collection.ConfigNode;
+import com.github.steanky.ethylene.core.collection.ConfigContainer;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -19,10 +19,10 @@ public interface ContextManager {
     void registerElementClass(final @NotNull Class<?> elementClass);
 
     /**
-     * Makes a {@link ElementContext} object from the given {@link ConfigNode}.
+     * Makes a {@link ElementContext} object from the given {@link ConfigContainer}.
      *
-     * @param node the node from which to create data context for
+     * @param container the container to create data context for
      * @return a new ElementContext object
      */
-    @NotNull ElementContext makeContext(final @NotNull ConfigNode node);
+    @NotNull ElementContext makeContext(final @NotNull ConfigContainer container);
 }
