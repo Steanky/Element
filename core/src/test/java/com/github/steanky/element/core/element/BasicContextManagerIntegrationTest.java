@@ -11,9 +11,9 @@ import com.github.steanky.element.core.data.DataInspector;
 import com.github.steanky.element.core.dependency.DependencyModule;
 import com.github.steanky.element.core.dependency.DependencyProvider;
 import com.github.steanky.element.core.dependency.ModuleDependencyProvider;
-import com.github.steanky.element.core.factory.BasicCollectionCreator;
+import com.github.steanky.element.core.factory.BasicContainerCreator;
 import com.github.steanky.element.core.factory.BasicFactoryResolver;
-import com.github.steanky.element.core.factory.CollectionCreator;
+import com.github.steanky.element.core.factory.ContainerCreator;
 import com.github.steanky.element.core.factory.FactoryResolver;
 import com.github.steanky.element.core.key.*;
 import com.github.steanky.element.core.processor.BasicProcessorResolver;
@@ -43,9 +43,9 @@ public class BasicContextManagerIntegrationTest {
         final KeyExtractor typeExtractor = new BasicKeyExtractor("type", keyParser);
         final ElementTypeIdentifier elementTypeIdentifier = new BasicElementTypeIdentifier(keyParser);
         final DataInspector dataInspector = new BasicDataInspector(keyParser);
-        final CollectionCreator collectionCreator = new BasicCollectionCreator();
+        final ContainerCreator collectionCreator = new BasicContainerCreator();
 
-        final FactoryResolver factoryResolver = new BasicFactoryResolver(keyParser, elementTypeIdentifier,
+        final FactoryResolver factoryResolver = new BasicFactoryResolver(keyParser,
                 dataInspector, collectionCreator, MappingProcessorSource.builder().build());
         final ProcessorResolver processorResolver = BasicProcessorResolver.INSTANCE;
         final ElementInspector elementInspector = new BasicElementInspector(factoryResolver, processorResolver);
@@ -141,19 +141,19 @@ public class BasicContextManagerIntegrationTest {
         private final String string;
 
         @FactoryMethod
-        public SimpleDependency(@Dependency String string) {
+        public SimpleDependency(@Depend String string) {
             this.string = string;
         }
 
         public static class Module implements DependencyModule {
             public Module() {}
 
-            @Dependency
+            @Depend
             public static String string() {
                 return "value";
             }
 
-            @Dependency
+            @Depend
             public static int unused() {
                 return 10;
             }
@@ -184,7 +184,7 @@ public class BasicContextManagerIntegrationTest {
         private final List<SimpleData> elements;
 
         @FactoryMethod
-        public MultiElement(@NotNull Data data, @DataName("data") @NotNull List<SimpleData> elements) {
+        public MultiElement(Data data, @Child List<SimpleData> elements) {
             this.data = data;
             this.elements = elements;
         }
@@ -208,7 +208,7 @@ public class BasicContextManagerIntegrationTest {
         }
 
         @DataObject
-        public record Data(@DataPath("data") List<String> simpleElements) {
+        public record Data(@DataPath("simple_data") List<String> simpleElements) {
 
         }
     }
@@ -254,7 +254,7 @@ public class BasicContextManagerIntegrationTest {
         private final SimpleData simpleElement;
 
         @FactoryMethod
-        public Nested(Data data, SimpleData simpleElement) {
+        public Nested(Data data, @Child SimpleData simpleElement) {
             this.data = data;
             this.simpleElement = simpleElement;
         }

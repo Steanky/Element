@@ -11,22 +11,13 @@ import java.lang.annotation.*;
  */
 @Documented
 @Retention(RetentionPolicy.RUNTIME)
-@Target(ElementType.METHOD)
+@Target({ElementType.METHOD, ElementType.PARAMETER})
 public @interface DataPath {
     /**
-     * The key string, which corresponds to the type of the element dependency, <i>or</i> the {@link DataName}
-     * annotation if present.
+     * The key string, which corresponds to the type of the element dependency, <i>or</i> its DataPath annotation if
+     * present.
      *
      * @return the key string
      */
     @NotNull @KeyString String value();
-
-    /**
-     * If the element object referred to by this path should be cached or not. If true, the element object for this path
-     * will only be created once, and the same instance will be shared across all cache-enabled dependencies. Defaults
-     * to {@code true}.
-     *
-     * @return true if this element object should be cached, false otherwise
-     */
-    boolean cache() default true;
 }

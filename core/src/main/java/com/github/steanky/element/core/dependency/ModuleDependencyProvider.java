@@ -1,7 +1,8 @@
 package com.github.steanky.element.core.dependency;
 
 import com.github.steanky.element.core.ElementException;
-import com.github.steanky.element.core.annotation.Dependency;
+import com.github.steanky.element.core.annotation.Depend;
+import com.github.steanky.element.core.annotation.Ignore;
 import com.github.steanky.element.core.annotation.Memoize;
 import com.github.steanky.element.core.key.Constants;
 import com.github.steanky.element.core.key.KeyParser;
@@ -52,31 +53,44 @@ public class ModuleDependencyProvider implements DependencyProvider {
             throw elementException(moduleClass, "DependencyModule must be public");
         }
 
+        final boolean defaultDepend = moduleClass.isAnnotationPresent(Depend.class);
+
+        final Memoize moduleClassMemoize = moduleClass.getAnnotation(Memoize.class);
+        final boolean defaultMemoize = moduleClassMemoize != null && moduleClassMemoize.value();
+
         final Method[] methods = moduleClass.getMethods();
 
         //this variable is temporary, will be transformed into an immutable map later
         final Map<Token<?>, Map<String, Supplier<?>>> dependencyMap = new HashMap<>();
         for (final Method method : methods) {
-            final Dependency annotation = method.getAnnotation(Dependency.class);
-            if (annotation == null) {
+            if (method.isAnnotationPresent(Ignore.class)) {
                 continue;
             }
 
-            validateModifiersPresent(method, () -> "DependencySupplier method must be public", Modifier.PUBLIC);
+            if (defaultDepend && !Modifier.isPublic(method.getModifiers())) {
+                continue;
+            }
+
+            final Depend annotation = method.getAnnotation(Depend.class);
+            if (!defaultDepend && annotation == null) {
+                continue;
+            }
+
+            validateModifiersPresent(method, () -> "supplier method must be public", Modifier.PUBLIC);
 
             final Type genericReturnType = method.getGenericReturnType();
             if (genericReturnType.equals(void.class)) {
-                throw elementException(moduleClass, "DependencySupplier method must not return void");
+                throw elementException(moduleClass, "supplier method must not return void");
             }
 
-            validateParameterCount(method, 0, () -> "DependencySupplier method must be parameterless");
+            validateParameterCount(method, 0, () -> "supplier method must be parameterless");
 
-            final String annotationValue = annotation.value();
+            final String annotationValue = annotation == null ? Constants.DEFAULT : annotation.value();
             final boolean isAnnotationDefault = annotationValue.equals(Constants.DEFAULT);
 
             if (!isAnnotationDefault && !keyParser.isValidKey(annotationValue)) {
                 throw elementException(moduleClass,
-                        "DependencySupplier annotation value must be a parseable Key, or " + Constants.DEFAULT);
+                        "supplier annotation value must be a parseable Key, or " + Constants.DEFAULT);
             }
 
             final Token<?> returnType;
@@ -91,22 +105,22 @@ public class ModuleDependencyProvider implements DependencyProvider {
             final Map<String, Supplier<?>> supplierMap = dependencyMap.get(returnType);
             if (supplierMap == null) {
                 final Map<String, Supplier<?>> newMap = new HashMap<>(4);
-                putInvoker(newMap, annotationValue, method, module);
+                putInvoker(newMap, annotationValue, method, module, defaultMemoize);
                 dependencyMap.put(returnType, newMap);
                 continue;
             }
 
             if (isAnnotationDefault || supplierMap.containsKey(Constants.DEFAULT)) {
                 throw elementException(moduleClass,
-                        "DependencySupplier ambiguity, there may only be a single unnamed" + " supplier per type");
+                        "supplier ambiguity, there may only be a single unnamed supplier per type");
             }
 
             if (supplierMap.containsKey(annotationValue)) {
                 throw elementException(moduleClass,
-                        "DependencySupplier ambiguity, two suppliers may not have the " + "same name");
+                        "supplier ambiguity, two suppliers may not have the same name");
             }
 
-            putInvoker(supplierMap, annotationValue, method, module);
+            putInvoker(supplierMap, annotationValue, method, module, defaultMemoize);
         }
 
         final Map.Entry<Token<?>, Map<String, Supplier<?>>>[] array = dependencyMap.entrySet()
@@ -128,8 +142,11 @@ public class ModuleDependencyProvider implements DependencyProvider {
         this.dependencyMap = Map.ofEntries(array);
     }
 
-    private static void putInvoker(Map<String, Supplier<?>> map, String key, Method method, Object module) {
-        final boolean isMemoizing = method.isAnnotationPresent(Memoize.class);
+    private static void putInvoker(Map<String, Supplier<?>> map, String key, Method method, Object module,
+            boolean defaultMemoize) {
+        final Memoize memoize = method.getAnnotation(Memoize.class);
+        final boolean isMemoizing = memoize == null ? defaultMemoize : memoize.value();
+
         final Supplier<?> invoker = isStatic(method) ? () -> ReflectionUtils.invokeMethod(method, null) :
                 () -> ReflectionUtils.invokeMethod(method, module);
         map.put(key, isMemoizing ? new MemoizingSupplier<>(invoker) : invoker);
@@ -163,7 +180,7 @@ public class ModuleDependencyProvider implements DependencyProvider {
         final String nameString = name.asString();
         if (!supplierMap.containsKey(nameString)) {
             throw new ElementException(
-                    "DependencySupplier named " + nameString + " with a return type of " + keyType + " not found");
+                    "supplier named " + nameString + " with a return type of " + keyType + " not found");
         }
 
         return (TDependency) supplierMap.get(nameString).get();

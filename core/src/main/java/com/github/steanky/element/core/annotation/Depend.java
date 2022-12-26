@@ -18,7 +18,7 @@ import java.lang.annotation.*;
 @Documented
 @Retention(RetentionPolicy.RUNTIME)
 @Target({ElementType.PARAMETER, ElementType.TYPE, ElementType.METHOD})
-public @interface Dependency {
+public @interface Depend {
     /**
      * The type identifier of this dependency (or dependency supplier), which must be a valid key string, <i>or</i>
      * equal to {@link Constants#DEFAULT}.

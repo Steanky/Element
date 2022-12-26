@@ -34,7 +34,7 @@ public interface DataInspector {
          * @param id         the identifier used to locate the right accessor
          * @return the path key
          */
-        @NotNull Collection<? extends String> apply(final @NotNull Object dataObject, final @NotNull Key id);
+        @NotNull @Unmodifiable Collection<String> apply(final @NotNull Object dataObject, final @NotNull Key id);
 
         /**
          * Represents some info about a specific path.

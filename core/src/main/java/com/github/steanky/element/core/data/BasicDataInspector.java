@@ -13,6 +13,7 @@ import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
 import java.lang.reflect.Type;
 import java.util.*;
+import java.util.function.Supplier;
 
 import static com.github.steanky.element.core.util.Validate.*;
 
@@ -20,8 +21,9 @@ import static com.github.steanky.element.core.util.Validate.*;
  * Basic implementation of {@link DataInspector}.
  */
 public class BasicDataInspector implements DataInspector {
-    private static final Type COLLECTION_TYPE = TypeUtils.parameterize(Collection.class,
-            TypeUtils.wildcardType().withUpperBounds(String.class).build());
+    private static final Type COLLECTION_TYPE = TypeUtils.parameterize(Collection.class, String.class);
+    private static final Supplier<String> ERR_MESSAGE_SUPPLIER = () -> "DataPath accessor return value must be " +
+            "assignable to String, Collection<String>, or String[]";
 
     private final KeyParser keyParser;
 
@@ -51,9 +53,13 @@ public class BasicDataInspector implements DataInspector {
                 final boolean isIterable;
                 if (TypeUtils.isAssignable(returnType, COLLECTION_TYPE)) {
                     isIterable = true;
+                }
+                else if(TypeUtils.isArrayType(returnType)) {
+                    final Type component = TypeUtils.getArrayComponentType(returnType);
+                    validateType(dataClass, String.class, component, ERR_MESSAGE_SUPPLIER);
+                    isIterable = true;
                 } else {
-                    validateType(dataClass, String.class, returnType, () -> "DataPath accessor return value must be " +
-                            "assignable to String or Collection<? extends String>");
+                    validateType(dataClass, String.class, returnType, ERR_MESSAGE_SUPPLIER);
                     isIterable = false;
                 }
 
@@ -74,10 +80,13 @@ public class BasicDataInspector implements DataInspector {
 
             final Object path = ReflectionUtils.invokeMethod(pathInfo.accessorMethod(), data);
             if (path instanceof Collection<?> collection) {
-                return (Collection<? extends String>) collection;
+                return List.copyOf((Collection<String>) collection);
+            }
+            else if (path instanceof String[] strings) {
+                return List.of(strings);
             }
 
-            return Collections.singleton((String) path);
+            return List.of((String) path);
         };
 
         return new DataInformation(function, Map.copyOf(infoMap));

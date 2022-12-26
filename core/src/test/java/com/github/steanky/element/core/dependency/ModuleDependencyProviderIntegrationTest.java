@@ -1,7 +1,7 @@
 package com.github.steanky.element.core.dependency;
 
 import com.github.steanky.element.core.ElementException;
-import com.github.steanky.element.core.annotation.Dependency;
+import com.github.steanky.element.core.annotation.Depend;
 import com.github.steanky.element.core.annotation.Memoize;
 import com.github.steanky.element.core.key.BasicKeyParser;
 import com.github.steanky.ethylene.mapper.type.Token;
@@ -165,138 +165,138 @@ class ModuleDependencyProviderIntegrationTest {
     }
 
     public static class WrapperBoxing implements DependencyModule {
-        @Dependency("test:wrapper")
+        @Depend("test:wrapper")
         public static @NotNull Integer wrapper() {
             return 10;
         }
 
-        @Dependency("test:primitive")
+        @Depend("test:primitive")
         public static int primitive() {
             return 20;
         }
     }
 
     public static class PrimitiveWrapperBoxingAmbiguity implements DependencyModule {
-        @Dependency
+        @Depend
         public static @NotNull Integer wrapper() {
             return 0;
         }
 
-        @Dependency
+        @Depend
         public static int primitive() {
             return 0;
         }
     }
 
     public static class IdenticalGenericTypes implements DependencyModule {
-        @Dependency
+        @Depend
         public static @NotNull List<String> stringList() {
             return List.of("first");
         }
 
-        @Dependency
+        @Depend
         public static @NotNull List<String> stringList2() {
             return List.of("first");
         }
     }
 
     public static class TypesDifferingByGeneric implements DependencyModule {
-        @Dependency
+        @Depend
         public static @NotNull List<String> stringList() {
             return List.of("first");
         }
 
-        @Dependency
+        @Depend
         public static @NotNull List<Integer> integerList() {
             return List.of(10);
         }
 
-        @Dependency
+        @Depend
         public static @NotNull List<?> wildcardList() {
             return List.of("first", 1, 2);
         }
     }
 
     public static class SameNameDifferentTypes implements DependencyModule {
-        @Dependency("test:first")
+        @Depend("test:first")
         public static @NotNull Object objectReturning() {
             return "first";
         }
 
-        @Dependency("test:first")
+        @Depend("test:first")
         public static @NotNull String stringReturning() {
             return "second";
         }
     }
 
     public static class AmbiguityResolvedByName implements DependencyModule {
-        @Dependency("test:first")
+        @Depend("test:first")
         public static @NotNull Object objectReturning() {
             return "first";
         }
 
-        @Dependency("test:second")
+        @Depend("test:second")
         public static @NotNull Object objectReturning2() {
             return "second";
         }
     }
 
     public static class AmbiguousSameName implements DependencyModule {
-        @Dependency("test:first")
+        @Depend("test:first")
         public static @NotNull Object objectReturning() {
             return new Object();
         }
 
-        @Dependency("test:first")
+        @Depend("test:first")
         public static @NotNull Object objectReturning2() {
             return new Object();
         }
     }
 
     public static class NotAmbiguous implements DependencyModule {
-        @Dependency
+        @Depend
         public static @NotNull String string() {
             return "value";
         }
 
-        @Dependency
+        @Depend
         public static int integer() {
             return 10;
         }
     }
 
     public static class Ambiguous implements DependencyModule {
-        @Dependency
+        @Depend
         public static @NotNull Object objectReturning() {
             return new Object();
         }
 
-        @Dependency
+        @Depend
         public static @NotNull Object objectReturning2() {
             return new Object();
         }
     }
 
     public static class NotMemoizing implements DependencyModule {
-        @Dependency("test:static")
+        @Depend("test:static")
         public static @NotNull Object memoizedStatic() {
             return new Object();
         }
 
-        @Dependency("test:non_static")
+        @Depend("test:non_static")
         public @NotNull Object memoized() {
             return new Object();
         }
     }
 
     public static class MemoizingModule implements DependencyModule {
-        @Dependency("test:memoized_static")
+        @Depend("test:memoized_static")
         @Memoize
         public static @NotNull Object memoizedStatic() {
             return new Object();
         }
 
-        @Dependency("test:memoized")
+        @Depend("test:memoized")
         @Memoize
         public @NotNull Object memoized() {
             return new Object();
@@ -304,12 +304,12 @@ class ModuleDependencyProviderIntegrationTest {
     }
 
     public static class SimpleModule implements DependencyModule {
-        @Dependency("test:static_method")
+        @Depend("test:static_method")
         public static int staticMethod() {
             return 69420;
         }
 
-        @Dependency("test:non_static_method")
+        @Depend("test:non_static_method")
         public int nonStaticMethod() {
             return 69;
         }
@@ -318,14 +318,14 @@ class ModuleDependencyProviderIntegrationTest {
     static class NonPublicModule implements DependencyModule {}
 
     public static class VoidMethod implements DependencyModule {
-        @Dependency("test:void_method")
+        @Depend("test:void_method")
         public static void testMethod() {
 
         }
     }
 
     public static class TooManyParameters implements DependencyModule {
-        @Dependency("test:too_many_parameters")
+        @Depend("test:too_many_parameters")
         public static int testMethod(Key first) {
             return 0;
         }

@@ -3,10 +3,17 @@ package com.github.steanky.element.core.annotation;
 import java.lang.annotation.*;
 
 /**
- * Marker annotation used to indicate that the result of a {@link Dependency} method should be memoized. If this
- * annotation is present on a supplier, the method will only be called once, and its return value will be saved.
+ * Annotation used to indicate that the result of a {@link Depend} method should or should not be memoized such that it
+ * is only called (reflectively) once.
  */
 @Documented
 @Retention(RetentionPolicy.RUNTIME)
-@Target(ElementType.METHOD)
-public @interface Memoize {}
+@Target({ElementType.METHOD, ElementType.TYPE})
+public @interface Memoize {
+    /**
+     * Whether to memoize the return value of this supplier.
+     *
+     * @return true if it should be memoized; false otherwise. Defaults to true.
+     */
+    boolean value() default true;
+}

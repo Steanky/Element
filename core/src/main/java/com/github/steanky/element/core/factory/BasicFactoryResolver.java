@@ -2,12 +2,7 @@ package com.github.steanky.element.core.factory;
 
 import com.github.steanky.element.core.ElementException;
 import com.github.steanky.element.core.ElementFactory;
-import com.github.steanky.element.core.ElementTypeIdentifier;
-import com.github.steanky.element.core.annotation.DataName;
-import com.github.steanky.element.core.annotation.DataObject;
-import com.github.steanky.element.core.annotation.Dependency;
-import com.github.steanky.element.core.annotation.FactoryMethod;
-import com.github.steanky.element.core.context.ElementContext;
+import com.github.steanky.element.core.annotation.*;
 import com.github.steanky.element.core.data.DataInspector;
 import com.github.steanky.element.core.data.DataInspector.PathFunction;
 import com.github.steanky.element.core.dependency.DependencyProvider;
@@ -34,84 +29,27 @@ import static com.github.steanky.element.core.util.Validate.*;
  */
 public class BasicFactoryResolver implements FactoryResolver {
     private final KeyParser keyParser;
-    private final ElementTypeIdentifier elementTypeIdentifier;
     private final DataInspector dataInspector;
-    private final CollectionCreator typeResolver;
+    private final ContainerCreator containerCreator;
     private final MappingProcessorSource processorSource;
 
     /**
      * Creates a new instance of this class.
      *
      * @param keyParser             the {@link KeyParser} implementation used to interpret strings as keys
-     * @param elementTypeIdentifier the {@link ElementTypeIdentifier} used to extract type keys from element classes
      * @param dataInspector         the {@link DataInspector} object used to extract {@link PathFunction}s from data
      *                              classes
-     * @param collectionCreator     the {@link CollectionCreator} used to reflectively create collection instances when
+     * @param collectionCreator     the {@link ContainerCreator} used to reflectively create collection instances when
      *                              necessary, when requiring multiple element dependencies
      * @param processorSource       the {@link MappingProcessorSource} used to create {@link ConfigProcessor}
      *                              implementations on-demand for data classes
      */
-    public BasicFactoryResolver(final @NotNull KeyParser keyParser,
-            final @NotNull ElementTypeIdentifier elementTypeIdentifier, final @NotNull DataInspector dataInspector,
-            final @NotNull CollectionCreator collectionCreator, final @NotNull MappingProcessorSource processorSource) {
+    public BasicFactoryResolver(final @NotNull KeyParser keyParser, final @NotNull DataInspector dataInspector,
+            final @NotNull ContainerCreator collectionCreator, final @NotNull MappingProcessorSource processorSource) {
         this.keyParser = Objects.requireNonNull(keyParser);
-        this.elementTypeIdentifier = Objects.requireNonNull(elementTypeIdentifier);
         this.dataInspector = Objects.requireNonNull(dataInspector);
-        this.typeResolver = Objects.requireNonNull(collectionCreator);
+        this.containerCreator = Objects.requireNonNull(collectionCreator);
         this.processorSource = Objects.requireNonNull(processorSource);
-    }
-
-    private static Key parseKey(final KeyParser parser, final @Subst(Constants.NAMESPACE_OR_KEY) String keyString) {
-        return parser.parseKey(keyString);
-    }
-
-    private Object[] resolveArguments(final Object objectData, final ElementContext context,
-            final DependencyProvider provider, final ElementSpec spec) {
-        final Object[] args;
-        if (spec.dataIndex == -1) {
-            args = new Object[spec.parameters.size()];
-            for (int i = 0; i < spec.parameters.size(); i++) {
-                args[i] = createParameter(spec.parameters.get(i), context, provider, spec.dataInformation, objectData);
-            }
-
-            return args;
-        }
-
-        args = new Object[spec.parameters.size() + 1];
-        args[spec.dataIndex] = objectData;
-
-        for (int i = 0; i < spec.dataIndex; i++) {
-            args[i] = createParameter(spec.parameters.get(i), context, provider, spec.dataInformation, objectData);
-        }
-
-        for (int i = spec.dataIndex + 1; i < args.length; i++) {
-            args[i] = createParameter(spec.parameters.get(i - 1), context, provider, spec.dataInformation, objectData);
-        }
-
-        return args;
-    }
-
-    private Object createParameter(final ElementParameter parameter, final ElementContext context,
-            final DependencyProvider provider, final DataInspector.DataInformation dataInformation, final Object data) {
-        if (parameter.isDependency) {
-            return provider.provide(
-                    DependencyProvider.key(Token.ofType(parameter.parameter.getParameterizedType()), parameter.name));
-        }
-
-        final PathFunction.PathInfo info = dataInformation.infoMap().get(parameter.name);
-        final Collection<? extends String> path = dataInformation.pathFunction().apply(data, parameter.name);
-        if (info.isCollection()) {
-            final Collection<Object> collection = typeResolver.createCollection(parameter.parameter.getType(),
-                    path.size());
-            for (final String elementPath : path) {
-                collection.add(context.provide(elementPath, provider, info.annotation().cache()));
-            }
-
-            return collection;
-        }
-
-        final String onlyPath = path.iterator().next();
-        return context.provide(onlyPath, provider, info.annotation().cache());
     }
 
     @Override
@@ -170,135 +108,249 @@ public class BasicFactoryResolver implements FactoryResolver {
         }
 
         final Constructor<?> finalFactoryConstructor = factoryConstructor;
-        final Parameter[] parameters = factoryConstructor.getParameters();
+        final Parameter[] parameters = finalFactoryConstructor.getParameters();
         if (parameters.length == 0) {
             return (objectData, data, dependencyProvider) -> ReflectionUtils.invokeConstructor(finalFactoryConstructor);
         }
 
-        final ArrayList<ElementParameter> elementParameters = new ArrayList<>(parameters.length);
-        int dataParameterIndex = -1;
-        Class<?> dataClass = null;
+        final ElementParameter[] elementParameters = new ElementParameter[parameters.length];
         boolean hasComposite = false;
-        for (int i = 0; i < parameters.length; i++) {
+        Class<?> dataClass = null;
+
+        final Set<Key> childKeys = new HashSet<>(5);
+        for (int i = 0; i < elementParameters.length; i++) {
             final Parameter parameter = parameters[i];
+            final Class<?> parameterType = parameter.getType();
 
-            if (parameter.isAnnotationPresent(DataObject.class) ||
-                    parameter.getType().isAnnotationPresent(DataObject.class)) {
-                if (dataParameterIndex != -1) {
-                    throw elementException(elementClass, "more than one ElementData on constructor factory");
-                }
-
-                if (parameter.isAnnotationPresent(Dependency.class)) {
-                    throw elementException(elementClass, "Dependency present on data parameter");
-                }
-
-                if (parameter.isAnnotationPresent(DataName.class)) {
-                    throw elementException(elementClass, "DataName present on data parameter");
-                }
-
-                dataParameterIndex = i;
-                dataClass = parameter.getType();
-                continue;
+            DataObject dataObjectAnnotation = parameter.getAnnotation(DataObject.class);
+            if (dataObjectAnnotation == null) {
+                dataObjectAnnotation = parameterType.getAnnotation(DataObject.class);
             }
 
-            Dependency dependency = parameter.getDeclaredAnnotation(Dependency.class);
-            if (dependency == null) {
-                dependency = parameter.getType().getDeclaredAnnotation(Dependency.class);
+            final boolean hasDataAnnotation = dataObjectAnnotation != null;
+            if (hasDataAnnotation) {
+                if (dataClass != null) {
+                    throw elementException(elementClass, "cannot have more than one DataObject parameter");
+                }
+
+                dataClass = parameterType;
             }
 
-            if (dependency == null) {
-                final Key name;
-                final DataName nameAnnotation = parameter.getDeclaredAnnotation(DataName.class);
-                if (nameAnnotation == null) {
-                    try {
-                        name = elementTypeIdentifier.identify(parameter.getType());
-                    } catch (ElementException e) {
-                        throw elementException(elementClass,
-                                "unnamed composite dependency or missing dependency annotation", e);
+            final Depend dependAnnotation = parameter.getAnnotation(Depend.class);
+            final boolean hasDependAnnotation = dependAnnotation != null;
+
+            if (hasDataAnnotation && hasDependAnnotation) {
+                //ambiguous case, we don't know if we should deserialize or load a dependency
+                throw elementException(elementClass, "parameter is annotated with both DataObject and Depend");
+            }
+
+            final Model modelAnnotation = parameterType.getAnnotation(Model.class);
+            final boolean hasModelAnnotation = modelAnnotation != null;
+
+            final Child childAnnotation = parameter.getAnnotation(Child.class);
+            final boolean hasChildAnnotation = childAnnotation != null;
+
+            if (hasChildAnnotation) {
+                //most of these cases aren't inherently problematic, but indicate improper usage or confusion
+                if (hasDataAnnotation) {
+                    throw elementException(elementClass, "parameter is annotated with both Child and DataObject");
+                }
+
+                if (hasDependAnnotation) {
+                    throw elementException(elementClass, "parameter is annotated with both Child and Depend");
+                }
+            }
+
+            final ParameterType type;
+            final Key info;
+            final boolean container;
+            final boolean cache;
+            if (hasDataAnnotation) {
+                type = ParameterType.DATA;
+                info = null;
+                container = false;
+                cache = false;
+            }
+            else if (hasDependAnnotation) {
+                //if the parameter has Depend, treat it as a regular dependency
+                type = ParameterType.DEPENDENCY;
+
+                @Subst(Constants.NAMESPACE_OR_KEY)
+                final String value = dependAnnotation.value();
+                final boolean isDefault = value.equals(Constants.DEFAULT);
+
+                if (!isDefault && !keyParser.isValidKey(value)) {
+                    throw elementException(elementClass, "invalid value for Depend annotation, must be a valid key " +
+                            "string or " + Constants.DEFAULT);
+                }
+
+                info = isDefault ? null : keyParser.parseKey(value);
+                container = false;
+                cache = false;
+            }
+            else if (hasChildAnnotation) {
+                //parameters with Child, but no Depend, are composite dependencies
+                type = ParameterType.COMPOSITE;
+
+                @Subst(Constants.NAMESPACE_OR_KEY)
+                final String value;
+
+                final boolean childProvidesPath = !childAnnotation.value().equals(Constants.DEFAULT);
+
+                if (hasModelAnnotation) {
+                    value = childProvidesPath ? childAnnotation.value() : modelAnnotation.value();
+                    container = false;
+                }
+                else {
+                    final Token<?> modelToken = containerCreator.extractComponentType(Token.ofType(parameter
+                            .getParameterizedType()));
+
+                    final Class<?> modelClass = modelToken.rawType();
+                    final Model model = modelClass.getAnnotation(Model.class);
+                    if (model == null) {
+                        throw elementException(elementClass, "extracted component type of parameter does not have a " +
+                                "Model annotation");
                     }
-                } else {
-                    name = parseKey(keyParser, nameAnnotation.value());
+
+                    value = childProvidesPath ? childAnnotation.value() : model.value();
+                    container = true;
                 }
 
-                elementParameters.add(new ElementParameter(parameter, name, false));
+                if (!keyParser.isValidKey(value)) {
+                    throw elementException(elementClass, "invalid data path identifier or child model key " + value);
+                }
+
+                info = keyParser.parseKey(value);
+
+                if (!childKeys.add(info)) {
+                    throw elementException(elementClass, "duplicate child key " + info);
+                }
+
+                //set composite flag, so we inspect the data class afterwards for path keys
                 hasComposite = true;
-                continue;
+
+                final Cache cacheAnnotation = parameter.getAnnotation(Cache.class);
+                cache = cacheAnnotation != null && cacheAnnotation.value();
+            }
+            else {
+                //parameters with nothing are treated as dependencies
+                type = ParameterType.DEPENDENCY;
+                info = null;
+                container = true;
+                cache = false;
             }
 
-            final String name = dependency.value();
-            elementParameters.add(new ElementParameter(parameter,
-                    name.equals(Constants.DEFAULT) ? null : parseKey(keyParser, dependency.value()), true));
+            elementParameters[i] = new ElementParameter(parameter, type, info, container, cache);
         }
 
-        if (hasComposite && dataClass == null) {
-            throw elementException(elementClass, "found composite dependency, but no data class");
-        }
-
-        final ConfigProcessor<?> existingProcessor = processor.getValue();
-        final boolean hasProcessor;
-        if (existingProcessor == null) {
-            if (dataClass != null) {
-                processor.setValue(processorSource.processorFor(Token.ofClass(dataClass)));
-                hasProcessor = true;
-            } else {
-                hasProcessor = false;
+        DataInspector.DataInformation data = null;
+        if (dataClass != null) {
+            if (hasComposite) {
+                data = dataInspector.inspectData(dataClass);
             }
-        } else {
-            hasProcessor = true;
         }
+        else if (hasComposite) {
+            final Class<?>[] children = elementClass.getDeclaredClasses();
 
-        if (dataParameterIndex == -1 && hasProcessor) {
-            throw elementException(elementClass,
-                    "no data parameter found on constructor factory, but class specifies a processor");
-        }
+            Class<?> inferredDataClass = null;
+            for (final Class<?> child : children) {
+                if (child.isAnnotationPresent(DataObject.class)) {
+                    if (inferredDataClass != null) {
+                        throw elementException(elementClass, "ambiguity between multiple possible inferred data " +
+                                "classes detected");
+                    }
 
-        if (dataParameterIndex != -1 && !hasProcessor) {
-            throw elementException(elementClass,
-                    "found data parameter on constructor factory, but class does not specify a processor");
-        }
-
-        elementParameters.trimToSize();
-
-        final DataInspector.DataInformation dataInformation =
-                dataClass == null ? null : dataInspector.inspectData(dataClass);
-        if (dataInformation != null) {
-            final Map<Key, PathFunction.PathInfo> infoMap = dataInformation.infoMap();
-
-            int nonDependencyCount = 0;
-            for (final ElementParameter parameter : elementParameters) {
-                if (parameter.isDependency) {
-                    continue;
+                    inferredDataClass = child;
                 }
-
-                final PathFunction.PathInfo info = infoMap.get(parameter.name);
-                if (info == null) {
-                    throw elementException(elementClass,
-                            "missing element dependency with parameter name '" + parameter.name + "'");
-                }
-
-                if (info.isCollection()) {
-                    validateType(elementClass, Collection.class, parameter.parameter.getType(),
-                            () -> "parameter with name '" + parameter.name + "' must be assignable to Collection<?>");
-                }
-
-                nonDependencyCount++;
             }
 
-            final int size = infoMap.size();
-            if (nonDependencyCount != size) {
-                throw elementException(elementClass,
-                        "unexpected number of element dependency parameters, needed " + size + ", was " +
-                                nonDependencyCount);
+            if (inferredDataClass == null) {
+                throw elementException(elementClass, "unable to infer data class");
+            }
+
+            dataClass = inferredDataClass;
+            data = dataInspector.inspectData(dataClass);
+        }
+
+        if (data != null) {
+            final Map<Key, PathFunction.PathInfo> functionMap = data.infoMap();
+            for (final Key requiredKey : childKeys) {
+                if (!functionMap.containsKey(requiredKey)) {
+                    throw elementException(elementClass, "data class missing required child key " + requiredKey);
+                }
             }
         }
 
-        final ElementSpec elementSpec = new ElementSpec(elementParameters, dataParameterIndex, dataInformation);
-        return (objectData, data, dependencyProvider) -> ReflectionUtils.invokeConstructor(finalFactoryConstructor,
-                resolveArguments(objectData, data, dependencyProvider, elementSpec));
+        if (processor.getValue() == null && dataClass != null) {
+            processor.setValue(processorSource.processorFor(Token.ofClass(dataClass)));
+        }
+
+        return buildFactory(finalFactoryConstructor, elementParameters, data);
     }
 
-    private record ElementSpec(List<ElementParameter> parameters, int dataIndex,
-            DataInspector.DataInformation dataInformation) {}
+    @SuppressWarnings({"unchecked", "rawtypes"})
+    private ElementFactory<?, ?> buildFactory(final Constructor<?> constructor, final ElementParameter[] parameters,
+            final DataInspector.DataInformation dataInformation) {
+        return (objectData, context, dependencyProvider) -> {
+            //objects that will be used to construct the new model
+            final Object[] args = new Object[parameters.length];
 
-    private record ElementParameter(Parameter parameter, Key name, boolean isDependency) {}
+            for (int i = 0; i < parameters.length; i++) {
+                final ElementParameter parameter = parameters[i];
+
+                args[i] = switch (parameter.type) {
+                    case DATA -> objectData;
+                    case DEPENDENCY -> dependencyProvider.provide(DependencyProvider.key(Token.ofClass(parameter
+                            .parameter.getType()), parameter.info));
+                    case COMPOSITE -> {
+                        //inspect the data at runtime if necessary
+                        //this happens for element classes whose data only consists of paths
+                        final DataInspector.DataInformation information = Objects.requireNonNullElseGet(dataInformation,
+                                () -> dataInspector.inspectData(objectData.getClass()));
+
+                        final Collection<String> paths = information.pathFunction().apply(objectData, parameter.info);
+                        final Object object;
+                        if (parameter.container) {
+                            object = containerCreator.createContainer(parameter.parameter.getType(), paths.size());
+
+                            if (object.getClass().isArray()) {
+                                final Iterator<String> pathsIterator = paths.iterator();
+                                for (int j = 0; pathsIterator.hasNext(); j++) {
+                                    Array.set(object, j, context.provide(pathsIterator.next(), dependencyProvider,
+                                            parameter.cache));
+                                }
+                            }
+                            else {
+                                final Collection objects = (Collection) object;
+                                for (final String path : paths) {
+                                    objects.add(context.provide(path, dependencyProvider, parameter.cache));
+                                }
+                            }
+                        }
+                        else {
+                            if (paths.isEmpty()) {
+                                throw new ElementException("no path found to construct child element");
+                            }
+
+                            final String path = paths.iterator().next();
+                            object = context.provide(path, dependencyProvider, parameter.cache);
+                        }
+
+                        yield object;
+                    }
+                };
+            }
+
+            return ReflectionUtils.invokeConstructor(constructor, args);
+        };
+    }
+
+    private enum ParameterType {
+        DATA,
+        DEPENDENCY,
+        COMPOSITE
+    }
+
+    private record ElementParameter(Parameter parameter, ParameterType type, Key info, boolean container,
+            boolean cache) {}
 }

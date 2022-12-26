@@ -7,7 +7,7 @@ import java.lang.annotation.*;
  */
 @Documented
 @Retention(RetentionPolicy.RUNTIME)
-@Target(ElementType.TYPE)
+@Target({ElementType.TYPE, ElementType.PARAMETER})
 public @interface Cache {
     /**
      * Whether this element object should always be cached. Defaults to true.
