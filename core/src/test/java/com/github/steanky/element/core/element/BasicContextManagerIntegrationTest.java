@@ -46,7 +46,7 @@ public class BasicContextManagerIntegrationTest {
         final ContainerCreator collectionCreator = new BasicContainerCreator();
 
         final FactoryResolver factoryResolver = new BasicFactoryResolver(keyParser,
-                dataInspector, collectionCreator, MappingProcessorSource.builder().build());
+                dataInspector, collectionCreator, MappingProcessorSource.builder().ignoringLengths().build());
         final ProcessorResolver processorResolver = BasicProcessorResolver.INSTANCE;
         final ElementInspector elementInspector = new BasicElementInspector(factoryResolver, processorResolver);
 
@@ -65,6 +65,8 @@ public class BasicContextManagerIntegrationTest {
         contextManager.registerElementClass(MultiElement.class);
         contextManager.registerElementClass(InferredProcessor.class);
         contextManager.registerElementClass(SimpleDependency.class);
+        contextManager.registerElementClass(SimpleDependencyNoAnnotation.class);
+        contextManager.registerElementClass(NestedNoDataElement.class);
     }
 
     @Test
@@ -134,6 +136,75 @@ public class BasicContextManagerIntegrationTest {
                 new ModuleDependencyProvider(keyParser, new SimpleDependency.Module()));
 
         assertEquals("value", simpleDependency.string);
+    }
+
+    @Test
+    void simpleDependencyNoAnnotation() {
+        final ConfigNode data = ConfigNode.of("type", "simple_dependency_no_annotation");
+
+        final ElementContext context = contextManager.makeContext(data);
+        final SimpleDependencyNoAnnotation simpleDependency = context.provide(
+                new ModuleDependencyProvider(keyParser, new SimpleDependencyNoAnnotation.Module()));
+
+        assertEquals("value", simpleDependency.string);
+    }
+
+    @Test
+    void nestedNoDataElement() {
+        final ConfigNode node = ConfigNode.of("type", "nested_no_data_element", "key", "simple_data");
+
+        final ConfigNode nested = ConfigNode.of("type", "simple_data", "value", 10);
+        node.put("simple_data", nested);
+
+        final ElementContext data = contextManager.makeContext(node);
+        final NestedNoDataElement nestedElement = data.provide("");
+
+        assertNotNull(nestedElement);
+        assertEquals(10, nestedElement.simpleElement.data.value);
+    }
+
+    @Model("nested_no_data_element")
+    public static class NestedNoDataElement {
+        private final SimpleData simpleElement;
+
+        @FactoryMethod
+        public NestedNoDataElement(@Child SimpleData simpleElement) {
+            this.simpleElement = simpleElement;
+        }
+
+        @DataObject
+        public record Data(@DataPath("simple_data") String key) {}
+    }
+
+    @Model("simple_dependency_no_annotation")
+    public static class SimpleDependencyNoAnnotation {
+        private final String string;
+
+        @FactoryMethod
+        public SimpleDependencyNoAnnotation(String string) {
+            this.string = string;
+        }
+
+        public static class Module implements DependencyModule {
+            public Module() {}
+
+            @Depend
+            public static String string() {
+                return "value";
+            }
+
+            @Ignore
+            public static String string2() {
+                return "this is ignored";
+            }
+
+            @Depend
+            public static int unused() {
+                return 10;
+            }
+
+            public static void ignored() {}
+        }
     }
 
     @Model("simple_dependency")

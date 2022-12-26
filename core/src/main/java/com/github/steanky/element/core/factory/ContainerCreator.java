@@ -22,5 +22,12 @@ public interface ContainerCreator {
      */
     @NotNull Object createContainer(final @NotNull Class<?> type, final int initialSize);
 
+    /**
+     * Extracts the "component type" of a container. This is the component type of an array, or the generic parameter
+     * of a {@link Collection}.
+     *
+     * @param containerType the container from which to extract a component type
+     * @return a component type, possibly including generic type information
+     */
     @NotNull Token<?> extractComponentType(final @NotNull Token<?> containerType);
 }

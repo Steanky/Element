@@ -42,7 +42,9 @@ public class BasicFactoryResolver implements FactoryResolver {
      * @param collectionCreator     the {@link ContainerCreator} used to reflectively create collection instances when
      *                              necessary, when requiring multiple element dependencies
      * @param processorSource       the {@link MappingProcessorSource} used to create {@link ConfigProcessor}
-     *                              implementations on-demand for data classes
+     *                              implementations on-demand for data classes.
+     *                              {@link MappingProcessorSource.Builder#ignoringLengths()} should be used to avoid
+     *                              issues when deserializing composite elements
      */
     public BasicFactoryResolver(final @NotNull KeyParser keyParser, final @NotNull DataInspector dataInspector,
             final @NotNull ContainerCreator collectionCreator, final @NotNull MappingProcessorSource processorSource) {
