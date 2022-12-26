@@ -2,6 +2,7 @@ package com.github.steanky.element.core.util;
 
 import com.github.steanky.element.core.ElementException;
 import org.apache.commons.lang3.reflect.TypeUtils;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.lang.reflect.*;
@@ -10,6 +11,7 @@ import java.util.function.Supplier;
 /**
  * Contains utility methods designed to validate various conditions, usually in a reflection-related context.
  */
+@ApiStatus.Internal
 public final class Validate {
     private Validate() {
         throw new UnsupportedOperationException();
@@ -93,23 +95,6 @@ public final class Validate {
         if (!TypeUtils.isAssignable(actualType, requiredType)) {
             throw elementException(owner, exceptionMessage.get());
         }
-    }
-
-    /**
-     * Validates that the given {@link Method} returns a parameterized type, and returns it.
-     *
-     * @param method           the method to validate
-     * @param exceptionMessage the message supplier which provides the error message
-     * @return the {@link ParameterizedType} this method returns
-     */
-    public static @NotNull ParameterizedType validateParameterizedReturnType(final @NotNull Method method,
-            final @NotNull Supplier<String> exceptionMessage) {
-        final Type genericReturnType = method.getGenericReturnType();
-        if (!(genericReturnType instanceof ParameterizedType)) {
-            throw elementException(method.getDeclaringClass(), exceptionMessage.get());
-        }
-
-        return (ParameterizedType) genericReturnType;
     }
 
     /**

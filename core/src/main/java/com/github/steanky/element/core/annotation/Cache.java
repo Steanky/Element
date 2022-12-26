@@ -3,7 +3,8 @@ package com.github.steanky.element.core.annotation;
 import java.lang.annotation.*;
 
 /**
- * Marker annotation used to signify that an element object should always be cached, or non-cached.
+ * Marker annotation used to signify that an element object should always be cached, or non-cached. When applied to a
+ * child parameter, indicates that the parameter should prefer to be cached or non-cached.
  */
 @Documented
 @Retention(RetentionPolicy.RUNTIME)
