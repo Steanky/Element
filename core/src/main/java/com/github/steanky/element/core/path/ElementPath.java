@@ -35,6 +35,8 @@ public interface ElementPath {
 
     @NotNull ElementPath append(final @Nullable Object node);
 
+    @NotNull ElementPath toAbsolute();
+
     @NotNull ConfigElement follow(final @NotNull ConfigElement root);
 
     default @NotNull ConfigContainer followContainer(final @NotNull ConfigElement root) {

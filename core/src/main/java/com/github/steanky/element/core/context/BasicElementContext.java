@@ -63,15 +63,17 @@ public class BasicElementContext implements ElementContext {
     @Override
     public <TElement> @NotNull TElement provide(final @NotNull ElementPath path,
             final @NotNull DependencyProvider dependencyProvider, final boolean cache) {
-        Key objectType = typeMap.get(path);
-        final ConfigNode dataNode;
+        final ElementPath absolutePath = path.toAbsolute();
 
+        Key objectType = typeMap.get(absolutePath);
+
+        final ConfigNode dataNode;
         if (objectType == null) {
-            dataNode = path.followNode(root);
+            dataNode = absolutePath.followNode(root);
 
             objectType = typeKeyExtractor.extractKey(dataNode);
             typeKeyExtractor.removeKey(dataNode);
-            typeMap.put(path, objectType);
+            typeMap.put(absolutePath, objectType);
         }
         else {
             dataNode = null;
@@ -85,31 +87,31 @@ public class BasicElementContext implements ElementContext {
         }
 
         //don't use computeIfAbsent because the map may be modified by the mapping function
-        if (cacheElement && elementObjects.containsKey(path)) {
-            return (TElement) elementObjects.get(path);
+        if (cacheElement && elementObjects.containsKey(absolutePath)) {
+            return (TElement) elementObjects.get(absolutePath);
         }
 
         final DataInfo dataInfo;
-        if (dataObjects.containsKey(path)) {
-            dataInfo = dataObjects.get(path);
+        if (dataObjects.containsKey(absolutePath)) {
+            dataInfo = dataObjects.get(absolutePath);
         } else {
             try {
-                final ConfigNode configuration = dataNode != null ? dataNode : path.followNode(root);
+                final ConfigNode configuration = dataNode != null ? dataNode : absolutePath.followNode(root);
                 final Object data = processorRegistry.contains(objectType) ?
                         processorRegistry.lookup(objectType).dataFromElement(configuration) : null;
 
                 dataInfo = new DataInfo(data, objectType);
-                dataObjects.put(path, dataInfo);
+                dataObjects.put(absolutePath, dataInfo);
             } catch (ConfigProcessException e) {
-                throw new ElementException("configuration error deserializing data at path " + path, e);
+                throw new ElementException("configuration error deserializing data at path " + absolutePath, e);
             }
         }
 
         final TElement element = (TElement) ((ElementFactory<Object, Object>) factoryRegistry.lookup(
-                dataInfo.type)).make(dataInfo.data, path, this, dependencyProvider);
+                dataInfo.type)).make(dataInfo.data, absolutePath, this, dependencyProvider);
 
         if (cacheElement) {
-            elementObjects.put(path, element);
+            elementObjects.put(absolutePath, element);
         }
 
         return element;

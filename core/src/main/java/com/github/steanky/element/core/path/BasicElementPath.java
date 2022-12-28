@@ -36,25 +36,6 @@ class BasicElementPath implements ElementPath {
         return current == DELIMITER || current == CURRENT || current == ESCAPE;
     }
 
-    static @NotNull String escape(final @NotNull String string) {
-        if (string.isEmpty()) {
-            return string;
-        }
-
-        final int stringLength = string.length();
-        final StringBuilder builder = new StringBuilder(stringLength);
-        for (int i = 0; i < stringLength; i++) {
-            final char current = string.charAt(i);
-            if (isCharacterEscapable(current)) {
-                builder.append(ESCAPE);
-            }
-
-            builder.append(current);
-        }
-
-        return builder.toString();
-    }
-
     static @NotNull BasicElementPath parse(final @NotNull String path) {
         final int pathLength = path.length();
 
@@ -165,7 +146,7 @@ class BasicElementPath implements ElementPath {
 
     @Override
     public boolean isAbsolute() {
-        return nodes.length > 0 && nodes[0].nodeType() == NodeType.NAME;
+        return nodes.length == 0 || nodes[0].nodeType() == NodeType.NAME;
     }
 
     @Override
@@ -218,6 +199,22 @@ class BasicElementPath implements ElementPath {
         System.arraycopy(nodes, 0, newNodes, 0, nodes.length);
         newNodes[newNodes.length - 1] = new Node(Objects.toString(node), NodeType.NAME);
         return new BasicElementPath(newNodes);
+    }
+
+    @Override
+    public @NotNull ElementPath toAbsolute() {
+        if (isAbsolute()) {
+            return this;
+        }
+
+        final List<Node> newNodes = new ArrayList<>(nodes.length - 1);
+        for (final Node node : nodes) {
+            if (node.nodeType() == NodeType.NAME) {
+                newNodes.add(node);
+            }
+        }
+
+        return new BasicElementPath(newNodes.toArray(Node[]::new));
     }
 
     @Override
