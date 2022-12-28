@@ -8,6 +8,7 @@ import com.github.steanky.element.core.data.DataInspector.PathFunction;
 import com.github.steanky.element.core.dependency.DependencyProvider;
 import com.github.steanky.element.core.key.Constants;
 import com.github.steanky.element.core.key.KeyParser;
+import com.github.steanky.element.core.path.ElementPath;
 import com.github.steanky.element.core.util.ReflectionUtils;
 import com.github.steanky.ethylene.core.processor.ConfigProcessor;
 import com.github.steanky.ethylene.mapper.MappingProcessorSource;
@@ -112,7 +113,7 @@ public class BasicFactoryResolver implements FactoryResolver {
         final Constructor<?> finalFactoryConstructor = factoryConstructor;
         final Parameter[] parameters = finalFactoryConstructor.getParameters();
         if (parameters.length == 0) {
-            return (objectData, data, dependencyProvider) -> ReflectionUtils.invokeConstructor(finalFactoryConstructor);
+            return (objectData, dataPath, data, dependencyProvider) -> ReflectionUtils.invokeConstructor(finalFactoryConstructor);
         }
 
         final ElementParameter[] elementParameters = new ElementParameter[parameters.length];
@@ -293,7 +294,7 @@ public class BasicFactoryResolver implements FactoryResolver {
     @SuppressWarnings({"unchecked", "rawtypes"})
     private ElementFactory<?, ?> buildFactory(final Constructor<?> constructor, final ElementParameter[] parameters,
             final DataInspector.DataInformation dataInformation) {
-        return (objectData, context, dependencyProvider) -> {
+        return (objectData, dataPath, context, dependencyProvider) -> {
             //objects that will be used to construct the new model
             final Object[] args = new Object[parameters.length];
 
@@ -318,14 +319,15 @@ public class BasicFactoryResolver implements FactoryResolver {
                             if (object.getClass().isArray()) {
                                 final Iterator<String> pathsIterator = paths.iterator();
                                 for (int j = 0; pathsIterator.hasNext(); j++) {
-                                    Array.set(object, j, context.provide(pathsIterator.next(), dependencyProvider,
-                                            parameter.cache));
+                                    Array.set(object, j, context.provide(dataPath.resolve(pathsIterator.next()),
+                                            dependencyProvider, parameter.cache));
                                 }
                             }
                             else {
                                 final Collection objects = (Collection) object;
                                 for (final String path : paths) {
-                                    objects.add(context.provide(path, dependencyProvider, parameter.cache));
+                                    objects.add(context.provide(dataPath.resolve(path), dependencyProvider, parameter
+                                            .cache));
                                 }
                             }
                         }
@@ -335,7 +337,7 @@ public class BasicFactoryResolver implements FactoryResolver {
                             }
 
                             final String path = paths.iterator().next();
-                            object = context.provide(path, dependencyProvider, parameter.cache);
+                            object = context.provide(dataPath.resolve(path), dependencyProvider, parameter.cache);
                         }
 
                         yield object;
