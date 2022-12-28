@@ -1,6 +1,9 @@
 package com.github.steanky.element.core.element;
 
-import com.github.steanky.element.core.*;
+import com.github.steanky.element.core.BasicElementInspector;
+import com.github.steanky.element.core.ElementException;
+import com.github.steanky.element.core.ElementFactory;
+import com.github.steanky.element.core.ElementInspector;
 import com.github.steanky.element.core.annotation.*;
 import com.github.steanky.element.core.data.BasicDataInspector;
 import com.github.steanky.element.core.data.DataInspector;
@@ -33,8 +36,8 @@ public class BasicElementInspectorIntegrationTest {
         final KeyParser parser = new BasicKeyParser();
         final DataInspector dataInspector = new BasicDataInspector(parser);
         final ContainerCreator collectionCreator = new BasicContainerCreator();
-        final FactoryResolver factoryResolver = new BasicFactoryResolver(parser, dataInspector,
-                collectionCreator, MappingProcessorSource.builder().build());
+        final FactoryResolver factoryResolver = new BasicFactoryResolver(parser, dataInspector, collectionCreator,
+                MappingProcessorSource.builder().build());
         final ProcessorResolver processorResolver = BasicProcessorResolver.INSTANCE;
         this.inspector = new BasicElementInspector(factoryResolver, processorResolver);
     }
@@ -632,8 +635,7 @@ public class BasicElementInspectorIntegrationTest {
         private final Data data;
 
         @FactoryMethod
-        public DataAndDependenciesConstructorFactory(@NotNull Data data,
-                @Depend("test:dependency") int dependency) {
+        public DataAndDependenciesConstructorFactory(@NotNull Data data, @Depend("test:dependency") int dependency) {
             this.data = data;
         }
 
@@ -669,8 +671,7 @@ public class BasicElementInspectorIntegrationTest {
         private final Data data;
 
         @FactoryMethod
-        public DataAndDependenciesConstructorFactory1(@Depend("test:dependency") int dependency,
-                @NotNull Data data) {
+        public DataAndDependenciesConstructorFactory1(@Depend("test:dependency") int dependency, @NotNull Data data) {
             this.data = data;
         }
 

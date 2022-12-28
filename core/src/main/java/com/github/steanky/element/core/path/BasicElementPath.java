@@ -10,7 +10,13 @@ import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.*;
 
+/**
+ * Basic ElementPath implementation with UNIX-like semantics.
+ */
 class BasicElementPath implements ElementPath {
+    private static final Node CURRENT_NODE = new Node(".", NodeType.CURRENT);
+    private static final Node PREVIOUS_NODE = new Node("..", NodeType.PREVIOUS);
+
     private static final Node[] EMPTY_NODE_ARRAY = new Node[0];
     static final BasicElementPath EMPTY_PATH = new BasicElementPath(EMPTY_NODE_ARRAY);
 
@@ -36,6 +42,13 @@ class BasicElementPath implements ElementPath {
         return current == DELIMITER || current == CURRENT || current == ESCAPE;
     }
 
+    /**
+     * Parses the given UNIX-style path string into a {@link BasicElementPath}. The resulting object will represent the
+     * normalized path, with redundant elements removed.
+     *
+     * @param path the path string
+     * @return a normalized BasicElementPath
+     */
     static @NotNull BasicElementPath parse(final @NotNull String path) {
         final int pathLength = path.length();
 
@@ -55,19 +68,16 @@ class BasicElementPath implements ElementPath {
 
                 builder.append(current);
                 escape = false;
-            }
-            else if(current == ESCAPE) {
+            } else if (current == ESCAPE) {
                 escape = true;
 
                 if (builder.isEmpty()) {
                     nodeEscape = true;
                 }
-            }
-            else if (current == DELIMITER) {
+            } else if (current == DELIMITER) {
                 tryAddNode(nodes, builder, nodeEscape);
                 nodeEscape = false;
-            }
-            else {
+            } else {
                 builder.append(current);
             }
         }
@@ -130,7 +140,7 @@ class BasicElementPath implements ElementPath {
             default -> NodeType.NAME;
         };
 
-        nodes.add(switch(type) {
+        nodes.add(switch (type) {
             case CURRENT -> CURRENT_NODE;
             case PREVIOUS -> PREVIOUS_NODE;
             case NAME -> new Node(string, NodeType.NAME);
@@ -172,7 +182,8 @@ class BasicElementPath implements ElementPath {
         for (final Node node : relativeNodes) {
             switch (node.nodeType()) {
                 case NAME -> newNodes.addLast(node);
-                case CURRENT -> {} //no-op
+                case CURRENT -> {
+                } //no-op
                 case PREVIOUS -> { //resolve previous command
                     if (!newNodes.isEmpty()) {
                         newNodes.removeLast();
@@ -218,6 +229,50 @@ class BasicElementPath implements ElementPath {
     }
 
     @Override
+    public @NotNull ConfigElement follow(final @NotNull ConfigElement root) {
+        Objects.requireNonNull(root);
+        ConfigElement current = root;
+
+        for (int i = 0; i < nodes.length; i++) {
+            final Node node = nodes[i];
+
+            final NodeType type = node.nodeType();
+            if (type == NodeType.CURRENT || type == NodeType.PREVIOUS) {
+                continue;
+            }
+
+            final String name = node.name();
+            if (current.isNode()) {
+                current = current.asNode().get(name);
+            } else if (current.isList()) {
+                final ConfigList list = current.asList();
+
+                try {
+                    final int value = Integer.parseInt(name);
+                    if (value < 0 || value > list.size()) {
+                        throw new ElementException(
+                                "path " + this + " contains an out-of-bounds index at position " + i);
+                    }
+
+                    current = list.get(value);
+                } catch (NumberFormatException e) {
+                    throw new ElementException("path " + this + " contains a string that cannot be parsed into an " +
+                            "index at position " + i, e);
+                }
+            } else {
+                throw new ElementException("path " + this + " is invalid, expected node or list at position " + i);
+            }
+
+            if (current == null) {
+                throw new ElementException(
+                        "path " + this + " contains an element that does not exist at position " + i);
+            }
+        }
+
+        return current;
+    }
+
+    @Override
     public int hashCode() {
         if (hashed) {
             return hash;
@@ -251,52 +306,7 @@ class BasicElementPath implements ElementPath {
 
     @Override
     public String toString() {
-        return Objects.requireNonNullElseGet(stringValue, () -> stringValue = String.join("/", Arrays
-                .stream(nodes).map(Node::name).toArray(String[]::new)));
-    }
-
-    @Override
-    public @NotNull ConfigElement follow(final @NotNull ConfigElement root) {
-        Objects.requireNonNull(root);
-        ConfigElement current = root;
-
-        for (int i = 0; i < nodes.length; i++) {
-            final Node node = nodes[i];
-
-            final NodeType type = node.nodeType();
-            if (type == NodeType.CURRENT || type == NodeType.PREVIOUS) {
-                continue;
-            }
-
-            final String name = node.name();
-            if (current.isNode()) {
-                current = current.asNode().get(name);
-            }
-            else if (current.isList()) {
-                final ConfigList list = current.asList();
-
-                try {
-                    final int value = Integer.parseInt(name);
-                    if (value < 0 || value > list.size()) {
-                        throw new ElementException("path " + this + " contains an out-of-bounds index at position " + i);
-                    }
-
-                    current = list.get(value);
-                }
-                catch (NumberFormatException e) {
-                    throw new ElementException("path " + this + " contains a string that cannot be parsed into an " +
-                            "index at position " + i, e);
-                }
-            }
-            else {
-                throw new ElementException("path " + this + " is invalid, expected node or list at position " + i);
-            }
-
-            if (current == null) {
-                throw new ElementException("path " + this + " contains an element that does not exist at position " + i);
-            }
-        }
-
-        return current;
+        return Objects.requireNonNullElseGet(stringValue,
+                () -> stringValue = String.join("/", Arrays.stream(nodes).map(Node::name).toArray(String[]::new)));
     }
 }

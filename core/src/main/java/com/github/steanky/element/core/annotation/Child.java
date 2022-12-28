@@ -1,10 +1,10 @@
 package com.github.steanky.element.core.annotation;
 
+import com.github.steanky.element.core.context.ElementContext;
+import com.github.steanky.element.core.dependency.DependencyProvider;
 import com.github.steanky.element.core.key.Constants;
 import com.github.steanky.element.core.key.KeyString;
 import org.jetbrains.annotations.NotNull;
-import com.github.steanky.element.core.dependency.DependencyProvider;
-import com.github.steanky.element.core.context.ElementContext;
 
 import java.lang.annotation.*;
 

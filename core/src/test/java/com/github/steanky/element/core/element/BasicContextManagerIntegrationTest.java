@@ -15,7 +15,10 @@ import com.github.steanky.element.core.factory.BasicContainerCreator;
 import com.github.steanky.element.core.factory.BasicFactoryResolver;
 import com.github.steanky.element.core.factory.ContainerCreator;
 import com.github.steanky.element.core.factory.FactoryResolver;
-import com.github.steanky.element.core.key.*;
+import com.github.steanky.element.core.key.BasicKeyExtractor;
+import com.github.steanky.element.core.key.BasicKeyParser;
+import com.github.steanky.element.core.key.KeyExtractor;
+import com.github.steanky.element.core.key.KeyParser;
 import com.github.steanky.element.core.path.ElementPath;
 import com.github.steanky.element.core.processor.BasicProcessorResolver;
 import com.github.steanky.element.core.processor.ProcessorResolver;
@@ -31,7 +34,8 @@ import org.junit.jupiter.api.Test;
 
 import java.util.List;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 
 public class BasicContextManagerIntegrationTest {
     private final KeyParser keyParser;
@@ -45,8 +49,8 @@ public class BasicContextManagerIntegrationTest {
         final DataInspector dataInspector = new BasicDataInspector(keyParser);
         final ContainerCreator collectionCreator = new BasicContainerCreator();
 
-        final FactoryResolver factoryResolver = new BasicFactoryResolver(keyParser,
-                dataInspector, collectionCreator, MappingProcessorSource.builder().ignoringLengths().build());
+        final FactoryResolver factoryResolver = new BasicFactoryResolver(keyParser, dataInspector, collectionCreator,
+                MappingProcessorSource.builder().ignoringLengths().build());
         final ProcessorResolver processorResolver = BasicProcessorResolver.INSTANCE;
         final ElementInspector elementInspector = new BasicElementInspector(factoryResolver, processorResolver);
 

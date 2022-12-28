@@ -116,8 +116,7 @@ public class ModuleDependencyProvider implements DependencyProvider {
             }
 
             if (supplierMap.containsKey(annotationValue)) {
-                throw elementException(moduleClass,
-                        "supplier ambiguity, two suppliers may not have the same name");
+                throw elementException(moduleClass, "supplier ambiguity, two suppliers may not have the same name");
             }
 
             putInvoker(supplierMap, annotationValue, method, module, defaultMemoize);

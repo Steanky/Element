@@ -37,15 +37,15 @@ public class BasicFactoryResolver implements FactoryResolver {
     /**
      * Creates a new instance of this class.
      *
-     * @param keyParser             the {@link KeyParser} implementation used to interpret strings as keys
-     * @param dataInspector         the {@link DataInspector} object used to extract {@link PathFunction}s from data
-     *                              classes
-     * @param collectionCreator     the {@link ContainerCreator} used to reflectively create collection instances when
-     *                              necessary, when requiring multiple element dependencies
-     * @param processorSource       the {@link MappingProcessorSource} used to create {@link ConfigProcessor}
-     *                              implementations on-demand for data classes.
-     *                              {@link MappingProcessorSource.Builder#ignoringLengths()} should be used to avoid
-     *                              issues when deserializing composite elements
+     * @param keyParser         the {@link KeyParser} implementation used to interpret strings as keys
+     * @param dataInspector     the {@link DataInspector} object used to extract {@link PathFunction}s from data
+     *                          classes
+     * @param collectionCreator the {@link ContainerCreator} used to reflectively create collection instances when
+     *                          necessary, when requiring multiple element dependencies
+     * @param processorSource   the {@link MappingProcessorSource} used to create {@link ConfigProcessor}
+     *                          implementations on-demand for data classes.
+     *                          {@link MappingProcessorSource.Builder#ignoringLengths()} should be used to avoid issues
+     *                          when deserializing composite elements
      */
     public BasicFactoryResolver(final @NotNull KeyParser keyParser, final @NotNull DataInspector dataInspector,
             final @NotNull ContainerCreator collectionCreator, final @NotNull MappingProcessorSource processorSource) {
@@ -53,6 +53,10 @@ public class BasicFactoryResolver implements FactoryResolver {
         this.dataInspector = Objects.requireNonNull(dataInspector);
         this.containerCreator = Objects.requireNonNull(collectionCreator);
         this.processorSource = Objects.requireNonNull(processorSource);
+    }
+
+    private static ElementPath path(ElementPath dataPath, String relativePath) {
+        return dataPath.resolve(relativePath);
     }
 
     @Override
@@ -113,7 +117,8 @@ public class BasicFactoryResolver implements FactoryResolver {
         final Constructor<?> finalFactoryConstructor = factoryConstructor;
         final Parameter[] parameters = finalFactoryConstructor.getParameters();
         if (parameters.length == 0) {
-            return (objectData, dataPath, data, dependencyProvider) -> ReflectionUtils.invokeConstructor(finalFactoryConstructor);
+            return (objectData, dataPath, data, dependencyProvider) -> ReflectionUtils.invokeConstructor(
+                    finalFactoryConstructor);
         }
 
         final ElementParameter[] elementParameters = new ElementParameter[parameters.length];
@@ -173,46 +178,42 @@ public class BasicFactoryResolver implements FactoryResolver {
                 info = null;
                 container = false;
                 cache = false;
-            }
-            else if (hasDependAnnotation) {
+            } else if (hasDependAnnotation) {
                 //if the parameter has Depend, treat it as a regular dependency
                 type = ParameterType.DEPENDENCY;
 
-                @Subst(Constants.NAMESPACE_OR_KEY)
-                final String value = dependAnnotation.value();
+                @Subst(Constants.NAMESPACE_OR_KEY) final String value = dependAnnotation.value();
                 final boolean isDefault = value.equals(Constants.DEFAULT);
 
                 if (!isDefault && !keyParser.isValidKey(value)) {
-                    throw elementException(elementClass, "invalid value for Depend annotation, must be a valid key " +
-                            "string or " + Constants.DEFAULT);
+                    throw elementException(elementClass,
+                            "invalid value for Depend annotation, must be a valid key " + "string or " +
+                                    Constants.DEFAULT);
                 }
 
                 info = isDefault ? null : keyParser.parseKey(value);
                 container = false;
                 cache = false;
-            }
-            else if (hasChildAnnotation) {
+            } else if (hasChildAnnotation) {
                 //parameters with Child, but no Depend, are composite dependencies
                 type = ParameterType.COMPOSITE;
 
-                @Subst(Constants.NAMESPACE_OR_KEY)
-                final String value;
+                @Subst(Constants.NAMESPACE_OR_KEY) final String value;
 
                 final boolean childProvidesPath = !childAnnotation.value().equals(Constants.DEFAULT);
 
                 if (hasModelAnnotation) {
                     value = childProvidesPath ? childAnnotation.value() : modelAnnotation.value();
                     container = false;
-                }
-                else {
-                    final Token<?> modelToken = containerCreator.extractComponentType(Token.ofType(parameter
-                            .getParameterizedType()));
+                } else {
+                    final Token<?> modelToken = containerCreator.extractComponentType(
+                            Token.ofType(parameter.getParameterizedType()));
 
                     final Class<?> modelClass = modelToken.rawType();
                     final Model model = modelClass.getAnnotation(Model.class);
                     if (model == null) {
-                        throw elementException(elementClass, "extracted component type of parameter does not have a " +
-                                "Model annotation");
+                        throw elementException(elementClass,
+                                "extracted component type of parameter does not have a " + "Model annotation");
                     }
 
                     value = childProvidesPath ? childAnnotation.value() : model.value();
@@ -234,8 +235,7 @@ public class BasicFactoryResolver implements FactoryResolver {
 
                 final Cache cacheAnnotation = parameter.getAnnotation(Cache.class);
                 cache = cacheAnnotation != null && cacheAnnotation.value();
-            }
-            else {
+            } else {
                 //parameters with nothing are treated as dependencies
                 type = ParameterType.DEPENDENCY;
                 info = null;
@@ -251,8 +251,7 @@ public class BasicFactoryResolver implements FactoryResolver {
             if (hasComposite) {
                 data = dataInspector.inspectData(dataClass);
             }
-        }
-        else if (hasComposite) {
+        } else if (hasComposite) {
             final Class<?>[] children = elementClass.getDeclaredClasses();
 
             Class<?> inferredDataClass = null;
@@ -302,8 +301,9 @@ public class BasicFactoryResolver implements FactoryResolver {
 
                 args[i] = switch (parameter.type) {
                     case DATA -> objectData;
-                    case DEPENDENCY -> dependencyProvider.provide(DependencyProvider.key(Token.ofType(parameter
-                            .parameter.getParameterizedType()), parameter.info));
+                    case DEPENDENCY -> dependencyProvider.provide(
+                            DependencyProvider.key(Token.ofType(parameter.parameter.getParameterizedType()),
+                                    parameter.info));
                     case COMPOSITE -> {
                         //inspect the data at runtime if necessary
                         //this happens for element classes whose data only consists of paths
@@ -319,19 +319,17 @@ public class BasicFactoryResolver implements FactoryResolver {
                                 final Iterator<String> pathsIterator = paths.iterator();
                                 for (int j = 0; pathsIterator.hasNext(); j++) {
                                     final String path = pathsIterator.next();
-                                    Array.set(object, j, context.provide(path(dataPath, path), dependencyProvider,
-                                            parameter.cache));
+                                    Array.set(object, j,
+                                            context.provide(path(dataPath, path), dependencyProvider, parameter.cache));
                                 }
-                            }
-                            else {
+                            } else {
                                 final Collection objects = (Collection) object;
                                 for (final String path : paths) {
-                                    objects.add(context.provide(path(dataPath, path), dependencyProvider, parameter
-                                            .cache));
+                                    objects.add(
+                                            context.provide(path(dataPath, path), dependencyProvider, parameter.cache));
                                 }
                             }
-                        }
-                        else {
+                        } else {
                             if (paths.isEmpty()) {
                                 throw new ElementException("no path found to construct child element");
                             }
@@ -349,14 +347,8 @@ public class BasicFactoryResolver implements FactoryResolver {
         };
     }
 
-    private static ElementPath path(ElementPath dataPath, String relativePath) {
-        return dataPath.resolve(relativePath);
-    }
-
     private enum ParameterType {
-        DATA,
-        DEPENDENCY,
-        COMPOSITE
+        DATA, DEPENDENCY, COMPOSITE
     }
 
     private record ElementParameter(Parameter parameter, ParameterType type, Key info, boolean container,

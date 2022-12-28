@@ -23,8 +23,7 @@ public class BasicContainerCreator implements ContainerCreator {
             return ArrayList.class;
         } else if (type.equals(Set.class)) {
             return HashSet.class;
-        }
-        else if (type.isArray()) {
+        } else if (type.isArray()) {
             return type;
         }
 

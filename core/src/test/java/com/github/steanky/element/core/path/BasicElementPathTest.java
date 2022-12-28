@@ -7,7 +7,7 @@ import org.junit.jupiter.api.Test;
 
 import java.util.List;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 class BasicElementPathTest {
     @Test
@@ -66,8 +66,8 @@ class BasicElementPathTest {
 
         ElementPath result = absolutePath.resolve(relativePath);
 
-        assertEquals(List.of("this", "is", "a", "test", "relative", "path"), result.nodes().stream().map(
-                ElementPath.Node::name).toList());
+        assertEquals(List.of("this", "is", "a", "test", "relative", "path"),
+                result.nodes().stream().map(ElementPath.Node::name).toList());
     }
 
     @Test
@@ -77,8 +77,8 @@ class BasicElementPathTest {
 
         ElementPath result = absolutePath.resolve(relativePath);
 
-        assertEquals(List.of(".", "this", "is", "a", "test", "relative", "path"), result.nodes().stream().map(
-                ElementPath.Node::name).toList());
+        assertEquals(List.of(".", "this", "is", "a", "test", "relative", "path"),
+                result.nodes().stream().map(ElementPath.Node::name).toList());
     }
 
     @Test
@@ -88,8 +88,7 @@ class BasicElementPathTest {
 
         ElementPath result = absolutePath.resolve(relativePath);
 
-        assertEquals(List.of("this", "is", "a"), result.nodes().stream().map(
-                ElementPath.Node::name).toList());
+        assertEquals(List.of("this", "is", "a"), result.nodes().stream().map(ElementPath.Node::name).toList());
     }
 
     @Test
@@ -99,8 +98,7 @@ class BasicElementPathTest {
 
         ElementPath result = absolutePath.resolve(relativePath);
 
-        assertEquals(List.of("this", "is"), result.nodes().stream().map(
-                ElementPath.Node::name).toList());
+        assertEquals(List.of("this", "is"), result.nodes().stream().map(ElementPath.Node::name).toList());
     }
 
     @Test
@@ -110,8 +108,7 @@ class BasicElementPathTest {
 
         ElementPath result = absolutePath.resolve(relativePath);
 
-        assertEquals(List.of("this"), result.nodes().stream().map(
-                ElementPath.Node::name).toList());
+        assertEquals(List.of("this"), result.nodes().stream().map(ElementPath.Node::name).toList());
     }
 
     @Test
@@ -121,8 +118,7 @@ class BasicElementPathTest {
 
         ElementPath result = absolutePath.resolve(relativePath);
 
-        assertEquals(List.of(), result.nodes().stream().map(
-                ElementPath.Node::name).toList());
+        assertEquals(List.of(), result.nodes().stream().map(ElementPath.Node::name).toList());
     }
 
     @Test
@@ -132,7 +128,6 @@ class BasicElementPathTest {
 
         ElementPath result = absolutePath.resolve(relativePath);
 
-        assertEquals(List.of(), result.nodes().stream().map(
-                ElementPath.Node::name).toList());
+        assertEquals(List.of(), result.nodes().stream().map(ElementPath.Node::name).toList());
     }
 }

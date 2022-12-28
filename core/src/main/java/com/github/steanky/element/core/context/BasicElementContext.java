@@ -44,8 +44,8 @@ public class BasicElementContext implements ElementContext {
      */
     public BasicElementContext(final @NotNull Registry<ConfigProcessor<?>> processorRegistry,
             final @NotNull Registry<ElementFactory<?, ?>> factoryRegistry,
-            final @NotNull Registry<Boolean> cacheRegistry,
-            final @NotNull KeyExtractor typeKeyExtractor, final @NotNull ConfigContainer rootContainer) {
+            final @NotNull Registry<Boolean> cacheRegistry, final @NotNull KeyExtractor typeKeyExtractor,
+            final @NotNull ConfigContainer rootContainer) {
         this.processorRegistry = Objects.requireNonNull(processorRegistry);
         this.factoryRegistry = Objects.requireNonNull(factoryRegistry);
         this.cacheRegistry = Objects.requireNonNull(cacheRegistry);
@@ -73,8 +73,7 @@ public class BasicElementContext implements ElementContext {
             objectType = typeKeyExtractor.extractKey(dataNode);
             typeKeyExtractor.removeKey(dataNode);
             typeMap.put(absolutePath, objectType);
-        }
-        else {
+        } else {
             dataNode = null;
         }
 
@@ -146,8 +145,7 @@ public class BasicElementContext implements ElementContext {
          */
         public Source(final @NotNull Registry<ConfigProcessor<?>> processorRegistry,
                 final @NotNull Registry<ElementFactory<?, ?>> factoryRegistry,
-                final @NotNull Registry<Boolean> cacheRegistry,
-                final @NotNull KeyExtractor keyExtractor) {
+                final @NotNull Registry<Boolean> cacheRegistry, final @NotNull KeyExtractor keyExtractor) {
             this.processorRegistry = Objects.requireNonNull(processorRegistry);
             this.factoryRegistry = Objects.requireNonNull(factoryRegistry);
             this.cacheRegistry = Objects.requireNonNull(cacheRegistry);

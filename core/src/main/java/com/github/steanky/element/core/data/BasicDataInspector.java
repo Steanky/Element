@@ -53,8 +53,7 @@ public class BasicDataInspector implements DataInspector {
                 final boolean isIterable;
                 if (TypeUtils.isAssignable(returnType, COLLECTION_TYPE)) {
                     isIterable = true;
-                }
-                else if(TypeUtils.isArrayType(returnType)) {
+                } else if (TypeUtils.isArrayType(returnType)) {
                     final Type component = TypeUtils.getArrayComponentType(returnType);
                     validateType(dataClass, String.class, component, ERR_MESSAGE_SUPPLIER);
                     isIterable = true;
@@ -81,8 +80,7 @@ public class BasicDataInspector implements DataInspector {
             final Object path = ReflectionUtils.invokeMethod(pathInfo.accessorMethod(), data);
             if (path instanceof Collection<?> collection) {
                 return List.copyOf((Collection<String>) collection);
-            }
-            else if (path instanceof String[] strings) {
+            } else if (path instanceof String[] strings) {
                 return List.of(strings);
             }
 
