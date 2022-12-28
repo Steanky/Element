@@ -259,8 +259,7 @@ public class BasicFactoryResolver implements FactoryResolver {
             for (final Class<?> child : children) {
                 if (child.isAnnotationPresent(DataObject.class)) {
                     if (inferredDataClass != null) {
-                        throw elementException(elementClass, "ambiguity between multiple possible inferred data " +
-                                "classes detected");
+                        throw elementException(elementClass, "there may only be one inferred data class");
                     }
 
                     inferredDataClass = child;
@@ -303,8 +302,8 @@ public class BasicFactoryResolver implements FactoryResolver {
 
                 args[i] = switch (parameter.type) {
                     case DATA -> objectData;
-                    case DEPENDENCY -> dependencyProvider.provide(DependencyProvider.key(Token.ofClass(parameter
-                            .parameter.getType()), parameter.info));
+                    case DEPENDENCY -> dependencyProvider.provide(DependencyProvider.key(Token.ofType(parameter
+                            .parameter.getParameterizedType()), parameter.info));
                     case COMPOSITE -> {
                         //inspect the data at runtime if necessary
                         //this happens for element classes whose data only consists of paths
@@ -319,14 +318,15 @@ public class BasicFactoryResolver implements FactoryResolver {
                             if (object.getClass().isArray()) {
                                 final Iterator<String> pathsIterator = paths.iterator();
                                 for (int j = 0; pathsIterator.hasNext(); j++) {
-                                    Array.set(object, j, context.provide(dataPath.resolve(pathsIterator.next()),
-                                            dependencyProvider, parameter.cache));
+                                    final String path = pathsIterator.next();
+                                    Array.set(object, j, context.provide(path(dataPath, path), dependencyProvider,
+                                            parameter.cache));
                                 }
                             }
                             else {
                                 final Collection objects = (Collection) object;
                                 for (final String path : paths) {
-                                    objects.add(context.provide(dataPath.resolve(path), dependencyProvider, parameter
+                                    objects.add(context.provide(path(dataPath, path), dependencyProvider, parameter
                                             .cache));
                                 }
                             }
@@ -337,7 +337,7 @@ public class BasicFactoryResolver implements FactoryResolver {
                             }
 
                             final String path = paths.iterator().next();
-                            object = context.provide(dataPath.resolve(path), dependencyProvider, parameter.cache);
+                            object = context.provide(path(dataPath, path), dependencyProvider, parameter.cache);
                         }
 
                         yield object;
@@ -347,6 +347,10 @@ public class BasicFactoryResolver implements FactoryResolver {
 
             return ReflectionUtils.invokeConstructor(constructor, args);
         };
+    }
+
+    private static ElementPath path(ElementPath dataPath, String relativePath) {
+        return dataPath.resolve(relativePath);
     }
 
     private enum ParameterType {

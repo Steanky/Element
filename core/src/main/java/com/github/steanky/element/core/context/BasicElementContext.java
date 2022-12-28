@@ -14,7 +14,6 @@ import net.kyori.adventure.key.Key;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.HashMap;
-import java.util.IdentityHashMap;
 import java.util.Map;
 import java.util.Objects;
 
@@ -56,7 +55,7 @@ public class BasicElementContext implements ElementContext {
 
         this.dataObjects = new HashMap<>(4);
         this.elementObjects = new HashMap<>(4);
-        this.typeMap = new IdentityHashMap<>(4);
+        this.typeMap = new HashMap<>(4);
     }
 
     @SuppressWarnings("unchecked")

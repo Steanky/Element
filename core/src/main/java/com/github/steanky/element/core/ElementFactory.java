@@ -23,6 +23,6 @@ public interface ElementFactory<TData, TElement> {
      * @param dependencyProvider the provider of dependency objects that are not elements
      * @return the element object
      */
-    @NotNull TElement make(final TData objectData, final @NotNull ElementPath dataPath, final @NotNull ElementContext context,
-            final @NotNull DependencyProvider dependencyProvider);
+    @NotNull TElement make(final TData objectData, final @NotNull ElementPath dataPath,
+            final @NotNull ElementContext context, final @NotNull DependencyProvider dependencyProvider);
 }

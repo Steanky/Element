@@ -7,13 +7,15 @@ import org.jetbrains.annotations.NotNull;
 import java.util.function.Function;
 import java.util.function.Predicate;
 
-class ElementPathUtils {
-    static <R> @NotNull R follow(@NotNull Predicate<? super ConfigElement> typeValidator,
-            @NotNull Function<? super ConfigElement, ? extends R> function,
-            @NotNull ConfigElement root,
-            @NotNull ElementPath elementPath,
-            @NotNull String typeName) {
-        ConfigElement element = elementPath.follow(root);
+final class ElementPathUtils {
+    private ElementPathUtils() {}
+
+    static <R> @NotNull R follow(final @NotNull Predicate<? super ConfigElement> typeValidator,
+            final @NotNull Function<? super ConfigElement, ? extends R> function,
+            final @NotNull ConfigElement root,
+            final @NotNull ElementPath elementPath,
+            final @NotNull String typeName) {
+        final ConfigElement element = elementPath.follow(root);
         if (typeValidator.test(element)) {
             return function.apply(element);
         }

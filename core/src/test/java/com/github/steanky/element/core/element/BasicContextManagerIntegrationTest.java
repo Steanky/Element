@@ -31,8 +31,7 @@ import org.junit.jupiter.api.Test;
 
 import java.util.List;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.*;
 
 public class BasicContextManagerIntegrationTest {
     private final KeyParser keyParser;
@@ -66,6 +65,7 @@ public class BasicContextManagerIntegrationTest {
         contextManager.registerElementClass(SimpleDependency.class);
         contextManager.registerElementClass(SimpleDependencyNoAnnotation.class);
         contextManager.registerElementClass(NestedNoDataElement.class);
+        contextManager.registerElementClass(RelativePath.class);
     }
 
     @Test
@@ -160,6 +160,41 @@ public class BasicContextManagerIntegrationTest {
 
         assertNotNull(nestedElement);
         assertEquals(10, nestedElement.simpleElement.data.value);
+    }
+
+    @Test
+    void relativePath() {
+        final ConfigNode root = ConfigNode.of("type", "relative_path", "key", "nested");
+
+        final ConfigNode node = ConfigNode.of("type", "nested_no_data_element", "key", "./simple_data");
+        final ConfigNode nested = ConfigNode.of("type", "simple_data", "value", 69);
+        node.put("simple_data", nested);
+        root.put("nested", node);
+
+        final ElementContext context = contextManager.makeContext(root);
+        final RelativePath relativePath = context.provide();
+
+        assertNotNull(relativePath);
+        assertEquals(69, relativePath.nestedElement.simpleElement.data.value);
+    }
+
+    @Model("simple_element")
+    public static class SimpleElement {
+        @FactoryMethod
+        public SimpleElement() {}
+    }
+
+    @Model("relative_path")
+    public static class RelativePath {
+        private final NestedNoDataElement nestedElement;
+
+        @FactoryMethod
+        public RelativePath(@Child NestedNoDataElement nestedElement) {
+            this.nestedElement = nestedElement;
+        }
+
+        @DataObject
+        public record Data(@DataPath("nested_no_data_element") String key) {}
     }
 
     @Model("nested_no_data_element")
@@ -281,12 +316,6 @@ public class BasicContextManagerIntegrationTest {
         public record Data(@DataPath("simple_data") List<String> simpleElements) {
 
         }
-    }
-
-    @Model("simple_element")
-    public static class SimpleElement {
-        @FactoryMethod
-        public SimpleElement() {}
     }
 
     @Model("simple_data")
