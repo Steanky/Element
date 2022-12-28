@@ -14,8 +14,11 @@ import java.util.*;
  * Basic ElementPath implementation with UNIX-like semantics.
  */
 class BasicElementPath implements ElementPath {
-    private static final Node CURRENT_NODE = new Node(".", NodeType.CURRENT);
-    private static final Node PREVIOUS_NODE = new Node("..", NodeType.PREVIOUS);
+    private static final String CURRENT_COMMAND = ".";
+    private static final String PREVIOUS_COMMAND = "..";
+
+    private static final Node CURRENT_NODE = new Node(CURRENT_COMMAND, NodeType.CURRENT);
+    private static final Node PREVIOUS_NODE = new Node(PREVIOUS_COMMAND, NodeType.PREVIOUS);
 
     private static final Node[] EMPTY_NODE_ARRAY = new Node[0];
     static final BasicElementPath EMPTY_PATH = new BasicElementPath(EMPTY_NODE_ARRAY);
@@ -89,6 +92,7 @@ class BasicElementPath implements ElementPath {
         }
 
         //process the path to remove unnecessary or redundant PREVIOUS commands
+        //we don't have to worry about redundant CURRENTs because they wouldn't have been added in the first place
         for (int i = nodes.size() - 1; i > 0; i--) {
             final Node node = nodes.get(i);
             if (node.nodeType() != NodeType.PREVIOUS) {
@@ -97,19 +101,19 @@ class BasicElementPath implements ElementPath {
 
             final int previousIndex = i - 1;
             final Node previous = nodes.get(previousIndex);
-            if (previousIndex == 0 && previous.nodeType() != NodeType.NAME) {
-                //don't remove the first node if it's significant
-                break;
-            }
-
-            if (previous.nodeType() != NodeType.NAME) {
-                //don't remove the previous node if it's not a name type
+            final NodeType previousType = previous.nodeType();
+            if (previousType == NodeType.PREVIOUS) {
+                //don't remove the previous node if it's also a previous
                 continue;
             }
 
-            //strip out redundant PREVIOUS commands
+            //the current PREVIOUS command erased the previous node
             nodes.remove(previousIndex);
-            nodes.remove(previousIndex);
+
+            if (previousType == NodeType.NAME) {
+                //strip out redundant PREVIOUS commands, otherwise leave themalone
+                nodes.remove(previousIndex);
+            }
 
             if (i > nodes.size()) {
                 i--;
@@ -131,12 +135,13 @@ class BasicElementPath implements ElementPath {
         final String string = builder.toString();
         final boolean empty = nodes.isEmpty();
         if (!empty && !escape && string.length() <= 1 && string.charAt(0) == CURRENT) {
+            builder.setLength(0);
             return;
         }
 
         final NodeType type = escape ? NodeType.NAME : switch (string) {
-            case ".." -> NodeType.PREVIOUS;
-            case "." -> NodeType.CURRENT;
+            case PREVIOUS_COMMAND -> NodeType.PREVIOUS;
+            case CURRENT_COMMAND -> NodeType.CURRENT;
             default -> NodeType.NAME;
         };
 

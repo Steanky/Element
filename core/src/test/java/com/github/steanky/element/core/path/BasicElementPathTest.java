@@ -11,9 +11,74 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 
 class BasicElementPathTest {
     @Test
+    void chainedPreviousMakingEmpty() {
+        ElementPath path = BasicElementPath.parse("/test/test1/test2/test3/test4/../../../../..");
+        assertEquals(List.of(), path.nodes().stream().map(ElementPath.Node::name).toList());
+    }
+
+    @Test
+    void chainedPrevious() {
+        ElementPath path = BasicElementPath.parse("/test/test1/test2/test3/test4/../../../..");
+        assertEquals(List.of("test"), path.nodes().stream().map(ElementPath.Node::name).toList());
+    }
+
+    @Test
+    void previousToAbsolute() {
+        ElementPath path = BasicElementPath.parse("./..").toAbsolute();
+        assertEquals(List.of(), path.nodes().stream().map(ElementPath.Node::name).toList());
+    }
+
+    @Test
+    void messyToAbsolute() {
+        ElementPath path = BasicElementPath.parse("./test///././././././././././.").toAbsolute();
+        assertEquals(List.of("test"), path.nodes().stream().map(ElementPath.Node::name).toList());
+    }
+
+    @Test
+    void simpleToAbsolute() {
+        ElementPath path = BasicElementPath.parse("./test").toAbsolute();
+        assertEquals(List.of("test"), path.nodes().stream().map(ElementPath.Node::name).toList());
+    }
+
+    @Test
+    void pain() {
+        BasicElementPath path = BasicElementPath.parse("////./././//////./test/../..//////test2/../././//.//////");
+        assertEquals(List.of(".."), path.nodes().stream().map(ElementPath.Node::name).toList());
+    }
+
+    @Test
+    void redundantSlashes() {
+        BasicElementPath path = BasicElementPath.parse("////./././//////./test/../..//////test2/./././//.//////");
+        assertEquals(List.of("..", "test2"), path.nodes().stream().map(ElementPath.Node::name).toList());
+    }
+
+    @Test
+    void redundantPrevious() {
+        BasicElementPath path = BasicElementPath.parse("./../..");
+        assertEquals(List.of("..", ".."), path.nodes().stream().map(ElementPath.Node::name).toList());
+    }
+
+    @Test
+    void currentToPrevious() {
+        BasicElementPath path = BasicElementPath.parse("./..");
+        assertEquals(List.of(".."), path.nodes().stream().map(ElementPath.Node::name).toList());
+    }
+
+    @Test
+    void mixedPath() {
+        BasicElementPath path = BasicElementPath.parse("test/../../test2/./././.");
+        assertEquals(List.of("..", "test2"), path.nodes().stream().map(ElementPath.Node::name).toList());
+    }
+
+    @Test
+    void mixedPath2() {
+        BasicElementPath path = BasicElementPath.parse("./test/../../test2/./././.");
+        assertEquals(List.of("..", "test2"), path.nodes().stream().map(ElementPath.Node::name).toList());
+    }
+
+    @Test
     void escapedBackslash() {
         BasicElementPath path = BasicElementPath.parse("\\\\test/test");
-
         assertEquals(List.of("\\test", "test"), path.nodes().stream().map(ElementPath.Node::name).toList());
     }
 
