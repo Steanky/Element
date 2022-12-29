@@ -12,6 +12,7 @@ import com.github.steanky.ethylene.core.processor.ConfigProcessException;
 import com.github.steanky.ethylene.core.processor.ConfigProcessor;
 import net.kyori.adventure.key.Key;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -116,7 +117,7 @@ public class BasicElementContext implements ElementContext {
     }
 
     @Override
-    public @NotNull ConfigContainer root() {
+    public @NotNull @Unmodifiable ConfigContainer root() {
         return rootCopy;
     }
 

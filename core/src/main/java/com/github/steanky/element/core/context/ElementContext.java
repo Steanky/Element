@@ -12,6 +12,7 @@ import com.github.steanky.ethylene.core.collection.ConfigList;
 import com.github.steanky.ethylene.core.collection.ConfigNode;
 import com.github.steanky.ethylene.core.processor.ConfigProcessor;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.*;
 import java.util.function.Consumer;
@@ -514,7 +515,7 @@ public interface ElementContext {
      *
      * @return the root of this context
      */
-    @NotNull ConfigContainer root();
+    @NotNull @Unmodifiable ConfigContainer root();
 
     /**
      * A source of {@link ElementContext} objects.
