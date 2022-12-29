@@ -73,6 +73,8 @@ public class BasicContextManagerIntegrationTest {
         contextManager.registerElementClass(InterfaceChild.class);
         contextManager.registerElementClass(TestInterfaceElement.class);
         contextManager.registerElementClass(InferredPath.class);
+        contextManager.registerElementClass(InferredListPath.class);
+        contextManager.registerElementClass(InferredListPathNoExplicitChildName.class);
     }
 
     @Test
@@ -206,6 +208,66 @@ public class BasicContextManagerIntegrationTest {
 
         assertEquals(10, inferredPath.inferredProcessor.data.number);
         assertEquals("test", inferredPath.inferredProcessor.data.string);
+    }
+
+    @Test
+    void inferredListPath() {
+        final ConfigNode root = ConfigNode.of("type", "inferred_list_path", "child_list",
+                ConfigList.of(ConfigNode.of("type", "inferred_processor", "number", 1, "string", "one"),
+                        ConfigNode.of("type", "inferred_processor", "number", 2, "string", "two")));
+
+        final ElementContext context = contextManager.makeContext(root);
+        final InferredListPath inferredPath = context.provide();
+
+        assertEquals(2, inferredPath.inferredProcessor.size());
+        final InferredProcessor first = inferredPath.inferredProcessor.get(0);
+        final InferredProcessor second = inferredPath.inferredProcessor.get(1);
+
+        assertEquals(1, first.data.number);
+        assertEquals("one", first.data.string);
+
+        assertEquals(2, second.data.number);
+        assertEquals("two", second.data.string);
+    }
+
+    @Test
+    void inferredListPathNoExplicitChild() {
+        final ConfigNode root = ConfigNode.of("type", "inferred_list_path_no_explicit_child", "inferred_processor",
+                ConfigList.of(ConfigNode.of("type", "inferred_processor", "number", 1, "string", "one"),
+                        ConfigNode.of("type", "inferred_processor", "number", 2, "string", "two")));
+
+        final ElementContext context = contextManager.makeContext(root);
+        final InferredListPathNoExplicitChildName inferredPath = context.provide();
+
+        assertEquals(2, inferredPath.inferredProcessor.size());
+        final InferredProcessor first = inferredPath.inferredProcessor.get(0);
+        final InferredProcessor second = inferredPath.inferredProcessor.get(1);
+
+        assertEquals(1, first.data.number);
+        assertEquals("one", first.data.string);
+
+        assertEquals(2, second.data.number);
+        assertEquals("two", second.data.string);
+    }
+
+    @Model("inferred_list_path_no_explicit_child")
+    public static class InferredListPathNoExplicitChildName {
+        private final List<InferredProcessor> inferredProcessor;
+
+        @FactoryMethod
+        public InferredListPathNoExplicitChildName(@Child List<InferredProcessor> inferredProcessor) {
+            this.inferredProcessor = inferredProcessor;
+        }
+    }
+
+    @Model("inferred_list_path")
+    public static class InferredListPath {
+        private final List<InferredProcessor> inferredProcessor;
+
+        @FactoryMethod
+        public InferredListPath(@Child("child_list") List<InferredProcessor> inferredProcessor) {
+            this.inferredProcessor = inferredProcessor;
+        }
     }
 
     @Model("inferred_path")
