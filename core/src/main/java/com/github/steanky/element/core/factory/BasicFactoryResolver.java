@@ -10,6 +10,7 @@ import com.github.steanky.element.core.key.Constants;
 import com.github.steanky.element.core.key.KeyParser;
 import com.github.steanky.element.core.path.ElementPath;
 import com.github.steanky.element.core.util.ReflectionUtils;
+import com.github.steanky.ethylene.core.collection.ConfigList;
 import com.github.steanky.ethylene.core.processor.ConfigProcessor;
 import com.github.steanky.ethylene.mapper.MappingProcessorSource;
 import com.github.steanky.ethylene.mapper.type.Token;
@@ -123,6 +124,7 @@ public class BasicFactoryResolver implements FactoryResolver {
 
         final ElementParameter[] elementParameters = new ElementParameter[parameters.length];
         boolean hasComposite = false;
+        boolean hasData = false;
         Class<?> dataClass = null;
 
         final Set<Key> childKeys = new HashSet<>(5);
@@ -178,6 +180,7 @@ public class BasicFactoryResolver implements FactoryResolver {
                 info = null;
                 container = false;
                 cache = false;
+                hasData = true;
             } else if (hasDependAnnotation) {
                 //if the parameter has Depend, treat it as a regular dependency
                 type = ParameterType.DEPENDENCY;
@@ -255,11 +258,13 @@ public class BasicFactoryResolver implements FactoryResolver {
         DataInspector.DataInformation data = null;
         if (dataClass != null) {
             if (hasComposite) {
+                //inspect the data early if we can
                 data = dataInspector.inspectData(dataClass);
             }
         } else if (hasComposite) {
             final Class<?>[] children = elementClass.getDeclaredClasses();
 
+            //search classes inside this one, try to find our DataObject, it wasn't in the constructor
             Class<?> inferredDataClass = null;
             for (final Class<?> child : children) {
                 if (child.isAnnotationPresent(DataObject.class)) {
@@ -271,21 +276,17 @@ public class BasicFactoryResolver implements FactoryResolver {
                 }
             }
 
-            if (inferredDataClass == null) {
-                throw elementException(elementClass, "unable to infer data class");
-            }
-
             dataClass = inferredDataClass;
-            data = dataInspector.inspectData(dataClass);
+
+            if (dataClass != null) {
+                //we might have failed to find a data class, and we have children
+                //we'll try to automatically find them later
+                data = dataInspector.inspectData(dataClass);
+            }
         }
 
-        if (data != null) {
-            final Map<Key, PathFunction.PathInfo> functionMap = data.infoMap();
-            for (final Key requiredKey : childKeys) {
-                if (!functionMap.containsKey(requiredKey)) {
-                    throw elementException(elementClass, "data class missing required child key " + requiredKey);
-                }
-            }
+        if (hasData && dataClass == null) {
+            throw elementException(elementClass, "missing required data class");
         }
 
         if (processor.getValue() == null && dataClass != null) {
@@ -307,41 +308,72 @@ public class BasicFactoryResolver implements FactoryResolver {
 
                 args[i] = switch (parameter.type) {
                     case DATA -> objectData;
-                    case DEPENDENCY -> dependencyProvider.provide(
-                            DependencyProvider.key(Token.ofType(parameter.parameter.getParameterizedType()),
-                                    parameter.info));
+                    case DEPENDENCY -> dependencyProvider.provide(DependencyProvider.key(Token.ofType(parameter
+                            .parameter.getParameterizedType()), parameter.info));
                     case COMPOSITE -> {
+                        //objectData might not be present at all, if we're inferring paths
+                        final boolean hasData = objectData != null;
+
                         //inspect the data at runtime if necessary
                         //this happens for element classes whose data only consists of paths
-                        final DataInspector.DataInformation information = Objects.requireNonNullElseGet(dataInformation,
-                                () -> dataInspector.inspectData(objectData.getClass()));
+                        final DataInspector.DataInformation information = hasData ? Objects
+                                .requireNonNullElseGet(dataInformation,
+                                        () -> dataInspector.inspectData(objectData.getClass())) : null;
 
-                        final Collection<String> paths = information.pathFunction().apply(objectData, parameter.info);
+                        final ElementPath[] paths;
+                        if (hasData && information.infoMap().containsKey(parameter.info)) {
+                            //if it exists, extract a path key from the data
+                            final Collection<String> pathStrings = information.pathFunction().apply(objectData,
+                                    parameter.info);
+                            paths = new ElementPath[pathStrings.size()];
+
+                            final Iterator<String> pathStringIterator = pathStrings.iterator();
+                            for (int j = 0; j < paths.length; j++) {
+                                //consider each path relative to dataPath
+                                paths[j] = dataPath.resolve(pathStringIterator.next());
+                            }
+                        }
+                        else {
+                            //the path key for this child doesn't exist, either because we have no data object,
+                            //or because it doesn't supply an explicit key
+                            final ElementPath inferredPath = dataPath.append(parameter.info.asString());
+
+                            if (parameter.container) {
+                                //if we need to find a container, try to find a list at the inferred path
+                                final ConfigList list = inferredPath.followList(context.root());
+                                final int length = list.size();
+
+                                paths = new ElementPath[length];
+                                for (int j = 0; j < length; j++) {
+                                    paths[j] = inferredPath.append(j);
+                                }
+                            }
+                            else {
+                                //if we don't want a container, just use the inferred path
+                                paths = new ElementPath[] {inferredPath};
+                            }
+                        }
+
                         final Object object;
                         if (parameter.container) {
-                            object = containerCreator.createContainer(parameter.parameter.getType(), paths.size());
+                            object = containerCreator.createContainer(parameter.parameter.getType(), paths.length);
 
                             if (object.getClass().isArray()) {
-                                final Iterator<String> pathsIterator = paths.iterator();
-                                for (int j = 0; pathsIterator.hasNext(); j++) {
-                                    final String path = pathsIterator.next();
-                                    Array.set(object, j,
-                                            context.provide(path(dataPath, path), dependencyProvider, parameter.cache));
+                                for (int j = 0; j < paths.length; j++) {
+                                    Array.set(object, j, context.provide(paths[j], dependencyProvider, parameter.cache));
                                 }
                             } else {
                                 final Collection objects = (Collection) object;
-                                for (final String path : paths) {
-                                    objects.add(
-                                            context.provide(path(dataPath, path), dependencyProvider, parameter.cache));
+                                for (final ElementPath path : paths) {
+                                    objects.add(context.provide(path, dependencyProvider, parameter.cache));
                                 }
                             }
                         } else {
-                            if (paths.isEmpty()) {
+                            if (paths.length == 0) {
                                 throw new ElementException("no path found to construct child element");
                             }
 
-                            final String path = paths.iterator().next();
-                            object = context.provide(path(dataPath, path), dependencyProvider, parameter.cache);
+                            object = context.provide(paths[0], dependencyProvider, parameter.cache);
                         }
 
                         yield object;

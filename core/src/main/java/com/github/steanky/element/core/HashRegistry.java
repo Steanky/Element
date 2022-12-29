@@ -3,10 +3,10 @@ package com.github.steanky.element.core;
 import net.kyori.adventure.key.Key;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.HashMap;
 import java.util.Map;
 import java.util.NoSuchElementException;
 import java.util.Objects;
+import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * A {@link Map}-based Registry implementation.
@@ -23,7 +23,7 @@ public class HashRegistry<TRegistrant> implements Registry<TRegistrant> {
      * @param loadFactor  the load factor of the underlying hashmap
      */
     public HashRegistry(final int initialSize, final float loadFactor) {
-        this.map = new HashMap<>(initialSize, loadFactor);
+        this.map = new ConcurrentHashMap<>(initialSize, loadFactor);
     }
 
     /**

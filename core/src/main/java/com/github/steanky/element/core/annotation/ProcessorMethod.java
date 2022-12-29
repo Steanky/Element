@@ -6,7 +6,7 @@ import java.lang.annotation.*;
 
 /**
  * Denotes a public static accessor method which must take no arguments and return a {@link ConfigProcessor} capable of
- * serializing/deserializing a Keyed object (or specific subclass of Keyed).
+ * serializing/deserializing some kind of element data.
  */
 @Documented
 @Retention(RetentionPolicy.RUNTIME)
