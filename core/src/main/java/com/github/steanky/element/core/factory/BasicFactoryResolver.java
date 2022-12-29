@@ -56,10 +56,6 @@ public class BasicFactoryResolver implements FactoryResolver {
         this.processorSource = Objects.requireNonNull(processorSource);
     }
 
-    private static ElementPath path(ElementPath dataPath, String relativePath) {
-        return dataPath.resolve(relativePath);
-    }
-
     @Override
     public @NotNull ElementFactory<?, ?> resolveFactory(final @NotNull Class<?> elementClass,
             final @NotNull Mutable<ConfigProcessor<?>> processor) {
@@ -336,7 +332,7 @@ public class BasicFactoryResolver implements FactoryResolver {
                         else {
                             //the path key for this child doesn't exist, either because we have no data object,
                             //or because it doesn't supply an explicit key
-                            final ElementPath inferredPath = dataPath.append(parameter.info.asString());
+                            final ElementPath inferredPath = dataPath.append(parameter.info.value());
 
                             if (parameter.container) {
                                 //if we need to find a container, try to find a list at the inferred path

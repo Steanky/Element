@@ -72,6 +72,7 @@ public class BasicContextManagerIntegrationTest {
         contextManager.registerElementClass(RelativePath.class);
         contextManager.registerElementClass(InterfaceChild.class);
         contextManager.registerElementClass(TestInterfaceElement.class);
+        contextManager.registerElementClass(InferredPath.class);
     }
 
     @Test
@@ -193,6 +194,28 @@ public class BasicContextManagerIntegrationTest {
         final InterfaceChild interfaceChild = context.provide();
 
         assertEquals(10, interfaceChild.child.value());
+    }
+
+    @Test
+    void inferredPath() {
+        final ConfigNode root = ConfigNode.of("type", "inferred_path", "inferred_processor",
+                ConfigNode.of("type", "inferred_processor", "number", 10, "string", "test"));
+
+        final ElementContext context = contextManager.makeContext(root);
+        final InferredPath inferredPath = context.provide();
+
+        assertEquals(10, inferredPath.inferredProcessor.data.number);
+        assertEquals("test", inferredPath.inferredProcessor.data.string);
+    }
+
+    @Model("inferred_path")
+    public static class InferredPath {
+        private final InferredProcessor inferredProcessor;
+
+        @FactoryMethod
+        public InferredPath(@Child InferredProcessor inferredProcessor) {
+            this.inferredProcessor = inferredProcessor;
+        }
     }
 
     public interface TestInterface {

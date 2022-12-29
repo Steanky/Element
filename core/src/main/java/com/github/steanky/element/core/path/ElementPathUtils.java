@@ -18,6 +18,6 @@ final class ElementPathUtils {
             return function.apply(element);
         }
 
-        throw new ElementException("expected object in path " + elementPath + " to be a " + typeName);
+        throw new ElementException("expected object at path " + elementPath + " to be a " + typeName);
     }
 }

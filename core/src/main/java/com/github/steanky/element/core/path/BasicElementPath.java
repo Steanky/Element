@@ -251,30 +251,33 @@ class BasicElementPath implements ElementPath {
                 current = current.asNode().get(name);
             } else if (current.isList()) {
                 final ConfigList list = current.asList();
+                final int size = list.size();
 
                 try {
+
                     final int value = Integer.parseInt(name);
-                    if (value < 0 || value > list.size()) {
-                        throw new ElementException(
-                                "path " + this + " contains an out-of-bounds index at position " + i);
+                    if (value < 0 || value > size) {
+                        formatPathException("index " + value + " out of bounds for ConfigList of length " + size, i);
                     }
 
                     current = list.get(value);
                 } catch (NumberFormatException e) {
-                    throw new ElementException("path " + this + " contains a string that cannot be parsed into an " +
-                            "index at position " + i, e);
+                    formatPathException("string " + name + " cannot be parsed", i);
                 }
             } else {
-                throw new ElementException("path " + this + " is invalid, expected node or list at position " + i);
+                formatPathException("unexpected ConfigElement type " + current.type(), i);
             }
 
             if (current == null) {
-                throw new ElementException(
-                        "path " + this + " contains an element that does not exist at position " + i);
+                formatPathException("target element does not exist", i);
             }
         }
 
         return current;
+    }
+
+    private void formatPathException(String message, int position) {
+        throw new ElementException(this + ", position " + position + ": " + message);
     }
 
     @Override
