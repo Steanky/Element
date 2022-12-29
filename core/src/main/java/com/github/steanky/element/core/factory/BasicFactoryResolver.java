@@ -159,7 +159,7 @@ public class BasicFactoryResolver implements FactoryResolver {
             final boolean hasChildAnnotation = childAnnotation != null;
 
             if (hasChildAnnotation) {
-                //most of these cases aren't inherently problematic, but indicate improper usage or confusion
+                //these cases aren't inherently problematic, but indicate improper usage or confusion
                 if (hasDataAnnotation) {
                     throw elementException(elementClass, "parameter is annotated with both Child and DataObject");
                 }
@@ -184,13 +184,6 @@ public class BasicFactoryResolver implements FactoryResolver {
 
                 @Subst(Constants.NAMESPACE_OR_KEY) final String value = dependAnnotation.value();
                 final boolean isDefault = value.equals(Constants.DEFAULT);
-
-                if (!isDefault && !keyParser.isValidKey(value)) {
-                    throw elementException(elementClass,
-                            "invalid value for Depend annotation, must be a valid key " + "string or " +
-                                    Constants.DEFAULT);
-                }
-
                 info = isDefault ? null : keyParser.parseKey(value);
                 container = false;
                 cache = false;
@@ -203,25 +196,38 @@ public class BasicFactoryResolver implements FactoryResolver {
                 final boolean childProvidesPath = !childAnnotation.value().equals(Constants.DEFAULT);
 
                 if (hasModelAnnotation) {
+                    //parameter is itself a Model type; we can use its model key as a data path
                     value = childProvidesPath ? childAnnotation.value() : modelAnnotation.value();
                     container = false;
                 } else {
-                    final Token<?> modelToken = containerCreator.extractComponentType(
-                            Token.ofType(parameter.getParameterizedType()));
+                    //parameter is not a Model type, but it might be a collection of model types
+                    final Token<?> parameterGenericType = Token.ofType(parameter.getParameterizedType());
 
-                    final Class<?> modelClass = modelToken.rawType();
-                    final Model model = modelClass.getAnnotation(Model.class);
-                    if (model == null) {
-                        throw elementException(elementClass,
-                                "extracted component type of parameter does not have a " + "Model annotation");
+                    if (containerCreator.isContainerType(parameterGenericType)) {
+                        final Class<?> modelClass = containerCreator.extractComponentType(parameterGenericType)
+                                .rawType();
+
+                        final Model model = modelClass.getAnnotation(Model.class);
+                        if (model == null && !childProvidesPath) {
+                            //could not find Model annotation on component type, and we have no child path
+                            throw elementException(elementClass,
+                                    "extracted component type of parameter does not have a Model annotation, and the " +
+                                            "Child annotation does not provide a path");
+                        }
+
+                        value = childProvidesPath ? childAnnotation.value() : model.value();
+                        container = true;
                     }
-
-                    value = childProvidesPath ? childAnnotation.value() : model.value();
-                    container = true;
-                }
-
-                if (!keyParser.isValidKey(value)) {
-                    throw elementException(elementClass, "invalid data path identifier or child model key " + value);
+                    else if (childProvidesPath) {
+                        //no model annotation, not a collection, but we have a child path so use that
+                        value = childAnnotation.value();
+                        container = false;
+                    }
+                    else {
+                        //child paths are required in cases where we can't obtain a model
+                        throw elementException(elementClass, "could not infer data path from non-element Child " +
+                                "dependency");
+                    }
                 }
 
                 info = keyParser.parseKey(value);
@@ -239,7 +245,7 @@ public class BasicFactoryResolver implements FactoryResolver {
                 //parameters with nothing are treated as dependencies
                 type = ParameterType.DEPENDENCY;
                 info = null;
-                container = true;
+                container = false;
                 cache = false;
             }
 

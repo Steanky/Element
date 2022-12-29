@@ -30,4 +30,14 @@ public interface ContainerCreator {
      * @return a component type, possibly including generic type information
      */
     @NotNull Token<?> extractComponentType(final @NotNull Token<?> containerType);
+
+    /**
+     * Determines if the given {@link Token} constitues a valid container type (i.e. one whose raw type may be passed to
+     * {@link ContainerCreator#createContainer(Class, int)} or directly to
+     * {@link ContainerCreator#extractComponentType(Token)}.
+     *
+     * @param type the type token
+     * @return true if the given type is a container, false otherwise
+     */
+    boolean isContainerType(final @NotNull Token<?> type);
 }

@@ -95,4 +95,10 @@ public class BasicContainerCreator implements ContainerCreator {
 
         return Token.OBJECT;
     }
+
+    @Override
+    public boolean isContainerType(final @NotNull Token<?> type) {
+        Objects.requireNonNull(type);
+        return resolverFunction.apply(type.rawType()) != null;
+    }
 }

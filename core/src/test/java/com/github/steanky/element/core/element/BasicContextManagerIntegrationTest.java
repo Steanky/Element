@@ -70,6 +70,8 @@ public class BasicContextManagerIntegrationTest {
         contextManager.registerElementClass(SimpleDependencyNoAnnotation.class);
         contextManager.registerElementClass(NestedNoDataElement.class);
         contextManager.registerElementClass(RelativePath.class);
+        contextManager.registerElementClass(InterfaceChild.class);
+        contextManager.registerElementClass(TestInterfaceElement.class);
     }
 
     @Test
@@ -182,6 +184,52 @@ public class BasicContextManagerIntegrationTest {
         assertEquals(69, relativePath.nestedElement.simpleElement.data.value);
     }
 
+    @Test
+    void interfaceChild() {
+        final ConfigNode root = ConfigNode.of("type", "interface_child", "path", "./child", "child",
+                ConfigNode.of("type", "test_interface_element", "value", 10));
+
+        final ElementContext context = contextManager.makeContext(root);
+        final InterfaceChild interfaceChild = context.provide();
+
+        assertEquals(10, interfaceChild.child.value());
+    }
+
+    public interface TestInterface {
+        int value();
+    }
+
+    @Model("interface_child")
+    public static class InterfaceChild {
+        private final TestInterface child;
+
+        @FactoryMethod
+        public InterfaceChild(@NotNull @Child("child") TestInterface child) {
+            this.child = child;
+        }
+
+        @DataObject
+        public record Data(@DataPath("child") String path) {}
+    }
+
+    @Model("test_interface_element")
+    public static class TestInterfaceElement implements TestInterface {
+        private final Data data;
+
+        @FactoryMethod
+        public TestInterfaceElement(@NotNull Data data) {
+            this.data = data;
+        }
+
+        @Override
+        public int value() {
+            return data.value;
+        }
+
+        @DataObject
+        public record Data(int value) {}
+    }
+
     @Model("simple_element")
     public static class SimpleElement {
         @FactoryMethod
@@ -289,12 +337,10 @@ public class BasicContextManagerIntegrationTest {
     @SuppressWarnings("FieldCanBeLocal")
     @Model("multi_element")
     public static class MultiElement {
-        private final Data data;
         private final List<SimpleData> elements;
 
         @FactoryMethod
-        public MultiElement(Data data, @Child List<SimpleData> elements) {
-            this.data = data;
+        public MultiElement(@Child List<SimpleData> elements) {
             this.elements = elements;
         }
 
