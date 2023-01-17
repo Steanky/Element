@@ -58,7 +58,7 @@ public class ModuleDependencyProvider implements DependencyProvider {
         final Memoize moduleClassMemoize = moduleClass.getAnnotation(Memoize.class);
         final boolean defaultMemoize = moduleClassMemoize != null && moduleClassMemoize.value();
 
-        final Method[] methods = moduleClass.getMethods();
+        final Method[] methods = moduleClass.getDeclaredMethods();
 
         //this variable is temporary, will be transformed into an immutable map later
         final Map<Token<?>, Map<String, Supplier<?>>> dependencyMap = new HashMap<>();
