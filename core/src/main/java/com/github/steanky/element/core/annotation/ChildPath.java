@@ -12,10 +12,10 @@ import java.lang.annotation.*;
 @Documented
 @Retention(RetentionPolicy.RUNTIME)
 @Target({ElementType.METHOD, ElementType.PARAMETER})
-public @interface DataPath {
+public @interface ChildPath {
     /**
-     * The key string, which corresponds to the type of the element dependency, <i>or</i> its DataPath annotation if
-     * present.
+     * The key string, which corresponds to the type of the element dependency, <i>or</i> the value of its Child
+     * annotation if present.
      *
      * @return the key string
      */

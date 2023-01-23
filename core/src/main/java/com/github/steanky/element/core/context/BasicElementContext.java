@@ -51,7 +51,7 @@ public class BasicElementContext implements ElementContext {
         this.factoryRegistry = Objects.requireNonNull(factoryRegistry);
         this.cacheRegistry = Objects.requireNonNull(cacheRegistry);
         this.typeKeyExtractor = Objects.requireNonNull(typeKeyExtractor);
-        this.root = Objects.requireNonNull(rootContainer.copy());
+        this.root = rootContainer.copy();
         this.rootCopy = rootContainer.immutableCopy();
 
         this.dataObjects = new HashMap<>(4);
@@ -85,7 +85,6 @@ public class BasicElementContext implements ElementContext {
             cacheElement = cache;
         }
 
-        //don't use computeIfAbsent because the map may be modified by the mapping function
         if (cacheElement && elementObjects.containsKey(absolutePath)) {
             return (TElement) elementObjects.get(absolutePath);
         }

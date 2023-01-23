@@ -41,7 +41,7 @@ class BasicElementPath implements ElementPath {
         this.nodeView = Containers.arrayView(nodeArray);
     }
 
-    static boolean isCharacterEscapable(char current) {
+    private static boolean isCharacterEscapable(char current) {
         return current == DELIMITER || current == CURRENT || current == ESCAPE;
     }
 
@@ -111,7 +111,7 @@ class BasicElementPath implements ElementPath {
             nodes.remove(previousIndex);
 
             if (previousType == NodeType.NAME) {
-                //strip out redundant PREVIOUS commands, otherwise leave themalone
+                //strip out redundant PREVIOUS commands, otherwise leave them alone
                 nodes.remove(previousIndex);
             }
 
@@ -121,7 +121,7 @@ class BasicElementPath implements ElementPath {
         }
 
         if (nodes.isEmpty()) {
-            return BasicElementPath.EMPTY_PATH;
+            return EMPTY_PATH;
         }
 
         return new BasicElementPath(nodes.toArray(Node[]::new));
@@ -286,8 +286,9 @@ class BasicElementPath implements ElementPath {
             return hash;
         }
 
+        int hash = this.hash = Arrays.hashCode(nodes);
         hashed = true;
-        return hash = Arrays.hashCode(nodes);
+        return hash;
     }
 
     @Override

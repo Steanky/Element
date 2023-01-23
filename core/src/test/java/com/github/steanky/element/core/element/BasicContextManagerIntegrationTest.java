@@ -294,7 +294,7 @@ public class BasicContextManagerIntegrationTest {
         }
 
         @DataObject
-        public record Data(@DataPath("child") String path) {}
+        public record Data(@ChildPath("child") String path) {}
     }
 
     @Model("test_interface_element")
@@ -331,7 +331,7 @@ public class BasicContextManagerIntegrationTest {
         }
 
         @DataObject
-        public record Data(@DataPath("nested_no_data_element") String key) {}
+        public record Data(@ChildPath("nested_no_data_element") String key) {}
     }
 
     @Model("nested_no_data_element")
@@ -344,7 +344,7 @@ public class BasicContextManagerIntegrationTest {
         }
 
         @DataObject
-        public record Data(@DataPath("simple_data") String key) {}
+        public record Data(@ChildPath("simple_data") String key) {}
     }
 
     @Model("simple_dependency_no_annotation")
@@ -448,7 +448,7 @@ public class BasicContextManagerIntegrationTest {
         }
 
         @DataObject
-        public record Data(@DataPath("simple_data") List<String> simpleElements) {
+        public record Data(@ChildPath("simple_data") List<String> simpleElements) {
 
         }
     }
@@ -509,6 +509,6 @@ public class BasicContextManagerIntegrationTest {
         }
 
         @DataObject
-        public record Data(@DataPath("simple_data") String key) {}
+        public record Data(@ChildPath("simple_data") String key) {}
     }
 }

@@ -1,6 +1,6 @@
 package com.github.steanky.element.core.data;
 
-import com.github.steanky.element.core.annotation.DataPath;
+import com.github.steanky.element.core.annotation.ChildPath;
 import com.github.steanky.element.core.key.Constants;
 import com.github.steanky.element.core.key.KeyParser;
 import com.github.steanky.element.core.util.ReflectionUtils;
@@ -43,8 +43,8 @@ public class BasicDataInspector implements DataInspector {
         final Map<Key, PathFunction.PathInfo> infoMap = new HashMap<>(2);
 
         for (final Method method : declaredMethods) {
-            final DataPath dataPathAnnotation = method.getDeclaredAnnotation(DataPath.class);
-            if (dataPathAnnotation != null) {
+            final ChildPath childPathAnnotation = method.getDeclaredAnnotation(ChildPath.class);
+            if (childPathAnnotation != null) {
                 validateModifiersPresent(method, () -> "DataPath accessor must be public", Modifier.PUBLIC);
                 validateModifiersAbsent(method, () -> "DataPath accessor must be non-static", Modifier.STATIC);
                 validateParameterCount(method, 0, () -> "DataPath accessor must have no parameters");
@@ -62,9 +62,9 @@ public class BasicDataInspector implements DataInspector {
                     isIterable = false;
                 }
 
-                @Subst(Constants.NAMESPACE_OR_KEY) final String idString = dataPathAnnotation.value();
+                @Subst(Constants.NAMESPACE_OR_KEY) final String idString = childPathAnnotation.value();
                 final Key idKey = keyParser.parseKey(idString);
-                final PathFunction.PathInfo info = new PathFunction.PathInfo(method, dataPathAnnotation, isIterable);
+                final PathFunction.PathInfo info = new PathFunction.PathInfo(method, childPathAnnotation, isIterable);
                 if (infoMap.putIfAbsent(idKey, info) != null) {
                     throw elementException(dataClass, "multiple DataPath accessors with name '" + idKey + "'");
                 }

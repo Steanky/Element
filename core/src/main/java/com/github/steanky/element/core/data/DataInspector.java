@@ -1,6 +1,6 @@
 package com.github.steanky.element.core.data;
 
-import com.github.steanky.element.core.annotation.DataPath;
+import com.github.steanky.element.core.annotation.ChildPath;
 import net.kyori.adventure.key.Key;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Unmodifiable;
@@ -40,10 +40,10 @@ public interface DataInspector {
          * Represents some info about a specific path.
          *
          * @param accessorMethod the method used to access the path
-         * @param annotation     the {@link DataPath} annotation
+         * @param annotation     the {@link ChildPath} annotation
          * @param isCollection   whether this path represents a collection of data paths
          */
-        record PathInfo(@NotNull Method accessorMethod, @NotNull DataPath annotation, boolean isCollection) {}
+        record PathInfo(@NotNull Method accessorMethod, @NotNull ChildPath annotation, boolean isCollection) {}
     }
 
     /**
