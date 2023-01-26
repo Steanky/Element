@@ -58,7 +58,7 @@ public interface ElementContext {
      * @param <TElement>           the element type
      * @return the element object
      */
-    default <TElement> @NotNull TElement provide(final @NotNull ElementPath path,
+    default <TElement> TElement provide(final @NotNull ElementPath path,
             final @NotNull DependencyProvider dependencyProvider, final boolean cache,
             final @NotNull Consumer<? super ElementException> exceptionHandler,
             final @NotNull Supplier<? extends TElement> defaultValueSupplier) {
@@ -85,7 +85,7 @@ public interface ElementContext {
      * @param <TElement>           the element type
      * @return the element object
      */
-    default <TElement> @NotNull TElement provide(final @NotNull DependencyProvider dependencyProvider,
+    default <TElement> TElement provide(final @NotNull DependencyProvider dependencyProvider,
             final @NotNull Consumer<? super ElementException> exceptionHandler,
             final @NotNull Supplier<? extends TElement> defaultValueSupplier) {
         return provide(ElementPath.EMPTY, dependencyProvider, false, exceptionHandler, defaultValueSupplier);
@@ -104,7 +104,7 @@ public interface ElementContext {
      * @param <TElement>           the element type
      * @return the element object
      */
-    default <TElement> @NotNull TElement provide(final @NotNull ElementPath path,
+    default <TElement> TElement provide(final @NotNull ElementPath path,
             final @NotNull DependencyProvider dependencyProvider,
             final @NotNull Consumer<? super ElementException> exceptionHandler,
             final @NotNull Supplier<? extends TElement> defaultValueSupplier) {
@@ -123,7 +123,7 @@ public interface ElementContext {
      * @param <TElement>           the element type
      * @return the element object
      */
-    default <TElement> @NotNull TElement provide(final @NotNull ElementPath path,
+    default <TElement> TElement provide(final @NotNull ElementPath path,
             final @NotNull Consumer<? super ElementException> exceptionHandler,
             final @NotNull Supplier<? extends TElement> defaultValueSupplier) {
         return provide(path, DependencyProvider.EMPTY, false, exceptionHandler, defaultValueSupplier);
@@ -140,7 +140,7 @@ public interface ElementContext {
      * @param <TElement>           the element type
      * @return the element object
      */
-    default <TElement> @NotNull TElement provide(final @NotNull Consumer<? super ElementException> exceptionHandler,
+    default <TElement> TElement provide(final @NotNull Consumer<? super ElementException> exceptionHandler,
             final @NotNull Supplier<? extends TElement> defaultValueSupplier) {
         return provide(ElementPath.EMPTY, DependencyProvider.EMPTY, false, exceptionHandler, defaultValueSupplier);
     }
