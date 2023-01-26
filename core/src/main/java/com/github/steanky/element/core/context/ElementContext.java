@@ -17,6 +17,7 @@ import org.jetbrains.annotations.Unmodifiable;
 import java.util.*;
 import java.util.function.Consumer;
 import java.util.function.IntFunction;
+import java.util.function.Supplier;
 
 /**
  * Object holding contextual elements.
@@ -35,7 +36,7 @@ public interface ElementContext {
      * element will attempt to be cached (if it does not specify otherwise using the {@link Cache} annotation). If
      * false, no caching will be performed, unless overridden by the element itself (again using {@link Cache}).
      *
-     * @param path               the path key
+     * @param path               the {@link ElementPath} used to locate the target data
      * @param dependencyProvider the {@link DependencyProvider} used to provide dependencies
      * @param cache              true if this element should be cached, false otherwise
      * @param <TElement>         the type of the element object
@@ -43,6 +44,106 @@ public interface ElementContext {
      */
     <TElement> @NotNull TElement provide(final @NotNull ElementPath path,
             final @NotNull DependencyProvider dependencyProvider, final boolean cache);
+
+    /**
+     * Convenience overload of {@link ElementContext#provide(ElementPath, DependencyProvider, boolean)} that handles
+     * {@link ElementException}s thrown during construction.
+     *
+     * @param path                 the {@link ElementPath} used to locate the target data
+     * @param dependencyProvider   the {@link DependencyProvider} used to supply dependencies
+     * @param cache                true if this element should be cached, false otherwise
+     * @param exceptionHandler     a {@link Consumer} which will be called with an {@link ElementException}, if one
+     *                             occurs
+     * @param defaultValueSupplier the {@link Supplier} used to supply a fallback value in case an exception occurs
+     * @param <TElement>           the element type
+     * @return the element object
+     */
+    default <TElement> @NotNull TElement provide(final @NotNull ElementPath path,
+            final @NotNull DependencyProvider dependencyProvider, final boolean cache,
+            final @NotNull Consumer<? super ElementException> exceptionHandler,
+            final @NotNull Supplier<? extends TElement> defaultValueSupplier) {
+        Objects.requireNonNull(exceptionHandler);
+        Objects.requireNonNull(defaultValueSupplier);
+
+        try {
+            return provide(path, dependencyProvider, cache);
+        } catch (ElementException e) {
+            exceptionHandler.accept(e);
+            return defaultValueSupplier.get();
+        }
+    }
+
+    /**
+     * Convenience overload of
+     * {@link ElementContext#provide(ElementPath, DependencyProvider, boolean, Consumer, Supplier)} that provides the
+     * root element, and no caching.
+     *
+     * @param dependencyProvider   the {@link DependencyProvider} used to supply dependencies
+     * @param exceptionHandler     a {@link Consumer} which will be called with an {@link ElementException}, if one
+     *                             occurs
+     * @param defaultValueSupplier the {@link Supplier} used to supply a fallback value in case an exception occurs
+     * @param <TElement>           the element type
+     * @return the element object
+     */
+    default <TElement> @NotNull TElement provide(final @NotNull DependencyProvider dependencyProvider,
+            final @NotNull Consumer<? super ElementException> exceptionHandler,
+            final @NotNull Supplier<? extends TElement> defaultValueSupplier) {
+        return provide(ElementPath.EMPTY, dependencyProvider, false, exceptionHandler, defaultValueSupplier);
+    }
+
+    /**
+     * Convenience overload of
+     * {@link ElementContext#provide(ElementPath, DependencyProvider, boolean, Consumer, Supplier)} that does not
+     * specify any caching.
+     *
+     * @param path                 the {@link ElementPath} used to locate the target data
+     * @param dependencyProvider   the {@link DependencyProvider} used to supply dependencies
+     * @param exceptionHandler     a {@link Consumer} which will be called with an {@link ElementException}, if one
+     *                             occurs
+     * @param defaultValueSupplier the {@link Supplier} used to supply a fallback value in case an exception occurs
+     * @param <TElement>           the element type
+     * @return the element object
+     */
+    default <TElement> @NotNull TElement provide(final @NotNull ElementPath path,
+            final @NotNull DependencyProvider dependencyProvider,
+            final @NotNull Consumer<? super ElementException> exceptionHandler,
+            final @NotNull Supplier<? extends TElement> defaultValueSupplier) {
+        return provide(path, dependencyProvider, false, exceptionHandler, defaultValueSupplier);
+    }
+
+    /**
+     * Convenience overload of
+     * {@link ElementContext#provide(ElementPath, DependencyProvider, boolean, Consumer, Supplier)} that specifies an
+     * empty {@link DependencyProvider} and no caching.
+     *
+     * @param path                 the {@link ElementPath} used to locate the target data
+     * @param exceptionHandler     a {@link Consumer} which will be called with an {@link ElementException}, if one
+     *                             occurs
+     * @param defaultValueSupplier the {@link Supplier} used to supply a fallback value in case an exception occurs
+     * @param <TElement>           the element type
+     * @return the element object
+     */
+    default <TElement> @NotNull TElement provide(final @NotNull ElementPath path,
+            final @NotNull Consumer<? super ElementException> exceptionHandler,
+            final @NotNull Supplier<? extends TElement> defaultValueSupplier) {
+        return provide(path, DependencyProvider.EMPTY, false, exceptionHandler, defaultValueSupplier);
+    }
+
+    /**
+     * Convenience overload of
+     * {@link ElementContext#provide(ElementPath, DependencyProvider, boolean, Consumer, Supplier)} that provides the
+     * root element and uses the empty {@link DependencyProvider}.
+     *
+     * @param exceptionHandler     a {@link Consumer} which will be called with an {@link ElementException}, if one
+     *                             occurs
+     * @param defaultValueSupplier the {@link Supplier} used to supply a fallback value in case an exception occurs
+     * @param <TElement>           the element type
+     * @return the element object
+     */
+    default <TElement> @NotNull TElement provide(final @NotNull Consumer<? super ElementException> exceptionHandler,
+            final @NotNull Supplier<? extends TElement> defaultValueSupplier) {
+        return provide(ElementPath.EMPTY, DependencyProvider.EMPTY, false, exceptionHandler, defaultValueSupplier);
+    }
 
     /**
      * Convenience overload for {@link ElementContext#provide(ElementPath, DependencyProvider, boolean)}. This will

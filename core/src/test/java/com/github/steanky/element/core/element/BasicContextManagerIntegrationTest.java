@@ -250,6 +250,10 @@ public class BasicContextManagerIntegrationTest {
         assertEquals("two", second.data.string);
     }
 
+    public interface TestInterface {
+        int value();
+    }
+
     @Model("inferred_list_path_no_explicit_child")
     public static class InferredListPathNoExplicitChildName {
         private final List<InferredProcessor> inferredProcessor;
@@ -278,10 +282,6 @@ public class BasicContextManagerIntegrationTest {
         public InferredPath(@Child InferredProcessor inferredProcessor) {
             this.inferredProcessor = inferredProcessor;
         }
-    }
-
-    public interface TestInterface {
-        int value();
     }
 
     @Model("interface_child")

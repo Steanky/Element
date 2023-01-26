@@ -4,9 +4,7 @@ import com.github.steanky.element.core.BasicElementTypeIdentifier;
 import com.github.steanky.element.core.ElementException;
 import com.github.steanky.element.core.ElementTypeIdentifier;
 import com.github.steanky.element.core.annotation.Model;
-import com.github.steanky.element.core.context.ContextManager;
 import com.github.steanky.element.core.key.BasicKeyParser;
-import com.github.steanky.ethylene.mapper.MappingProcessorSource;
 import net.kyori.adventure.key.Key;
 import org.junit.jupiter.api.Test;
 

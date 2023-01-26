@@ -216,16 +216,14 @@ public class BasicFactoryResolver implements FactoryResolver {
 
                         value = childProvidesPath ? childAnnotation.value() : model.value();
                         container = true;
-                    }
-                    else if (childProvidesPath) {
+                    } else if (childProvidesPath) {
                         //no model annotation, not a collection, but we have a child path so use that
                         value = childAnnotation.value();
                         container = false;
-                    }
-                    else {
+                    } else {
                         //child paths are required in cases where we can't obtain a model
-                        throw elementException(elementClass, "could not infer data path from non-element Child " +
-                                "dependency");
+                        throw elementException(elementClass,
+                                "could not infer data path from non-element Child " + "dependency");
                     }
                 }
 
@@ -304,23 +302,24 @@ public class BasicFactoryResolver implements FactoryResolver {
 
                 args[i] = switch (parameter.type) {
                     case DATA -> objectData;
-                    case DEPENDENCY -> dependencyProvider.provide(DependencyProvider.key(Token.ofType(parameter
-                            .parameter.getParameterizedType()), parameter.info));
+                    case DEPENDENCY -> dependencyProvider.provide(
+                            DependencyProvider.key(Token.ofType(parameter.parameter.getParameterizedType()),
+                                    parameter.info));
                     case COMPOSITE -> {
                         //objectData might not be present at all, if we're inferring paths
                         final boolean hasData = objectData != null;
 
                         //inspect the data at runtime if necessary
                         //this happens for element classes whose data only consists of paths
-                        final DataInspector.DataInformation information = hasData ? Objects
-                                .requireNonNullElseGet(dataInformation,
+                        final DataInspector.DataInformation information = hasData ?
+                                Objects.requireNonNullElseGet(dataInformation,
                                         () -> dataInspector.inspectData(objectData.getClass())) : null;
 
                         final ElementPath[] paths;
                         if (hasData && information.infoMap().containsKey(parameter.info)) {
                             //if it exists, extract a path key from the data
-                            final Collection<String> pathStrings = information.pathFunction().apply(objectData,
-                                    parameter.info);
+                            final Collection<String> pathStrings = information.pathFunction()
+                                    .apply(objectData, parameter.info);
                             paths = new ElementPath[pathStrings.size()];
 
                             final Iterator<String> pathStringIterator = pathStrings.iterator();
@@ -328,8 +327,7 @@ public class BasicFactoryResolver implements FactoryResolver {
                                 //consider each path relative to dataPath
                                 paths[j] = dataPath.resolve(pathStringIterator.next());
                             }
-                        }
-                        else {
+                        } else {
                             //the path key for this child doesn't exist, either because we have no data object,
                             //or because it doesn't supply an explicit key
                             final ElementPath inferredPath = dataPath.append(parameter.info.value());
@@ -343,8 +341,7 @@ public class BasicFactoryResolver implements FactoryResolver {
                                 for (int j = 0; j < length; j++) {
                                     paths[j] = inferredPath.append(j);
                                 }
-                            }
-                            else {
+                            } else {
                                 //if we don't want a container, just use the inferred path
                                 paths = new ElementPath[] {inferredPath};
                             }
@@ -356,7 +353,8 @@ public class BasicFactoryResolver implements FactoryResolver {
 
                             if (object.getClass().isArray()) {
                                 for (int j = 0; j < paths.length; j++) {
-                                    Array.set(object, j, context.provide(paths[j], dependencyProvider, parameter.cache));
+                                    Array.set(object, j,
+                                            context.provide(paths[j], dependencyProvider, parameter.cache));
                                 }
                             } else {
                                 final Collection objects = (Collection) object;

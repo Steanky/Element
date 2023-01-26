@@ -32,6 +32,17 @@ import java.util.function.Supplier;
  */
 public interface ContextManager {
     /**
+     * Creates a new {@link Builder} using the provided namespace. This will be the default namespace associated with
+     * all keys interpreted by any {@link ContextManager} implementations created by the builder.
+     *
+     * @param namespace the default namespace
+     * @return a builder object which may be used to create and configure ContextManager instances
+     */
+    static @NotNull Builder builder(final @NotNull String namespace) {
+        return new Builder(namespace);
+    }
+
+    /**
      * Registers the given element class. If the class does not conform to the standard element model, an
      * {@link ElementException} will be thrown.
      *
@@ -49,18 +60,8 @@ public interface ContextManager {
     @NotNull ElementContext makeContext(final @NotNull ConfigContainer container);
 
     /**
-     * Creates a new {@link Builder} using the provided namespace. This will be the default namespace associated with
-     * all keys interpreted by any {@link ContextManager} implementations created by the builder.
-     * @param namespace the default namespace
-     * @return a builder object which may be used to create and configure ContextManager instances
-     */
-    static @NotNull Builder builder(final @NotNull String namespace) {
-        return new Builder(namespace);
-    }
-
-    /**
-     * A builder of standard {@link ContextManager} instances. This object is mutable, and a single instance may be
-     * used to obtain any number of distinct ContextManagers. The dependencies of each ContextManager are, by default,
+     * A builder of standard {@link ContextManager} instances. This object is mutable, and a single instance may be used
+     * to obtain any number of distinct ContextManagers. The dependencies of each ContextManager are, by default,
      * re-created for each invocation of {@link Builder#build()}
      */
     class Builder {
@@ -72,7 +73,8 @@ public interface ContextManager {
         private Function<? super KeyParser, ? extends ElementTypeIdentifier> elementTypeIdentifierFunction = BasicElementTypeIdentifier::new;
         private Function<? super KeyParser, ? extends DataInspector> dataInspectorFunction = BasicDataInspector::new;
         private Supplier<? extends ContainerCreator> containerCreatorSupplier = BasicContainerCreator::new;
-        private Supplier<? extends MappingProcessorSource> mappingProcessorSourceSupplier = () -> MappingProcessorSource.builder().ignoringLengths().withStandardSignatures().withStandardTypeImplementations().build();
+        private Supplier<? extends MappingProcessorSource> mappingProcessorSourceSupplier = () -> MappingProcessorSource.builder()
+                .ignoringLengths().withStandardSignatures().withStandardTypeImplementations().build();
         private QuadFunction<? super KeyParser, ? super DataInspector, ? super ContainerCreator, ? super MappingProcessorSource, ? extends FactoryResolver> factoryResolverFunction = BasicFactoryResolver::new;
         private Supplier<? extends ProcessorResolver> processorResolverSupplier = () -> BasicProcessorResolver.INSTANCE;
         private BiFunction<? super FactoryResolver, ? super ProcessorResolver, ? extends ElementInspector> elementInspectorFunction = BasicElementInspector::new;
@@ -95,7 +97,8 @@ public interface ContextManager {
          * @param function the function which will be used to create KeyParser instances
          * @return this builder, for chaining
          */
-        public @NotNull Builder withKeyParserFunction(final @NotNull Function<? super String, ? extends KeyParser> function) {
+        public @NotNull Builder withKeyParserFunction(
+                final @NotNull Function<? super String, ? extends KeyParser> function) {
             this.keyParserFunction = Objects.requireNonNull(function);
             return this;
         }
@@ -107,7 +110,8 @@ public interface ContextManager {
          * @param function the function used to create KeyExtractors
          * @return this builder, for chaining
          */
-        public @NotNull Builder withKeyExtractorFunction(final @NotNull BiFunction<? super String, ? super KeyParser, ? extends KeyExtractor> function) {
+        public @NotNull Builder withKeyExtractorFunction(
+                final @NotNull BiFunction<? super String, ? super KeyParser, ? extends KeyExtractor> function) {
             this.keyExtractorFunction = Objects.requireNonNull(function);
             return this;
         }
@@ -131,7 +135,8 @@ public interface ContextManager {
          * @param function the function which provides the ElementTypeIdentifier
          * @return this builder, for chaining
          */
-        public @NotNull Builder withTypeIdentifierFunction(final @NotNull Function<? super KeyParser, ? extends ElementTypeIdentifier> function) {
+        public @NotNull Builder withTypeIdentifierFunction(
+                final @NotNull Function<? super KeyParser, ? extends ElementTypeIdentifier> function) {
             this.elementTypeIdentifierFunction = Objects.requireNonNull(function);
             return this;
         }
@@ -143,20 +148,22 @@ public interface ContextManager {
          * @param function the data inspector function
          * @return this builder, for chaining
          */
-        public @NotNull Builder withDataInspectorFunction(final @NotNull Function<? super KeyParser, ? extends DataInspector> function) {
+        public @NotNull Builder withDataInspectorFunction(
+                final @NotNull Function<? super KeyParser, ? extends DataInspector> function) {
             this.dataInspectorFunction = Objects.requireNonNull(function);
             return this;
         }
 
         /**
          * Specifies the supplier which produces {@link ContainerCreator} instances. These are used to automatically
-         * construct arrays, or implementations of {@link java.util.Collection}, when needed in order to instantiate
-         * an element object that contains children.
+         * construct arrays, or implementations of {@link java.util.Collection}, when needed in order to instantiate an
+         * element object that contains children.
          *
          * @param supplier the container creator supplier
          * @return this builder, for chaining
          */
-        public @NotNull Builder withContainerCreatorSupplier(final @NotNull Supplier<? extends ContainerCreator> supplier) {
+        public @NotNull Builder withContainerCreatorSupplier(
+                final @NotNull Supplier<? extends ContainerCreator> supplier) {
             this.containerCreatorSupplier = Objects.requireNonNull(supplier);
             return this;
         }
@@ -169,7 +176,8 @@ public interface ContextManager {
          * @param function the factory resolver function
          * @return this builder, for chaining
          */
-        public @NotNull Builder withFactoryResolverFunction(final @NotNull QuadFunction<? super KeyParser, ? super DataInspector, ? super ContainerCreator, ? super MappingProcessorSource, ? extends FactoryResolver> function) {
+        public @NotNull Builder withFactoryResolverFunction(
+                final @NotNull QuadFunction<? super KeyParser, ? super DataInspector, ? super ContainerCreator, ? super MappingProcessorSource, ? extends FactoryResolver> function) {
             this.factoryResolverFunction = Objects.requireNonNull(function);
             return this;
         }
@@ -181,7 +189,8 @@ public interface ContextManager {
          * @param supplier the processor resolver supplier
          * @return this builder, for chaining
          */
-        public @NotNull Builder withProcessorResolverSupplier(final @NotNull Supplier<? extends ProcessorResolver> supplier) {
+        public @NotNull Builder withProcessorResolverSupplier(
+                final @NotNull Supplier<? extends ProcessorResolver> supplier) {
             this.processorResolverSupplier = Objects.requireNonNull(supplier);
             return this;
         }
@@ -193,7 +202,8 @@ public interface ContextManager {
          * @param function the function used to create element inspectors
          * @return this builder, for chaining
          */
-        public @NotNull Builder withElementInspectorFunction(final @NotNull BiFunction<? super FactoryResolver, ? super ProcessorResolver, ? extends ElementInspector> function) {
+        public @NotNull Builder withElementInspectorFunction(
+                final @NotNull BiFunction<? super FactoryResolver, ? super ProcessorResolver, ? extends ElementInspector> function) {
             this.elementInspectorFunction = Objects.requireNonNull(function);
             return this;
         }
@@ -203,15 +213,15 @@ public interface ContextManager {
          * {@link ConfigProcessor} based on a data object's {@link Class}.
          * <p>
          * In order for Element to work properly, the MappingProcessorSource should be set to ignore container lengths,
-         * like this:<p>
-         * {@code MappingProcessorSource.builder().ignoringLengths().build()}
+         * like this:<p> {@code MappingProcessorSource.builder().ignoringLengths().build()}
          * <p>
          * The default supplier creates MappingProcessorSources like this.
          *
          * @param supplier the supplier used to produce MappingProcessorSource objects
          * @return this builder, for chaining
          */
-        public @NotNull Builder withMappingProcessorSourceSupplier(final @NotNull Supplier<? extends MappingProcessorSource> supplier) {
+        public @NotNull Builder withMappingProcessorSourceSupplier(
+                final @NotNull Supplier<? extends MappingProcessorSource> supplier) {
             this.mappingProcessorSourceSupplier = Objects.requireNonNull(supplier);
             return this;
         }
@@ -223,7 +233,8 @@ public interface ContextManager {
          * @param supplier the supplier of registry objects
          * @return this builder, for chaining
          */
-        public @NotNull Builder withConfigProcessorRegistrySupplier(final @NotNull Supplier<? extends Registry<ConfigProcessor<?>>> supplier) {
+        public @NotNull Builder withConfigProcessorRegistrySupplier(
+                final @NotNull Supplier<? extends Registry<ConfigProcessor<?>>> supplier) {
             this.configProcessorRegistrySupplier = Objects.requireNonNull(supplier);
             return this;
         }
@@ -235,19 +246,21 @@ public interface ContextManager {
          * @param supplier the supplier of registry objects
          * @return this builder, for chaining
          */
-        public @NotNull Builder withElementFactoryRegistrySupplier(final @NotNull Supplier<? extends Registry<ElementFactory<?, ?>>> supplier) {
+        public @NotNull Builder withElementFactoryRegistrySupplier(
+                final @NotNull Supplier<? extends Registry<ElementFactory<?, ?>>> supplier) {
             this.elementFactoryRegistrySupplier = Objects.requireNonNull(supplier);
             return this;
         }
 
         /**
-         * Specifies a supplier used to construct {@link Registry} objects to hold {@link Boolean}s extracted
-         * from element classes, which indicate their caching preference.
+         * Specifies a supplier used to construct {@link Registry} objects to hold {@link Boolean}s extracted from
+         * element classes, which indicate their caching preference.
          *
          * @param supplier the supplier of registry objects
          * @return this builder, for chaining
          */
-        public @NotNull Builder withCacheRegistrySupplier(final @NotNull Supplier<? extends Registry<Boolean>> supplier) {
+        public @NotNull Builder withCacheRegistrySupplier(
+                final @NotNull Supplier<? extends Registry<Boolean>> supplier) {
             this.cacheRegistrySupplier = Objects.requireNonNull(supplier);
             return this;
         }
@@ -259,7 +272,8 @@ public interface ContextManager {
          * @param function the function used to create ElementContext.Source instances
          * @return this builder, for chaining
          */
-        public @NotNull Builder withElementContextSourceFunction(final @NotNull QuadFunction<? super Registry<ConfigProcessor<?>>, ? super Registry<ElementFactory<?, ?>>, ? super Registry<Boolean>, ? super KeyExtractor, ? extends ElementContext.Source> function) {
+        public @NotNull Builder withElementContextSourceFunction(
+                final @NotNull QuadFunction<? super Registry<ConfigProcessor<?>>, ? super Registry<ElementFactory<?, ?>>, ? super Registry<Boolean>, ? super KeyExtractor, ? extends ElementContext.Source> function) {
             this.elementContextSourceFunction = Objects.requireNonNull(function);
             return this;
         }
@@ -271,7 +285,8 @@ public interface ContextManager {
          * @param function the function used to create ContextManagers
          * @return this builder, for chaining
          */
-        public @NotNull Builder withContextManagerFunction(final @NotNull TriFunction<? super ElementInspector, ? super ElementTypeIdentifier, ? super ElementContext.Source, ? extends ContextManager> function) {
+        public @NotNull Builder withContextManagerFunction(
+                final @NotNull TriFunction<? super ElementInspector, ? super ElementTypeIdentifier, ? super ElementContext.Source, ? extends ContextManager> function) {
             this.contextManagerFunction = Objects.requireNonNull(function);
             return this;
         }
@@ -335,10 +350,12 @@ public interface ContextManager {
             return contextManagerFunction.apply(elementInspector, elementTypeIdentifier, elementContextSource);
         }
 
-        private ElementContext.Source getElementContextSource(final Registry<ConfigProcessor<?>> configProcessorRegistry,
+        private ElementContext.Source getElementContextSource(
+                final Registry<ConfigProcessor<?>> configProcessorRegistry,
                 final Registry<ElementFactory<?, ?>> elementFactoryRegistry, final Registry<Boolean> cacheRegistry,
                 final KeyExtractor typeKeyExtractor) {
-            return elementContextSourceFunction.apply(configProcessorRegistry, elementFactoryRegistry, cacheRegistry, typeKeyExtractor);
+            return elementContextSourceFunction.apply(configProcessorRegistry, elementFactoryRegistry, cacheRegistry,
+                    typeKeyExtractor);
         }
 
         /**
@@ -360,7 +377,7 @@ public interface ContextManager {
                     mappingProcessorSource);
 
             final ProcessorResolver processorResolver = getProcessorResolver();
-            final  ElementInspector elementInspector = getElementInspector(factoryResolver, processorResolver);
+            final ElementInspector elementInspector = getElementInspector(factoryResolver, processorResolver);
 
             final Registry<ConfigProcessor<?>> configProcessorRegistry = getConfigProcessorRegistry();
             final Registry<ElementFactory<?, ?>> elementFactoryRegistry = getElementFactoryRegistry();
