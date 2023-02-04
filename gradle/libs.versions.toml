@@ -8,7 +8,7 @@ adventure-key = { module = "net.kyori:adventure-key", version = "4.11.0" }
 
 commons-lang3 = { module = "org.apache.commons:commons-lang3", version = "3.12.0" }
 
-ethylene-mapper = { module = "com.github.steanky:ethylene-mapper", version = "0.17.0" }
+ethylene-mapper = { module = "com.github.steanky:ethylene-mapper", version = "0.18.0" }
 
 jetbrains-annotations = { module = "org.jetbrains:annotations", version = "23.0.0" }
 

@@ -9,6 +9,9 @@ repositories {
 
 dependencies {
     implementation(libs.commons.lang3)
-    api(libs.ethylene.mapper)
-    api(libs.adventure.key)
+    compileOnly(libs.ethylene.mapper)
+    compileOnly(libs.adventure.key)
+
+    testImplementation(libs.ethylene.mapper)
+    testImplementation(libs.adventure.key)
 }
