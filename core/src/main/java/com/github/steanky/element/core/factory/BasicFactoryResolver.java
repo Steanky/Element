@@ -12,6 +12,7 @@ import com.github.steanky.element.core.path.ElementPath;
 import com.github.steanky.element.core.util.ReflectionUtils;
 import com.github.steanky.ethylene.core.ConfigElement;
 import com.github.steanky.ethylene.core.ConfigPrimitive;
+import com.github.steanky.ethylene.core.collection.ArrayConfigList;
 import com.github.steanky.ethylene.core.collection.ConfigList;
 import com.github.steanky.ethylene.core.collection.ConfigNode;
 import com.github.steanky.ethylene.core.collection.LinkedConfigNode;
@@ -307,17 +308,36 @@ public class BasicFactoryResolver implements FactoryResolver {
                                 String keyValue = pathInfo.accessorMethod().getName();
 
                                 ConfigElement actualValue = nodeElement.get(keyValue);
+                                if (actualValue == null) {
+                                    continue;
+                                }
 
-                                if (actualValue == null || mismatch(actualValue)) {
+                                if (mismatch(actualValue)) {
                                     if (lazyCopy == null) {
                                         lazyCopy = new LinkedConfigNode(nodeElement);
                                     }
 
+                                    ElementPath relative = ElementPath.of(".").append(keyValue);
                                     if (pathInfo.isCollection()) {
-                                        lazyCopy.put(keyValue, ConfigList.of("."));
+                                        ConfigList pathList;
+                                        if (actualValue.isNode()) {
+                                            pathList = ConfigList.of(relative.toString());
+                                        }
+                                        else if (actualValue.isList()) {
+                                            int size = actualValue.asList().size();
+                                            pathList = new ArrayConfigList(size);
+                                            for (int i = 0; i < size; i++) {
+                                                pathList.add(ConfigPrimitive.of(relative.append(i).toString()));
+                                            }
+                                        }
+                                        else {
+                                            continue;
+                                        }
+
+                                        lazyCopy.put(keyValue, pathList);
                                     }
                                     else {
-                                        lazyCopy.put(keyValue, ConfigPrimitive.of("."));
+                                        lazyCopy.put(keyValue, ConfigPrimitive.of(relative.toString()));
                                     }
                                 }
                             }

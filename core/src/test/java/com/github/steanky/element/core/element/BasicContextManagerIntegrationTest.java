@@ -50,7 +50,8 @@ public class BasicContextManagerIntegrationTest {
         final ContainerCreator collectionCreator = new BasicContainerCreator();
 
         final FactoryResolver factoryResolver = new BasicFactoryResolver(keyParser, dataInspector, collectionCreator,
-                MappingProcessorSource.builder().ignoringLengths().build());
+                MappingProcessorSource.builder().ignoringLengths().withStandardTypeImplementations()
+                        .withStandardSignatures().build());
         final ProcessorResolver processorResolver = BasicProcessorResolver.INSTANCE;
         final ElementInspector elementInspector = new BasicElementInspector(factoryResolver, processorResolver);
 
@@ -74,7 +75,9 @@ public class BasicContextManagerIntegrationTest {
         contextManager.registerElementClass(TestInterfaceElement.class);
         contextManager.registerElementClass(InferredPath.class);
         contextManager.registerElementClass(InferredListPath.class);
+        contextManager.registerElementClass(NestedNoProcessor.class);
         contextManager.registerElementClass(InferredListPathNoExplicitChildName.class);
+        contextManager.registerElementClass(NestedNoProcessorList.class);
     }
 
     @Test
@@ -248,6 +251,37 @@ public class BasicContextManagerIntegrationTest {
 
         assertEquals(2, second.data.number);
         assertEquals("two", second.data.string);
+    }
+
+    @Test
+    void substituteDataPath() {
+        final ConfigNode node = ConfigNode.of("type", "nested_no_processor", "key",
+                ConfigNode.of("type", "simple_data", "value", 10));
+
+        final ElementContext data = contextManager.makeContext(node);
+        final NestedNoProcessor nestedElement = data.provide();
+
+        assertNotNull(nestedElement);
+        assertEquals(10, nestedElement.simpleElement.data.value);
+    }
+
+    @Test
+    void substituteDataPathList() {
+        final ConfigNode node = ConfigNode.of("type", "nested_no_processor_list", "key",
+                ConfigList.of(ConfigNode.of("type", "simple_data", "value", 10),
+                        ConfigNode.of("type", "simple_data", "value", 11),
+                        ConfigNode.of("type", "simple_data", "value", 12)));
+
+        final ElementContext data = contextManager.makeContext(node);
+        final NestedNoProcessorList nestedElement = data.provide();
+
+        assertNotNull(nestedElement);
+        List<SimpleData> elements = nestedElement.simpleElement;
+
+        assertEquals(3, elements.size());
+        assertEquals(10, elements.get(0).data.value);
+        assertEquals(11, elements.get(1).data.value);
+        assertEquals(12, elements.get(2).data.value);
     }
 
     public interface TestInterface {
@@ -480,6 +514,36 @@ public class BasicContextManagerIntegrationTest {
 
         @DataObject
         public record Data(int value) {}
+    }
+
+    @Model("nested_no_processor_list")
+    public static class NestedNoProcessorList {
+        private final Data data;
+        private final List<SimpleData> simpleElement;
+
+        @FactoryMethod
+        public NestedNoProcessorList(Data data, @Child("simple_data") List<SimpleData> simpleElement) {
+            this.data = data;
+            this.simpleElement = simpleElement;
+        }
+
+        @DataObject
+        public record Data(@ChildPath("simple_data") List<String> key) {}
+    }
+
+    @Model("nested_no_processor")
+    public static class NestedNoProcessor {
+        private final Data data;
+        private final SimpleData simpleElement;
+
+        @FactoryMethod
+        public NestedNoProcessor(Data data, @Child("simple_data") SimpleData simpleElement) {
+            this.data = data;
+            this.simpleElement = simpleElement;
+        }
+
+        @DataObject
+        public record Data(@ChildPath("simple_data") String key) {}
     }
 
     @Model("nested_element")

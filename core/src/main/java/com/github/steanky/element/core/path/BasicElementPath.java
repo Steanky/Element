@@ -22,6 +22,8 @@ class BasicElementPath implements ElementPath {
 
     private static final Node[] EMPTY_NODE_ARRAY = new Node[0];
     static final BasicElementPath EMPTY_PATH = new BasicElementPath(EMPTY_NODE_ARRAY);
+    private static final BasicElementPath RELATIVE_BASE = new BasicElementPath(new Node[]{CURRENT_NODE});
+    private static final BasicElementPath PREVIOUS_BASE = new BasicElementPath(new Node[]{PREVIOUS_NODE});
 
     private static final char DELIMITER = '/';
     private static final char ESCAPE = '\\';
@@ -53,6 +55,13 @@ class BasicElementPath implements ElementPath {
      * @return a normalized BasicElementPath
      */
     static @NotNull BasicElementPath parse(final @NotNull String path) {
+        if (path.equals(".")) {
+            return RELATIVE_BASE;
+        }
+        else if(path.equals("..")) {
+            return PREVIOUS_BASE;
+        }
+
         final int pathLength = path.length();
 
         final List<Node> nodes = new ArrayList<>();
