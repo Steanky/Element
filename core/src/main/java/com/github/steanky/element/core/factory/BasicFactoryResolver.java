@@ -10,7 +10,12 @@ import com.github.steanky.element.core.key.Constants;
 import com.github.steanky.element.core.key.KeyParser;
 import com.github.steanky.element.core.path.ElementPath;
 import com.github.steanky.element.core.util.ReflectionUtils;
+import com.github.steanky.ethylene.core.ConfigElement;
+import com.github.steanky.ethylene.core.ConfigPrimitive;
 import com.github.steanky.ethylene.core.collection.ConfigList;
+import com.github.steanky.ethylene.core.collection.ConfigNode;
+import com.github.steanky.ethylene.core.collection.LinkedConfigNode;
+import com.github.steanky.ethylene.core.processor.ConfigProcessException;
 import com.github.steanky.ethylene.core.processor.ConfigProcessor;
 import com.github.steanky.ethylene.mapper.MappingProcessorSource;
 import com.github.steanky.ethylene.mapper.type.Token;
@@ -56,6 +61,7 @@ public class BasicFactoryResolver implements FactoryResolver {
         this.processorSource = Objects.requireNonNull(processorSource);
     }
 
+    @SuppressWarnings("rawtypes")
     @Override
     public @NotNull ElementFactory<?, ?> resolveFactory(final @NotNull Class<?> elementClass,
             final @NotNull Mutable<ConfigProcessor<?>> processor) {
@@ -284,10 +290,74 @@ public class BasicFactoryResolver implements FactoryResolver {
         }
 
         if (processor.getValue() == null && dataClass != null) {
-            processor.setValue(processorSource.processorFor(Token.ofClass(dataClass)));
+            ConfigProcessor<?> delegate = processorSource.processorFor(Token.ofClass(dataClass));
+
+            ConfigProcessor<?> result;
+            if (data != null) {
+                Map<Key, PathFunction.PathInfo> infoMap = data.infoMap();
+                result = new ConfigProcessor<>() {
+                    @Override
+                    public Object dataFromElement(@NotNull ConfigElement element) throws ConfigProcessException {
+                        ConfigNode lazyCopy = null;
+                        if (element.isNode()) {
+                            ConfigNode nodeElement = element.asNode();
+
+                            for (Key key : infoMap.keySet()) {
+                                PathFunction.PathInfo pathInfo = infoMap.get(key);
+                                String keyValue = pathInfo.accessorMethod().getName();
+
+                                ConfigElement actualValue = nodeElement.get(keyValue);
+
+                                if (actualValue == null || mismatch(actualValue)) {
+                                    if (lazyCopy == null) {
+                                        lazyCopy = new LinkedConfigNode(nodeElement);
+                                    }
+
+                                    if (pathInfo.isCollection()) {
+                                        lazyCopy.put(keyValue, ConfigList.of("."));
+                                    }
+                                    else {
+                                        lazyCopy.put(keyValue, ConfigPrimitive.of("."));
+                                    }
+                                }
+                            }
+                        }
+
+                        return delegate.dataFromElement(lazyCopy != null ? lazyCopy : element);
+                    }
+
+                    @SuppressWarnings("unchecked")
+                    @Override
+                    public @NotNull ConfigElement elementFromData(Object o) throws ConfigProcessException {
+                        return ((ConfigProcessor) delegate).elementFromData(o);
+                    }
+                };
+            }
+            else {
+                result = delegate;
+            }
+
+            processor.setValue(result);
         }
 
         return buildFactory(finalFactoryConstructor, elementParameters, data);
+    }
+
+    private static boolean mismatch(ConfigElement configElement) {
+        if (configElement.isNode()) {
+            return true;
+        }
+
+        if (configElement.isList()) {
+            ConfigList list = configElement.asList();
+            for (ConfigElement child : list) {
+                if (child.isNode()) {
+                    return true;
+                }
+            }
+        }
+
+        return false;
     }
 
     @SuppressWarnings({"unchecked", "rawtypes"})
