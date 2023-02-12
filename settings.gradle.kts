@@ -6,7 +6,7 @@ if (localSettings.exists()) {
 }
 
 
-sequenceOf("core").forEach {
+sequenceOf("core", "autodoc").forEach {
     include(":${rootProject.name}-$it")
     project(":${rootProject.name}-$it").projectDir = file(it)
 }
