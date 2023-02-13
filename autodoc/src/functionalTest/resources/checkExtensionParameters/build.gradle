@@ -1,0 +1,11 @@
+plugins {
+    id 'java'
+    id 'com.github.steanky.element-autodoc'
+}
+
+elementAutodoc {
+    projectDescription = "Test description"
+    projectUrl = "www.example.com"
+    founded = 1676253017L
+    maintainers = [ "Steank", "Steank", "Steank" ]
+}

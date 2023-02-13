@@ -1,6 +1,7 @@
 plugins {
     `java-gradle-plugin`
     kotlin("jvm") version "1.8.20-Beta"
+    kotlin("plugin.serialization") version "1.8.0"
 }
 
 val functionalTest: SourceSet by sourceSets.creating
@@ -16,16 +17,17 @@ gradlePlugin {
     testSourceSets(functionalTest)
 }
 
-
-
 repositories {
     mavenCentral()
 }
 
 dependencies {
     implementation("org.jetbrains.kotlin:kotlin-stdlib:1.8.20-Beta")
+    implementation("org.jetbrains.kotlinx:kotlinx-serialization-json-jvm:1.4.1")
+    implementation(project(":element-core"))
 
     "functionalTestImplementation"("org.junit.jupiter:junit-jupiter-api:5.9.0")
+    "functionalTestImplementation"("org.jetbrains.kotlinx:kotlinx-serialization-json-jvm:1.4.1")
     "functionalTestRuntimeOnly"("org.junit.jupiter:junit-jupiter-engine:5.9.0")
     "functionalTestImplementation"(project)
 }
@@ -43,4 +45,10 @@ tasks.check {
 
 tasks.withType<Test>().configureEach {
     useJUnitPlatform()
+}
+
+kotlin {
+    jvmToolchain {
+        languageVersion.set(JavaLanguageVersion.of(17))
+    }
 }
