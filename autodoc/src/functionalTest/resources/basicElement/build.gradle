@@ -3,11 +3,23 @@ plugins {
     id 'com.github.steanky.element-autodoc'
 }
 
+repositories {
+    maven {
+        url 'https://dl.cloudsmith.io/public/steanky/element/maven/'
+    }
+    mavenCentral()
+}
+
+dependencies {
+    implementation 'com.github.steanky:element-core:0.13.3'
+}
+
 elementAutodoc {
     projectDescription = "Test description"
     projectUrl = "www.example.com"
     founded = 1676253017L
     maintainers = [ "Steank", "Steank", "Steank" ]
+    recordTime = false
 }
 
 tasks.named("elementAutodoc") {

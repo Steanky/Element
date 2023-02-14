@@ -1,5 +1,6 @@
-import kotlinx.serialization.json.Json
+import kotlinx.serialization.json.*
 import org.gradle.testkit.runner.GradleRunner
+import org.gradle.testkit.runner.TaskOutcome
 import org.junit.jupiter.api.AfterAll
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.Assertions.*
@@ -28,7 +29,7 @@ class AutodocPluginTest {
 
     private fun test(vararg args: String) {
         val testProjectFile = testProjectDir.toFile()
-        testProjectFile.listFiles().forEach {
+        testProjectFile.listFiles()?.forEach {
             it.deleteRecursively()
         }
 
@@ -42,9 +43,9 @@ class AutodocPluginTest {
         val baseFile = fileFromResource(callerName)
         val baseTargetFile = testProjectFile.resolve(callerName)
 
-        baseFile.listFiles().forEach {
+        baseFile.listFiles()?.forEach {
             it.copyRecursively(baseTargetFile.resolve(it.relativeTo(baseFile)), true) {
-                file: File, exception: IOException ->
+                    file: File, exception: IOException ->
                 println("IOException when copying resource $file, it will be skipped: $exception")
                 return@copyRecursively OnErrorAction.SKIP
             }
@@ -54,11 +55,19 @@ class AutodocPluginTest {
         list.add("elementAutodoc")
         list.addAll(args)
 
-        GradleRunner.create()
+        val result = GradleRunner.create()
                 .withProjectDir(baseTargetFile)
                 .withArguments(list)
                 .withPluginClasspath()
                 .build()
+
+        if (result.tasks.any { it.outcome == TaskOutcome.FAILED }) {
+            println(result.output)
+            fail<String>("Gradle build had a failed task; see above")
+        }
+        else {
+            println(result.output)
+        }
 
         val actual = baseTargetFile.resolve("build").resolve("elementAutodoc").resolve("model.json")
         val actualJson = Json.parseToJsonElement(actual.readText())
@@ -68,6 +77,11 @@ class AutodocPluginTest {
 
     @Test
     fun checkExtensionParameters() {
+        test()
+    }
+
+    @Test
+    fun basicElement() {
         test()
     }
 }

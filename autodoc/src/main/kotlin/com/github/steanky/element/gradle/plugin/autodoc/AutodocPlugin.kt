@@ -1,6 +1,7 @@
 package com.github.steanky.element.gradle.plugin.autodoc
 
 import kotlinx.serialization.Serializable
+import kotlinx.serialization.Transient
 import org.gradle.api.Plugin
 import org.gradle.api.Project
 import org.gradle.api.provider.ListProperty
@@ -11,8 +12,9 @@ fun AutodocPlugin.Extension.resolve(): Settings {
     val projectUrl = this.projectUrl.get()
     val founded = this.founded.get()
     val maintainers = this.maintainers.get()
+    val recordTime = this.recordTime.get()
 
-    return Settings(projectDescription, projectUrl, founded, maintainers)
+    return Settings(projectDescription, projectUrl, founded, maintainers, recordTime)
 }
 
 @Serializable
@@ -33,7 +35,8 @@ data class Parameter (val type: String,
 data class Settings(val projectDescription: String,
                     val projectUrl: String,
                     val founded: Long,
-                    val maintainers: List<String>)
+                    val maintainers: List<String>,
+                    @Transient val recordTime: Boolean = true)
 
 class AutodocPlugin : Plugin<Project> {
     interface Extension {
@@ -41,6 +44,7 @@ class AutodocPlugin : Plugin<Project> {
         val projectUrl: Property<String>
         val founded: Property<Long>
         val maintainers: ListProperty<String>
+        val recordTime: Property<Boolean>
     }
 
     override fun apply(project: Project) {
@@ -51,5 +55,6 @@ class AutodocPlugin : Plugin<Project> {
         ext.projectUrl.convention("")
         ext.founded.convention(System.currentTimeMillis())
         ext.maintainers.convention(listOf())
+        ext.recordTime.convention(true)
     }
 }

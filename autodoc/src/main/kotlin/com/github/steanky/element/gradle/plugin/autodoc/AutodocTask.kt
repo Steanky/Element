@@ -10,7 +10,10 @@ import com.github.steanky.element.core.key.Constants
 import com.sun.source.util.JavacTask
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.encodeToJsonElement
+import org.gradle.api.artifacts.Configuration
 import org.gradle.api.logging.Logger
+import org.gradle.api.tasks.Input
+import org.gradle.api.tasks.Internal
 import org.gradle.api.tasks.SourceTask
 
 import org.gradle.api.tasks.TaskAction
@@ -24,12 +27,17 @@ abstract class AutodocTask : SourceTask() {
         val PATTERN: Pattern = Pattern.compile(Constants.KEY_PATTERN)
     }
 
+    var targetConfiguration: Configuration = project.configurations.getAt("runtimeClasspath")
+        @Internal get
+
+    var ext: AutodocPlugin.Extension = project.extensions.getByType(AutodocPlugin.Extension::class.java)
+        @Input get
+
     @TaskAction
     fun generateAutodoc() {
-        val ext = project.extensions.getByType(AutodocPlugin.Extension::class.java)
         val settings = ext.resolve()
 
-        val model = Model(processClasses(), settings)
+        val model = Model(processClasses(settings).sortedBy { it.type }, settings)
 
         val folder = project.buildDir.resolve("elementAutodoc")
         folder.mkdir()
@@ -39,14 +47,19 @@ abstract class AutodocTask : SourceTask() {
         folder.resolve("model.json").writeText(json.toString())
     }
 
-    private fun processClasses() : List<Element> {
+    private fun processClasses(settings: Settings) : List<Element> {
         val files = source.files
         val compiler = ToolProvider.getSystemJavaCompiler()
+        println(compiler.javaClass)
         val logger = project.logger
-        val processTime = System.currentTimeMillis()
+
+        val processTime = if (settings.recordTime) { System.currentTimeMillis() } else 0
 
         compiler.getStandardFileManager(null, null, null).use {
             val sources = it.getJavaFileObjectsFromFiles(files).filter { it.kind == JavaFileObject.Kind.SOURCE }
+            it.handleOption("-cp", listOf(targetConfiguration.files.map { "$it" }.joinToString(":"))
+                    .listIterator())
+
             val javacTask = compiler.getTask(null, it, null, null, null, sources) as JavacTask
 
             var nullableModelAnnotation: com.github.steanky.element.core.annotation.Model? = null
@@ -59,7 +72,7 @@ abstract class AutodocTask : SourceTask() {
                 val modelAnnotation = nullableModelAnnotation as com.github.steanky.element.core.annotation.Model
                 val value = modelAnnotation.value
                 if (!PATTERN.matcher(value).matches()) {
-                    logger.warn("Model type ${it.simpleName} has invalid type name")
+                    logger.error("Model type ${it.simpleName} has invalid type name")
                 }
 
                 val name = it.getAnnotation(Name::class.java)?.value ?: it.simpleName.toString()
@@ -76,13 +89,13 @@ abstract class AutodocTask : SourceTask() {
         val elements = typeElement.enclosedElements
         val factoryMethods = elements.filter { it.getAnnotation(FactoryMethod::class.java) != null }
         if (factoryMethods.size > 1) {
-            logger.warn("More than one factory method found on ${typeElement.simpleName}")
+            logger.error("More than one factory method found on ${typeElement.simpleName}")
             return null
         }
 
         val factoryMethod = factoryMethods.firstOrNull()
         if (factoryMethod == null) {
-            logger.warn("Could not find valid factory method or constructor on ${typeElement.simpleName}")
+            logger.error("Could not find valid factory method or constructor on ${typeElement.simpleName}")
             return null
         }
 
@@ -95,29 +108,29 @@ abstract class AutodocTask : SourceTask() {
                 }
 
                 if (dataParameters.size > 1) {
-                    logger.warn("More than one data parameter found in ${typeElement.simpleName}")
+                    logger.error("More than one data parameter found in ${typeElement.simpleName}")
                     return null
                 }
 
-                return dataParameters.firstOrNull()?.asType() as TypeElement
+                return dataParameters.firstOrNull()?.asType() as TypeElement?
             }
             ElementKind.METHOD -> {
                 val executable = factoryMethod as ExecutableElement
                 if (!executable.modifiers.contains(Modifier.STATIC)) {
-                    logger.warn("FactoryMethod in ${typeElement.simpleName} is not static")
+                    logger.error("FactoryMethod in ${typeElement.simpleName} is not static")
                     return null
                 }
 
                 val type = executable.returnType as TypeElement
                 val qualifiedName = type.qualifiedName.toString()
                 if (qualifiedName != ElementFactory::class.java.canonicalName) {
-                    logger.warn("FactoryMethod in ${typeElement.simpleName} does not return an ElementFactory")
+                    logger.error("FactoryMethod in ${typeElement.simpleName} does not return an ElementFactory")
                     return null
                 }
 
                 val typeParameters = type.typeParameters
                 if (typeParameters.size != 2) {
-                    logger.warn("FactoryMethod return type in ${typeElement.simpleName} does not have the right " +
+                    logger.error("FactoryMethod return type in ${typeElement.simpleName} does not have the right " +
                             "number of parameters")
                     return null
                 }
@@ -125,7 +138,7 @@ abstract class AutodocTask : SourceTask() {
                 return typeParameters[0].asType() as TypeElement
             }
             else -> {
-                logger.warn("FactoryMethod in ${typeElement.simpleName} declared on ${factoryMethod.kind}")
+                logger.error("FactoryMethod in ${typeElement.simpleName} declared on ${factoryMethod.kind}")
                 return null
             }
         }
@@ -156,7 +169,7 @@ abstract class AutodocTask : SourceTask() {
             }
         }
 
-        logger.warn("Could not infer parameters for ${dataElement.simpleName}, as it is neither a record nor does " +
+        logger.error("Could not infer parameters for ${dataElement.simpleName}, as it is neither a record nor does " +
                 "its element class provide any Parameter annotations")
         return listOf()
     }
