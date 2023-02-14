@@ -4,7 +4,13 @@
             "type": "test.model",
             "name": "SimpleElement",
             "description": "",
-            "parameters": [],
+            "parameters": [
+                {
+                    "type": "string",
+                    "name": "data",
+                    "behavior": ""
+                }
+            ],
             "lastUpdated": 0
         }
     ],

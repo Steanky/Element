@@ -19,6 +19,11 @@ import org.gradle.api.tasks.SourceTask
 import org.gradle.api.tasks.TaskAction
 import java.util.regex.Pattern
 import javax.lang.model.element.*
+import javax.lang.model.type.ArrayType
+import javax.lang.model.type.DeclaredType
+import javax.lang.model.type.PrimitiveType
+import javax.lang.model.type.TypeKind
+import javax.lang.model.type.TypeMirror
 import javax.tools.JavaFileObject
 import javax.tools.ToolProvider
 
@@ -50,7 +55,6 @@ abstract class AutodocTask : SourceTask() {
     private fun processClasses(settings: Settings) : List<Element> {
         val files = source.files
         val compiler = ToolProvider.getSystemJavaCompiler()
-        println(compiler.javaClass)
         val logger = project.logger
 
         val processTime = if (settings.recordTime) { System.currentTimeMillis() } else 0
@@ -103,8 +107,17 @@ abstract class AutodocTask : SourceTask() {
             ElementKind.CONSTRUCTOR -> {
                 val executable = factoryMethod as ExecutableElement
                 val dataParameters = executable.parameters.filter {
-                    (it.getAnnotation(DataObject::class.java)
-                            ?: it.asType().getAnnotation(DataObject::class.java)) != null
+                    var dataObject = it.getAnnotation(DataObject::class.java)
+                    if (dataObject == null) {
+                        val mirror = it.asType()
+
+                        if (mirror.kind == TypeKind.DECLARED) {
+                            mirror as DeclaredType
+                            dataObject = mirror.asElement().getAnnotation(DataObject::class.java)
+                        }
+                    }
+
+                    dataObject != null
                 }
 
                 if (dataParameters.size > 1) {
@@ -112,7 +125,8 @@ abstract class AutodocTask : SourceTask() {
                     return null
                 }
 
-                return dataParameters.firstOrNull()?.asType() as TypeElement?
+                val element = dataParameters.firstOrNull() ?: return null
+                return (element.asType() as DeclaredType).asElement() as TypeElement
             }
             ElementKind.METHOD -> {
                 val executable = factoryMethod as ExecutableElement
@@ -159,9 +173,7 @@ abstract class AutodocTask : SourceTask() {
 
         if (dataElement.kind == ElementKind.RECORD) {
             return dataElement.recordComponents.map {
-                val typeElement = it.asType() as TypeElement
-
-                val type = extractType(typeElement)
+                val type = extractType(it.asType())
                 val name = it.simpleName.toString()
                 val behavior = it.getAnnotation(Description::class.java)?.value ?: ""
 
@@ -174,33 +186,80 @@ abstract class AutodocTask : SourceTask() {
         return listOf()
     }
 
-    private fun extractType(componentType: TypeElement): String {
+    private fun extractType(componentType: TypeMirror): String {
         val typeAnnotation = componentType.getAnnotation(Type::class.java)
         if (typeAnnotation != null) {
             return typeAnnotation.value
         }
 
-        when (componentType.qualifiedName.toString()) {
-            "java.lang.String" -> {
-                return "string"
+        val kind = componentType.kind
+        if (kind.isPrimitive) {
+            return when(kind) {
+                TypeKind.BOOLEAN -> "boolean"
+                TypeKind.BYTE, TypeKind.SHORT, TypeKind.INT, TypeKind.LONG -> "number"
+                TypeKind.CHAR -> "string"
+                TypeKind.FLOAT, TypeKind.DOUBLE -> "decimal"
+                else -> throw IllegalStateException("Unexpected kind")
             }
-            "boolean", "java.lang.Boolean" -> {
-                return "boolean"
-            }
-            "byte", "short", "int", "long", "java.lang.Byte", "java.lang.Short", "java.lang.Integer", "java.lang.Long" -> {
-                return "number"
-            }
-            "float", "double", "java.lang.Float", "java.lang.Double" -> {
-                return "decimal"
-            }
-            else -> {
-                val components = componentType.qualifiedName.split(".")
-                if (components.isEmpty()) {
-                    return ""
-                }
+        }
 
-                return components.last().lowercase()
+        when(kind) {
+            TypeKind.VOID, TypeKind.NONE, TypeKind.NULL, TypeKind.ERROR, TypeKind.TYPEVAR, TypeKind.WILDCARD,
+            TypeKind.PACKAGE, TypeKind.EXECUTABLE, TypeKind.OTHER, TypeKind.UNION, TypeKind.INTERSECTION,
+            TypeKind.MODULE -> return "unknown"
+            TypeKind.ARRAY -> {
+                componentType as ArrayType
+                return "list of ${extractType(componentType.componentType)}"
             }
+            TypeKind.DECLARED -> {
+                componentType as DeclaredType
+                val asElement = componentType.asElement() as TypeElement
+
+                when(asElement.qualifiedName.toString()) {
+                    "java.lang.String" -> {
+                        return "string"
+                    }
+                    "java.lang.Boolean" -> {
+                        return "boolean"
+                    }
+                    "java.lang.Byte", "java.lang.Short", "java.lang.Integer", "java.lang.Long" -> {
+                        return "number"
+                    }
+                    "java.lang.Float", "java.lang.Double" -> {
+                        return "decimal"
+                    }
+                    else -> {
+                        var element = asElement
+                        while (element.superclass.kind != TypeKind.NONE) {
+                            val name = element.qualifiedName.toString()
+                            if (name == "java.util.Set") {
+                                val contents = element.typeParameters.firstOrNull() ?: return "set of unknown"
+                                return "set of ${extractType(contents.asType())}"
+                            }
+
+                            if (name == "java.util.Collection") {
+                                val contents = element.typeParameters.firstOrNull() ?: return "list of unknown"
+                                return "list of ${extractType(contents.asType())}"
+                            }
+
+                            val superMirror = element.superclass
+                            if (superMirror.kind != TypeKind.DECLARED) {
+                                break
+                            }
+
+                            element = (superMirror as DeclaredType).asElement() as TypeElement
+                        }
+
+                        val components = asElement.qualifiedName.split(".")
+                        if (components.isEmpty()) {
+                            return ""
+                        }
+
+                        return components.last().lowercase()
+                    }
+                }
+            }
+            else -> throw IllegalStateException("Unexpected kind")
         }
     }
 }
