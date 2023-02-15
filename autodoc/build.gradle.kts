@@ -1,8 +1,14 @@
+import java.net.URI
+
 plugins {
+    `maven-publish`
     `java-gradle-plugin`
     kotlin("jvm") version "1.8.20-Beta"
     kotlin("plugin.serialization") version "1.8.0"
 }
+
+group = "com.github.steanky"
+version = "0.1.0"
 
 val functionalTest: SourceSet by sourceSets.creating
 
@@ -30,6 +36,8 @@ dependencies {
     "functionalTestImplementation"("org.jetbrains.kotlinx:kotlinx-serialization-json-jvm:1.4.1")
     "functionalTestRuntimeOnly"("org.junit.jupiter:junit-jupiter-engine:5.9.0")
     "functionalTestImplementation"(project)
+
+    println(project.name)
 }
 
 val functionalTestTask = tasks.register<Test>("functionalTest") {
@@ -50,5 +58,25 @@ tasks.withType<Test>().configureEach {
 kotlin {
     jvmToolchain {
         languageVersion.set(JavaLanguageVersion.of(17))
+    }
+}
+
+publishing {
+    publications {
+        create<MavenPublication>("maven") {
+            from(components["java"])
+        }
+    }
+
+    repositories {
+        maven {
+            name = project.name
+            url = URI.create("https://maven.cloudsmith.io/steanky/element/")
+
+            credentials {
+                username = System.getenv("CLOUDSMITH_USERNAME")
+                password = System.getenv("CLOUDSMITH_PASSWORD")
+            }
+        }
     }
 }
