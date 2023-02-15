@@ -5,8 +5,8 @@ import org.jetbrains.annotations.NotNull;
 import java.lang.annotation.*;
 
 /**
- * Specifies some documentation on an Element class. By convention, this documentation should act as a high-level
- * description of what the annotated element does.
+ * Specifies some documentation on for an Element class or parameter. By convention, this documentation should act as a
+ * high-level description of what the annotated element does.
  */
 @Documented
 @Retention(RetentionPolicy.SOURCE)
