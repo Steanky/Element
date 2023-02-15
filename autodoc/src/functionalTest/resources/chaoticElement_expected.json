@@ -3,6 +3,7 @@
         {
             "type": "test.model",
             "name": "ChaoticElement",
+            "group": "",
             "description": "",
             "parameters": [
                 {

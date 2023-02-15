@@ -4,18 +4,16 @@ import com.github.steanky.element.core.ElementFactory
 import com.github.steanky.element.core.annotation.DataObject
 import com.github.steanky.element.core.annotation.FactoryMethod
 import com.github.steanky.element.core.annotation.document.Description
+import com.github.steanky.element.core.annotation.document.Group
 import com.github.steanky.element.core.annotation.document.Name
 import com.github.steanky.element.core.annotation.document.Type
 import com.github.steanky.element.core.key.Constants
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.encodeToJsonElement
-import org.gradle.api.artifacts.Configuration
 import org.gradle.api.logging.Logger
-import org.gradle.api.tasks.Input
-import org.gradle.api.tasks.Internal
-import org.gradle.api.tasks.SourceTask
+import org.gradle.api.tasks.*
+import java.io.File
 
-import org.gradle.api.tasks.TaskAction
 import java.lang.RuntimeException
 import java.util.regex.Pattern
 import javax.annotation.processing.*
@@ -36,28 +34,22 @@ abstract class AutodocTask : SourceTask() {
         val PATTERN: Pattern = Pattern.compile(Constants.KEY_PATTERN)
     }
 
-    var targetConfiguration: Configuration = project.configurations.getAt("compileClasspath")
-        @Internal get
-
     var ext: AutodocPlugin.Extension = project.extensions.getByType(AutodocPlugin.Extension::class.java)
         @Input get
+
+    var outputFile: File = project.buildDir.resolve("elementAutodoc").resolve("model.json")
+        @OutputFile get
 
     @TaskAction
     fun generateAutodoc() {
         val settings = ext.resolve()
-
-        val model = Model(processClasses(settings).sortedBy { it.type }, settings)
-
-        val folder = project.buildDir.resolve("elementAutodoc")
-        folder.mkdir()
-
+        val model = Model(processClasses(source.files, settings).sortedBy { it.type }, settings)
         val json = Json.encodeToJsonElement(model)
 
-        folder.resolve("model.json").writeText(json.toString())
+        outputFile.writeText(json.toString())
     }
 
-    private fun processClasses(settings: Settings) : List<Element> {
-        val files = source.files
+    private fun processClasses(files: Iterable<File>, settings: Settings) : List<Element> {
         val compiler = ToolProvider.getSystemJavaCompiler()
         val logger = project.logger
 
@@ -69,8 +61,8 @@ abstract class AutodocTask : SourceTask() {
                 file.kind == JavaFileObject.Kind.SOURCE
             }
 
-            it.handleOption("-cp", listOf(targetConfiguration.files.map { "$it" }.joinToString(":"))
-                    .listIterator())
+            it.handleOption("-cp", listOf(project.configurations.getAt("compileClasspath").files.map { "$it" }
+                    .joinToString(":")).listIterator())
 
             val compilerTask = compiler.getTask(null, it, null, listOf("-proc:only"), null,
                     sources)
@@ -162,7 +154,7 @@ abstract class AutodocTask : SourceTask() {
                 return null
             }
 
-            logger.error("Element $this is missing a Model annotation")
+            logger.error("Element $this missing a Model annotation")
             return null
         }
 
@@ -174,9 +166,18 @@ abstract class AutodocTask : SourceTask() {
             return this.simpleName.toString()
         }
 
+        private fun javax.lang.model.element.Element.group(): String {
+            getAnnotation(Group::class.java)?.let { group ->
+                return group.value
+            }
+
+            logger.error("Element $this missing a Group annotation")
+            return ""
+        }
+
         private fun javax.lang.model.element.Element.type(): String? {
-            getAnnotation(Type::class.java)?.let { name ->
-                return name.value
+            getAnnotation(Type::class.java)?.let { type ->
+                return type.value
             }
 
             return null
@@ -276,13 +277,14 @@ abstract class AutodocTask : SourceTask() {
 
             elements.forEach { element ->
                 element.toTypeElement()?.model()?.let { (model, typeElement) ->
-                    val parameterList = processParameters(typeElement)
-
                     val type = model.value
                     val name = typeElement.name()
+                    val group = typeElement.group()
                     val description = typeElement.description()
 
-                    elementList.add(Element(type, name, description, parameterList, processTime))
+                    val parameterList = processParameters(typeElement)
+
+                    elementList.add(Element(type, name, group, description, parameterList, processTime))
                 }
             }
 

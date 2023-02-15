@@ -53,6 +53,7 @@ class AutodocPluginTest {
 
         val list = mutableListOf<String>()
         list.add("elementAutodoc")
+        list.add("--stacktrace")
         list.addAll(args)
 
         val result = GradleRunner.create()

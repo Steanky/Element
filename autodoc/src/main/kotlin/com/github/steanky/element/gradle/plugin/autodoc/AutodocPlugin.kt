@@ -23,6 +23,7 @@ data class Model(val elements: List<Element>, val settings: Settings)
 @Serializable
 data class Element(val type: String,
                    val name: String,
+                   val group: String,
                    val description: String,
                    val parameters: List<Parameter>,
                    val lastUpdated: Long)
