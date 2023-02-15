@@ -2,6 +2,7 @@ package com.github.steanky.element.gradle.plugin.autodoc
 
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.Transient
+import kotlinx.serialization.json.JsonObject
 import org.gradle.api.Plugin
 import org.gradle.api.Project
 import org.gradle.api.provider.ListProperty
@@ -26,18 +27,21 @@ data class Element(val type: String,
                    val group: String,
                    val description: String,
                    val parameters: List<Parameter>,
-                   val lastUpdated: Long)
+                   val lastUpdated: Long,
+                   val metadata: JsonObject = JsonObject(mapOf()))
 
 @Serializable
 data class Parameter (val type: String,
                       val name: String,
-                      val behavior: String)
+                      val behavior: String,
+                      val metadata: JsonObject = JsonObject(mapOf()))
 @Serializable
 data class Settings(val projectDescription: String,
                     val projectUrl: String,
                     val founded: Long,
                     val maintainers: List<String>,
-                    @Transient val recordTime: Boolean = true)
+                    @Transient val recordTime: Boolean = true,
+                    val metadata: JsonObject = JsonObject(mapOf()))
 
 class AutodocPlugin : Plugin<Project> {
     interface Extension {
