@@ -291,6 +291,14 @@ abstract class AutodocTask : SourceTask() {
 
         private fun processParameters(typeElement: TypeElement): List<Parameter> {
             typeElement.dataType()?.let { dataType ->
+                val parameters = dataType
+                        .getAnnotationsByType(com.github.steanky.element.core.annotation.document.Parameter::class.java)
+                if (!parameters.isNullOrEmpty()) {
+                    return parameters.map { parameter ->
+                        Parameter(parameter.type, parameter.name, parameter.behavior)
+                    }
+                }
+
                 if (dataType.kind == ElementKind.RECORD) {
                     return dataType.recordComponents.map { component ->
                         val type = simpleTypeName(component, component.asType())
@@ -302,6 +310,7 @@ abstract class AutodocTask : SourceTask() {
                 }
             }
 
+            logger.error("Could not resolve parameters for $typeElement")
             return listOf()
         }
 
