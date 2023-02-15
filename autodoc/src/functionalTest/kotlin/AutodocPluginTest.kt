@@ -84,4 +84,9 @@ class AutodocPluginTest {
     fun basicElement() {
         test()
     }
+
+    @Test
+    fun chaoticElement() {
+        test()
+    }
 }

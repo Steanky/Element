@@ -1,0 +1,167 @@
+{
+    "elements": [
+        {
+            "type": "test.model",
+            "name": "ChaoticElement",
+            "description": "",
+            "parameters": [
+                {
+                    "type": "list of string",
+                    "name": "dataList",
+                    "behavior": ""
+                },
+                {
+                    "type": "list of string",
+                    "name": "dataArray",
+                    "behavior": ""
+                },
+                {
+                    "type": "set of string",
+                    "name": "dataSet",
+                    "behavior": ""
+                },
+                {
+                    "type": "list of list of set of whole number",
+                    "name": "messyList",
+                    "behavior": ""
+                },
+                {
+                    "type": "set of any",
+                    "name": "nonParameterizedSet",
+                    "behavior": ""
+                },
+                {
+                    "type": "any",
+                    "name": "genericParameter",
+                    "behavior": ""
+                },
+                {
+                    "type": "map of string -> list of string",
+                    "name": "map",
+                    "behavior": ""
+                },
+                {
+                    "type": "map of any",
+                    "name": "genericMap",
+                    "behavior": ""
+                },
+                {
+                    "type": "map of any -> string",
+                    "name": "objectToStringMap",
+                    "behavior": ""
+                },
+                {
+                    "type": "CustomData",
+                    "name": "customData",
+                    "behavior": ""
+                },
+                {
+                    "type": "list of string",
+                    "name": "wildcardList",
+                    "behavior": ""
+                },
+                {
+                    "type": "whole number",
+                    "name": "primitiveInt",
+                    "behavior": ""
+                },
+                {
+                    "type": "whole number",
+                    "name": "wrapperInt",
+                    "behavior": ""
+                },
+                {
+                    "type": "whole number",
+                    "name": "primitiveByte",
+                    "behavior": ""
+                },
+                {
+                    "type": "whole number",
+                    "name": "wrapperByte",
+                    "behavior": ""
+                },
+                {
+                    "type": "whole number",
+                    "name": "primitiveShort",
+                    "behavior": ""
+                },
+                {
+                    "type": "whole number",
+                    "name": "wrapperShort",
+                    "behavior": ""
+                },
+                {
+                    "type": "string",
+                    "name": "primitiveChar",
+                    "behavior": ""
+                },
+                {
+                    "type": "string",
+                    "name": "wrapperChar",
+                    "behavior": ""
+                },
+                {
+                    "type": "whole number",
+                    "name": "primitiveLong",
+                    "behavior": ""
+                },
+                {
+                    "type": "whole number",
+                    "name": "wrapperLong",
+                    "behavior": ""
+                },
+                {
+                    "type": "any",
+                    "name": "object",
+                    "behavior": ""
+                },
+                {
+                    "type": "list of any",
+                    "name": "wildcardListNoBounds",
+                    "behavior": ""
+                },
+                {
+                    "type": "decimal number",
+                    "name": "primitiveFloat",
+                    "behavior": ""
+                },
+                {
+                    "type": "decimal number",
+                    "name": "wrapperFloat",
+                    "behavior": ""
+                },
+                {
+                    "type": "decimal number",
+                    "name": "primitiveDouble",
+                    "behavior": ""
+                },
+                {
+                    "type": "decimal number",
+                    "name": "wrapperDouble",
+                    "behavior": ""
+                },
+                {
+                    "type": "boolean",
+                    "name": "primitiveBoolean",
+                    "behavior": ""
+                },
+                {
+                    "type": "boolean",
+                    "name": "wrapperBoolean",
+                    "behavior": ""
+                }
+            ],
+            "lastUpdated": 0
+        }
+    ],
+    "settings": {
+        "projectDescription": "Test description",
+        "projectUrl": "www.example.com",
+        "founded": 1676253017,
+        "maintainers": [
+            "Steank",
+            "Steank",
+            "Steank"
+        ]
+    }
+}
