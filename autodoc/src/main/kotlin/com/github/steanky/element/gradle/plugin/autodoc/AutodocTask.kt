@@ -116,18 +116,18 @@ abstract class AutodocTask : SourceTask() {
             setType = typeUtils.erasure(elementUtils.getTypeElement(base, "java.util.Set").asType())
             mapType = typeUtils.erasure(elementUtils.getTypeElement(base,"java.util.Map").asType())
 
-            stringType = typeUtils.erasure(elementUtils.getTypeElement(base, "java.lang.String").asType())
-            numberType = typeUtils.erasure(elementUtils.getTypeElement(base, "java.lang.Number").asType())
+            stringType = elementUtils.getTypeElement(base, "java.lang.String").asType()
+            numberType = elementUtils.getTypeElement(base, "java.lang.Number").asType()
 
-            objectType = typeUtils.erasure(elementUtils.getTypeElement(base, "java.lang.Object").asType())
-            booleanType = typeUtils.erasure(elementUtils.getTypeElement(base, "java.lang.Boolean").asType())
-            characterType = typeUtils.erasure(elementUtils.getTypeElement(base, "java.lang.Character").asType())
-            byteType = typeUtils.erasure(elementUtils.getTypeElement(base, "java.lang.Byte").asType())
-            shortType = typeUtils.erasure(elementUtils.getTypeElement(base, "java.lang.Short").asType())
-            integerType = typeUtils.erasure(elementUtils.getTypeElement(base, "java.lang.Integer").asType())
-            longType = typeUtils.erasure(elementUtils.getTypeElement(base, "java.lang.Long").asType())
-            floatType = typeUtils.erasure(elementUtils.getTypeElement(base, "java.lang.Float").asType())
-            doubleType = typeUtils.erasure(elementUtils.getTypeElement(base, "java.lang.Double").asType())
+            objectType = elementUtils.getTypeElement(base, "java.lang.Object").asType()
+            booleanType = elementUtils.getTypeElement(base, "java.lang.Boolean").asType()
+            characterType = elementUtils.getTypeElement(base, "java.lang.Character").asType()
+            byteType = elementUtils.getTypeElement(base, "java.lang.Byte").asType()
+            shortType = elementUtils.getTypeElement(base, "java.lang.Short").asType()
+            integerType = elementUtils.getTypeElement(base, "java.lang.Integer").asType()
+            longType = elementUtils.getTypeElement(base, "java.lang.Long").asType()
+            floatType = elementUtils.getTypeElement(base, "java.lang.Float").asType()
+            doubleType = elementUtils.getTypeElement(base, "java.lang.Double").asType()
         }
 
 
@@ -166,7 +166,7 @@ abstract class AutodocTask : SourceTask() {
             return this.simpleName.toString()
         }
 
-        private fun javax.lang.model.element.Element.group(): String {
+        private fun TypeElement.group(): String {
             getAnnotation(Group::class.java)?.let { group ->
                 return group.value
             }
@@ -303,20 +303,21 @@ abstract class AutodocTask : SourceTask() {
 
                 if (dataType.kind == ElementKind.RECORD) {
                     return dataType.recordComponents.map { component ->
-                        val type = simpleTypeName(component, component.asType())
+                        val type = component.type() ?: simpleTypeName(component.asType())
                         val name = component.name()
                         val behavior = component.description()
 
                         Parameter(type, name, behavior)
                     }
                 }
+
+                logger.error("Could not resolve parameters for $typeElement")
             }
 
-            logger.error("Could not resolve parameters for $typeElement")
             return listOf()
         }
 
-        private fun simpleTypeName(element: javax.lang.model.element.Element, componentType: TypeMirror): String {
+        private fun simpleTypeName(componentType: TypeMirror): String {
             val typeUtils = processingEnv.typeUtils
 
             return when(componentType.kind) {
@@ -324,7 +325,7 @@ abstract class AutodocTask : SourceTask() {
                 TypeKind.BYTE, TypeKind.SHORT, TypeKind.INT, TypeKind.LONG -> "whole number"
                 TypeKind.CHAR -> "string"
                 TypeKind.FLOAT, TypeKind.DOUBLE -> "decimal number"
-                TypeKind.ARRAY -> "list of ${simpleTypeName(element, (componentType as ArrayType).componentType)}"
+                TypeKind.ARRAY -> "list of ${simpleTypeName((componentType as ArrayType).componentType)}"
                 TypeKind.DECLARED -> {
                     componentType as DeclaredType
 
@@ -351,19 +352,18 @@ abstract class AutodocTask : SourceTask() {
                         return "any"
                     }
 
-                    element.type() ?:
-                    collectionType(element, "set", typeUtils, componentType, setType) ?:
-                    collectionType(element, "list", typeUtils, componentType, collectionType) ?:
-                    mapType(element, typeUtils, componentType) ?:
-                    (element.asType() as DeclaredType).asElement().simpleName.toString()
+                    collectionType("set", typeUtils, componentType, setType) ?:
+                    collectionType("list", typeUtils, componentType, collectionType) ?:
+                    mapType(typeUtils, componentType) ?:
+                    componentType.asElement().simpleName.toString()
                 }
                 TypeKind.TYPEVAR -> {
                     componentType as TypeVariable
-                    return simpleTypeName(element, componentType.upperBound)
+                    return simpleTypeName(componentType.upperBound)
                 }
                 TypeKind.WILDCARD -> {
                     componentType as WildcardType
-                    return simpleTypeName(element, componentType.extendsBound ?: objectType)
+                    return simpleTypeName(componentType.extendsBound ?: objectType)
                 }
                 else -> {
                     logger.error("Unrecognized type $componentType")
@@ -372,14 +372,14 @@ abstract class AutodocTask : SourceTask() {
             }
         }
 
-        private fun collectionType(element: javax.lang.model.element.Element, name: String, typeUtils: Types, component: DeclaredType, collectionType: TypeMirror): String? {
+        private fun collectionType(name: String, typeUtils: Types, component: DeclaredType, collectionType: TypeMirror): String? {
             if (typeUtils.isSameType(typeUtils.erasure(component), collectionType)) {
                 val typeArguments = component.typeArguments
                 if (typeArguments.size == 0) {
                     return "$name of any"
                 }
 
-                return "$name of ${simpleTypeName(element, typeArguments[0])}"
+                return "$name of ${simpleTypeName(typeArguments[0])}"
             }
 
             if (typeUtils.isAssignable(component, collectionType)) {
@@ -388,7 +388,7 @@ abstract class AutodocTask : SourceTask() {
 
                     val mirrorErasure = typeUtils.erasure(superMirror)
                     if (typeUtils.isSameType(collectionType, mirrorErasure)) {
-                        return "$name of ${simpleTypeName(element, superMirror.typeArguments[0])}"
+                        return "$name of ${simpleTypeName(superMirror.typeArguments[0])}"
                     }
                 }
 
@@ -398,14 +398,14 @@ abstract class AutodocTask : SourceTask() {
             return null
         }
 
-        private fun mapType(element: javax.lang.model.element.Element, typeUtils: Types, component: DeclaredType): String? {
+        private fun mapType(typeUtils: Types, component: DeclaredType): String? {
             if (typeUtils.isSameType(mapType, typeUtils.erasure(component))) {
                 val typeArguments = component.typeArguments
                 if (typeArguments.size != 2) {
                     return "map of any"
                 }
 
-                return "map of ${simpleTypeName(element, typeArguments[0])} -> ${simpleTypeName(element, typeArguments[1])}"
+                return "map of ${simpleTypeName(typeArguments[0])} -> ${simpleTypeName(typeArguments[1])}"
             }
 
             if (typeUtils.isAssignable(component, mapType)) {
@@ -415,7 +415,7 @@ abstract class AutodocTask : SourceTask() {
                     val mirorErasure = typeUtils.erasure(superMirror)
                     if (typeUtils.isSameType(mapType, mirorErasure)) {
                         val typeArguments = superMirror.typeArguments
-                        return "map of ${simpleTypeName(element, typeArguments[0])} -> ${simpleTypeName(element, typeArguments[1])}"
+                        return "map of ${simpleTypeName(typeArguments[0])} -> ${simpleTypeName(typeArguments[1])}"
                     }
                 }
 

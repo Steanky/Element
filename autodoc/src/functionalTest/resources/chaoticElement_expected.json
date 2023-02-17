@@ -150,6 +150,11 @@
                     "type": "boolean",
                     "name": "wrapperBoolean",
                     "behavior": ""
+                },
+                {
+                    "type": "list of CustomData",
+                    "name": "stringCollection",
+                    "behavior": ""
                 }
             ],
             "lastUpdated": 0

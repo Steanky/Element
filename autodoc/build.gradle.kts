@@ -8,7 +8,7 @@ plugins {
 }
 
 group = "com.github.steanky"
-version = "0.1.0"
+version = "0.1.1"
 
 val functionalTest: SourceSet by sourceSets.creating
 
@@ -63,8 +63,8 @@ kotlin {
 
 publishing {
     publications {
-        create<MavenPublication>("maven") {
-            from(components["java"])
+        create<MavenPublication>("pluginMaven") {
+            //from(components["java"])
         }
     }
 

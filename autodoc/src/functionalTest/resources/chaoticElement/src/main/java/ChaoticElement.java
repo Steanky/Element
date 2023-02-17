@@ -2,10 +2,7 @@ import com.github.steanky.element.core.annotation.Model;
 import com.github.steanky.element.core.annotation.FactoryMethod;
 import com.github.steanky.element.core.annotation.DataObject;
 
-import java.util.List;
-import java.util.Set;
-import java.util.HashSet;
-import java.util.Map;
+import java.util.*;
 
 @Model("test.model")
 public class ChaoticElement {
@@ -26,7 +23,7 @@ public class ChaoticElement {
             Byte wrapperByte, short primitiveShort, Short wrapperShort, char primitiveChar, Character wrapperChar,
             long primitiveLong, Long wrapperLong, Object object, List<?> wildcardListNoBounds, float primitiveFloat,
             Float wrapperFloat, double primitiveDouble, Double wrapperDouble, boolean primitiveBoolean,
-            Boolean wrapperBoolean) {
+            Boolean wrapperBoolean, Collection<CustomData> stringCollection) {
 
     }
 }
