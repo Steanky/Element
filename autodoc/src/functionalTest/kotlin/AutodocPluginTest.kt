@@ -90,4 +90,9 @@ class AutodocPluginTest {
     fun chaoticElement() {
         test()
     }
+
+    @Test
+    fun linkedElement() {
+        test()
+    }
 }

@@ -1,6 +1,8 @@
 package com.github.steanky.element.gradle.plugin.autodoc
 
 import com.github.steanky.element.core.ElementFactory
+import com.github.steanky.element.core.annotation.Child
+import com.github.steanky.element.core.annotation.ChildPath
 import com.github.steanky.element.core.annotation.DataObject
 import com.github.steanky.element.core.annotation.FactoryMethod
 import com.github.steanky.element.core.annotation.document.Description
@@ -131,7 +133,7 @@ abstract class AutodocTask : SourceTask() {
         }
 
 
-        private fun javax.lang.model.element.Element.toTypeElement(): TypeElement? {
+        private fun javax.lang.model.element.Element.asTypeElement(): TypeElement? {
             return when(kind) {
                 ElementKind.CLASS, ElementKind.RECORD -> {
                     this as TypeElement
@@ -171,7 +173,7 @@ abstract class AutodocTask : SourceTask() {
                 return group.value
             }
 
-            logger.error("Element $this missing a Group annotation")
+            logger.error("Element $this missing Group annotation")
             return ""
         }
 
@@ -192,7 +194,7 @@ abstract class AutodocTask : SourceTask() {
             return ""
         }
 
-        private fun TypeElement.dataType(): TypeElement? {
+        private fun TypeElement.dataType(): Pair<TypeElement, Map<String, VariableElement>>? {
             val factoryMethods = enclosedElements
                     .filter { it.kind == ElementKind.CONSTRUCTOR || it.kind == ElementKind.METHOD }
                     .map { it as ExecutableElement }
@@ -221,12 +223,12 @@ abstract class AutodocTask : SourceTask() {
                     }
 
                     val returnType = processingEnv.typeUtils.asElement(executableElement.returnType)?.let { element ->
-                        element.toTypeElement()?.let { typeElement ->
+                        element.asTypeElement()?.let { typeElement ->
                             if (typeElement.qualifiedName.toString() != ElementFactory::class.java.canonicalName) {
                                 val typeParameters = typeElement.typeParameters
                                 if (typeParameters.size == 2) {
-                                    typeParameters[0].toTypeElement()?.let {
-                                        return it
+                                    typeParameters[0].asTypeElement()?.let {
+                                        return Pair(it, mapOf())
                                     }
                                 }
                             }
@@ -237,14 +239,35 @@ abstract class AutodocTask : SourceTask() {
                     null
                 }
                 ElementKind.CONSTRUCTOR -> {
+                    val mappings = hashMapOf<String, VariableElement>()
                     val dataParameters = executableElement.parameters.mapNotNull { parameter ->
+                        parameter.getAnnotation(Child::class.java)?.let outer@{ child ->
+                            val childValue = child.value
+                            if (childValue != Constants.DEFAULT) {
+                                if (mappings.putIfAbsent(childValue, parameter) != null) {
+                                    logger.error("Child mapping $childValue occurs twice")
+                                }
+                            } else {
+                                parameter.asType().getAnnotation(com.github.steanky.element.core.annotation.Model::class.java)
+                                        ?.let { model ->
+                                            if (mappings.putIfAbsent(model.value, parameter) != null) {
+                                                logger.error("Ambiguous mapping to ${model.value}")
+                                            }
+
+                                            return@outer
+                                        }
+
+                                logger.error("Child mapping $childValue does not annotate an element type")
+                            }
+                        }
+
                         parameter.getAnnotation(DataObject::class.java)?.let {
                             return@mapNotNull parameter
                         }
 
                         processingEnv.typeUtils.asElement(parameter.asType())?.let { element ->
                             element.getAnnotation(DataObject::class.java)?.let {
-                                return@mapNotNull element.toTypeElement()
+                                return@mapNotNull element.asTypeElement()
                             }
                         }
                     }
@@ -254,7 +277,23 @@ abstract class AutodocTask : SourceTask() {
                         return null
                     }
 
-                    return dataParameters.firstOrNull()?.toTypeElement()
+                    if (dataParameters.isEmpty()) {
+                        val nestedDataObjects = this.enclosedElements.filter { it.kind == ElementKind.RECORD &&
+                                it.getAnnotation(DataObject::class.java) != null }
+
+                        if (nestedDataObjects.size > 1) {
+                            logger.error("More than one nested data object")
+                            return null
+                        }
+
+                        return nestedDataObjects.firstOrNull()?.asTypeElement()?.let {
+                            return Pair(it, mappings)
+                        }
+                    }
+
+                    return dataParameters.first().asTypeElement()?.let {
+                        return Pair(it, mappings)
+                    }
                 }
                 else -> error("Unexpected kind ${executableElement.kind}")
             }
@@ -276,7 +315,7 @@ abstract class AutodocTask : SourceTask() {
             }
 
             elements.forEach { element ->
-                element.toTypeElement()?.model()?.let { (model, typeElement) ->
+                element.asTypeElement()?.model()?.let { (model, typeElement) ->
                     val type = model.value
                     val name = typeElement.name()
                     val group = typeElement.group()
@@ -292,7 +331,7 @@ abstract class AutodocTask : SourceTask() {
         }
 
         private fun processParameters(typeElement: TypeElement): List<Parameter> {
-            typeElement.dataType()?.let { dataType ->
+            typeElement.dataType()?.let { (dataType, mappings) ->
                 val parameters = dataType
                         .getAnnotationsByType(com.github.steanky.element.core.annotation.document.Parameter::class.java)
                 if (!parameters.isNullOrEmpty()) {
@@ -303,18 +342,37 @@ abstract class AutodocTask : SourceTask() {
 
                 if (dataType.kind == ElementKind.RECORD) {
                     return dataType.recordComponents.map { component ->
-                        val type = component.type() ?: simpleTypeName(component.asType())
-                        val name = component.name()
-                        val behavior = component.description()
+                        val accessor = component.accessor
+
+                        val type = accessor.type() ?: tryLink(accessor, mappings) ?: simpleTypeName(component.asType())
+                        val name = accessor.name()
+                        val behavior = accessor.description()
 
                         Parameter(type, name, behavior)
                     }
                 }
 
-                logger.error("Could not resolve parameters for $typeElement")
+                logger.error("Could not resolve parameters for data class $typeElement as it is not a record")
             }
 
             return listOf()
+        }
+
+        private fun tryLink(component: ExecutableElement, map: Map<String, VariableElement>): String? {
+            component.getAnnotation(ChildPath::class.java)?.let { childPath ->
+                map[childPath.value]?.let { variableElement ->
+                    processingEnv.typeUtils.asElement(variableElement.asType()).asTypeElement()?.model()?.let { (model, _) ->
+                        return model.value
+                    }
+
+                    return null
+                }
+
+                logger.error("No child dependency named ${childPath.value}")
+                return null
+            }
+
+            return null
         }
 
         private fun simpleTypeName(componentType: TypeMirror): String {
