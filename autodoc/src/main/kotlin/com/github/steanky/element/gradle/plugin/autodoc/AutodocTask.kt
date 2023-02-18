@@ -413,7 +413,7 @@ abstract class AutodocTask : SourceTask() {
                     collectionType("set", typeUtils, componentType, setType) ?:
                     collectionType("list", typeUtils, componentType, collectionType) ?:
                     mapType(typeUtils, componentType) ?:
-                    componentType.asElement().simpleName.toString()
+                    return componentType.asElement().simpleName.toString()
                 }
                 TypeKind.TYPEVAR -> {
                     componentType as TypeVariable
@@ -425,7 +425,7 @@ abstract class AutodocTask : SourceTask() {
                 }
                 else -> {
                     logger.error("Unrecognized type $componentType")
-                    ""
+                    return ""
                 }
             }
         }
