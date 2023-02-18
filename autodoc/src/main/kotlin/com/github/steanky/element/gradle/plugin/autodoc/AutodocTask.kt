@@ -173,6 +173,10 @@ abstract class AutodocTask : SourceTask() {
                 return group.value
             }
 
+            super.processingEnv.elementUtils.getPackageOf(this)?.getAnnotation(Group::class.java)?.let { group ->
+                return group.value
+            }
+
             logger.error("Element $this missing Group annotation")
             return ""
         }
@@ -410,10 +414,9 @@ abstract class AutodocTask : SourceTask() {
                         return "any"
                     }
 
-                    collectionType("set", typeUtils, componentType, setType) ?:
+                    return collectionType("set", typeUtils, componentType, setType) ?:
                     collectionType("list", typeUtils, componentType, collectionType) ?:
-                    mapType(typeUtils, componentType) ?:
-                    return componentType.asElement().simpleName.toString()
+                    mapType(typeUtils, componentType) ?: componentType.asElement().simpleName.toString()
                 }
                 TypeKind.TYPEVAR -> {
                     componentType as TypeVariable
