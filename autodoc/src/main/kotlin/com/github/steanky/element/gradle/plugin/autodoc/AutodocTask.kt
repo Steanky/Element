@@ -236,6 +236,8 @@ abstract class AutodocTask : SourceTask() {
                                     }
                                 }
                             }
+
+                            typeElement
                         }
                     }
 
