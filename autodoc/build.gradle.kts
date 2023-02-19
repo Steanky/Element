@@ -34,10 +34,8 @@ dependencies {
 
     "functionalTestImplementation"("org.junit.jupiter:junit-jupiter-api:5.9.0")
     "functionalTestImplementation"("org.jetbrains.kotlinx:kotlinx-serialization-json-jvm:1.4.1")
+    "functionalTestImplementation"(project(":element-core"))
     "functionalTestRuntimeOnly"("org.junit.jupiter:junit-jupiter-engine:5.9.0")
-    "functionalTestImplementation"(project)
-
-    println(project.name)
 }
 
 val functionalTestTask = tasks.register<Test>("functionalTest") {

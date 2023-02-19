@@ -18,7 +18,7 @@
             "type": "test.other",
             "name": "OtherElement",
             "group": "",
-            "description": "",
+            "description": "This is a test element for testing purposes.",
             "parameters": [
                 {
                     "type": "string",

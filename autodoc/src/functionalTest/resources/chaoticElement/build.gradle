@@ -11,7 +11,7 @@ repositories {
 }
 
 dependencies {
-    implementation 'com.github.steanky:element-core:0.13.3'
+    implementation 'com.github.steanky:element-core:+'
 }
 
 elementAutodoc {

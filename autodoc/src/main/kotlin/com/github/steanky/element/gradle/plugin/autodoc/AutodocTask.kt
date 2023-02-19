@@ -63,8 +63,10 @@ abstract class AutodocTask : SourceTask() {
                 file.kind == JavaFileObject.Kind.SOURCE
             }
 
-            it.handleOption("-cp", listOf(project.configurations.getAt("compileClasspath").files.map { "$it" }
-                    .joinToString(":")).listIterator())
+            val classpathFiles = project.configurations.getAt("compileClasspath").files.map { "$it" }
+            logger.info("Compiling with classpath files $classpathFiles")
+
+            it.handleOption("-cp", listOf(classpathFiles.joinToString(":")).listIterator())
 
             val compilerTask = compiler.getTask(null, it, null, listOf("-proc:only"), null,
                     sources)
@@ -191,7 +193,7 @@ abstract class AutodocTask : SourceTask() {
 
         private fun javax.lang.model.element.Element.description(): String {
             getAnnotation(Description::class.java)?.let { description ->
-                return description.value
+                return description.value.trim()
             }
 
             logger.error("Element $this missing Description annotation")
