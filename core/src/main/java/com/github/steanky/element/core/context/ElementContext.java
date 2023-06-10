@@ -205,7 +205,15 @@ public interface ElementContext {
         Objects.requireNonNull(collectionSupplier);
         Objects.requireNonNull(exceptionHandler);
 
-        final ConfigList listElement = listPath.followList(root());
+        final ConfigList listElement;
+        try {
+            listElement = listPath.followList(root());
+        }
+        catch (ElementException e) {
+            exceptionHandler.accept(e);
+            return collectionSupplier.apply(0);
+        }
+
         final TCollection elementCollection = collectionSupplier.apply(listElement.size());
 
         ElementException exception = null;
@@ -421,7 +429,15 @@ public interface ElementContext {
         Objects.requireNonNull(mapSupplier);
         Objects.requireNonNull(exceptionHandler);
 
-        final ConfigNode nodeElement = nodePath.followNode(root());
+        final ConfigNode nodeElement;
+        try {
+            nodeElement = nodePath.followNode(root());
+        }
+        catch (ElementException e) {
+            exceptionHandler.accept(e);
+            return mapSupplier.apply(0);
+        }
+
         final TMap elementMap = mapSupplier.apply(nodeElement.size());
 
         ElementException exception = null;
