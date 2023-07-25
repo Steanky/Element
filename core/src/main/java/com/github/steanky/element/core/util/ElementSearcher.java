@@ -3,8 +3,12 @@ package com.github.steanky.element.core.util;
 import com.github.steanky.element.core.annotation.Model;
 import com.github.steanky.element.core.context.ContextManager;
 import org.jetbrains.annotations.NotNull;
+import sun.misc.Unsafe;
 
+import java.lang.invoke.MethodHandles;
+import java.lang.invoke.VarHandle;
 import java.lang.reflect.Field;
+import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
@@ -16,6 +20,48 @@ import java.util.function.Predicate;
  * {@link ContextManager}.
  */
 public final class ElementSearcher {
+    private static class Internal {
+        private static final VarHandle CLASSES_HANDLE;
+
+        static {
+            Field unsafeField;
+            try {
+                unsafeField = Unsafe.class.getDeclaredField("theUnsafe");
+            } catch (NoSuchFieldException e) {
+                throw new RuntimeException(e);
+            }
+
+            unsafeField.setAccessible(true);
+            Unsafe unsafe;
+            try {
+                unsafe = (Unsafe)unsafeField.get(null);
+            }
+            catch (IllegalAccessException e) {
+                throw new RuntimeException(e);
+            }
+            finally {
+                unsafeField.setAccessible(false);
+            }
+
+            final Field implLookupField;
+            try {
+                implLookupField = MethodHandles.Lookup.class.getDeclaredField("IMPL_LOOKUP");
+            } catch (NoSuchFieldException e) {
+                throw new RuntimeException(e);
+            }
+
+            final long offset = unsafe.staticFieldOffset(implLookupField);
+
+            final MethodHandles.Lookup lookup = (MethodHandles.Lookup) unsafe.getObject(MethodHandles.Lookup.class,
+                    offset);
+            try {
+                CLASSES_HANDLE = lookup.findVarHandle(ClassLoader.class, "classes", ArrayList.class);
+            } catch (NoSuchFieldException | IllegalAccessException e) {
+                throw new RuntimeException(e);
+            }
+        }
+    }
+
     private static ClassLoader current() {
         ClassLoader current = Thread.currentThread().getContextClassLoader();
         if (current == null) {
@@ -29,6 +75,12 @@ public final class ElementSearcher {
         return current;
     }
 
+    @SuppressWarnings("unchecked")
+    private static Class<?>[] getClassesField(ClassLoader classLoader)
+            throws NoSuchFieldException, NoSuchMethodException, InvocationTargetException, IllegalAccessException {
+        return ((ArrayList<Class<?>>)Internal.CLASSES_HANDLE.get(classLoader)).toArray(Class[]::new);
+    }
+
     /**
      * Searches the given {@link ClassLoader} for any class which possesses the {@link Model} annotation. The returned
      * list contains all such classes in the classloader. Note that this method does not perform any additional
@@ -40,31 +92,17 @@ public final class ElementSearcher {
      * @return a mutable collection of classes, contained in the classloader, which have the Model annotation
      * @throws IllegalArgumentException if any error occurs
      */
-    @SuppressWarnings("unchecked")
     public static @NotNull Collection<Class<?>> allElementsIn(@NotNull ClassLoader classLoader,
             @NotNull Predicate<? super Class<?>> filter) {
         Objects.requireNonNull(classLoader);
-
-        Field field;
-        try {
-            field = classLoader.getClass().getField("classes");
-        }
-        catch (NoSuchFieldException e) {
-            throw new IllegalArgumentException(e);
-        }
-
-        field.setAccessible(true);
+        Objects.requireNonNull(filter);
 
         final Class<?>[] classes;
         try {
-            //copy the array to avoid the possibility of any ConcurrentModificationExceptions in odd circumstances
-            //(new classes being dynamically loaded?)
-            classes = ((ArrayList<Class<?>>) field.get(classLoader)).toArray(Class[]::new);
-        } catch (IllegalAccessException e) {
-            throw new IllegalArgumentException(e);
+            classes = getClassesField(classLoader);
         }
-        finally {
-            field.setAccessible(false);
+        catch (NoSuchFieldException | InvocationTargetException | NoSuchMethodException | IllegalAccessException e) {
+            throw new IllegalArgumentException(e);
         }
 
         final List<Class<?>> candidates = new ArrayList<>();
