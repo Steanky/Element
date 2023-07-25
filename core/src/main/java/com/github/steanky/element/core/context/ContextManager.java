@@ -20,6 +20,7 @@ import com.github.steanky.ethylene.mapper.QuadFunction;
 import org.apache.commons.lang3.function.TriFunction;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.Collection;
 import java.util.Objects;
 import java.util.function.BiFunction;
 import java.util.function.Function;
@@ -50,6 +51,16 @@ public interface ContextManager {
      * @throws ElementException if an exception occurs
      */
     void registerElementClass(final @NotNull Class<?> elementClass);
+
+    /**
+     * Registers element classes in bulk. This may be more efficient than registering one at a time with
+     * {@link ContextManager#registerElementClass(Class)}. Otherwise, behaves identically to registering iteratively.
+     *
+     * @param elementClasses the classes to register
+     * @throws ElementException if an exception occurs
+     * @throws NullPointerException if any elements in the collection are null
+     */
+    void registerElementClasses(final @NotNull Collection<? extends Class<?>> elementClasses);
 
     /**
      * Makes a {@link ElementContext} object from the given {@link ConfigContainer}.

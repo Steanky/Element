@@ -1,5 +1,6 @@
 package com.github.steanky.element.core.context;
 
+import com.github.steanky.element.core.ElementFactory;
 import com.github.steanky.element.core.ElementInspector;
 import com.github.steanky.element.core.ElementTypeIdentifier;
 import com.github.steanky.ethylene.core.collection.ConfigContainer;
@@ -7,6 +8,9 @@ import com.github.steanky.ethylene.core.processor.ConfigProcessor;
 import net.kyori.adventure.key.Key;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Map;
 import java.util.Objects;
 
 /**
@@ -52,6 +56,45 @@ public class BasicContextManager implements ContextManager {
             elementContextSource.cacheRegistry()
                     .register(elementKey, preference == ElementInspector.CachePreference.CACHE);
         }
+    }
+
+    @Override
+    public void registerElementClasses(@NotNull Collection<? extends Class<?>> elementClasses) {
+        Objects.requireNonNull(elementClasses);
+        final Class<?>[] classes = elementClasses.toArray(Class[]::new);
+        if (classes.length == 0) {
+            return;
+        }
+
+        if (classes.length == 1) {
+            registerElementClass(classes[0]);
+            return;
+        }
+
+        final Collection<Map.Entry<Key, ConfigProcessor<?>>> processors = new ArrayList<>(classes.length);
+        final Collection<Map.Entry<Key, ElementFactory<?, ?>>> factories = new ArrayList<>(classes.length);
+        final Collection<Map.Entry<Key, Boolean>> cache = new ArrayList<>(classes.length);
+
+        for (final Class<?> elementClass : classes) {
+            Objects.requireNonNull(elementClass);
+            final Key elementKey = elementTypeIdentifier.identify(elementClass);
+            final ElementInspector.Information elementInformation = elementInspector.inspect(elementClass);
+            final ConfigProcessor<?> processor = elementInformation.processor();
+            if (processor != null) {
+                processors.add(Map.entry(elementKey, processor));
+            }
+
+            factories.add(Map.entry(elementKey, elementInformation.factory()));
+            final ElementInspector.CachePreference preference = elementInformation.cachePreference();
+
+            if (preference != ElementInspector.CachePreference.UNSPECIFIED) {
+                cache.add(Map.entry(elementKey, preference == ElementInspector.CachePreference.CACHE));
+            }
+        }
+
+        elementContextSource.processorRegistry().registerBulk(processors);
+        elementContextSource.factoryRegistry().registerBulk(factories);
+        elementContextSource.cacheRegistry().registerBulk(cache);
     }
 
     @Override

@@ -3,6 +3,8 @@ package com.github.steanky.element.core;
 import net.kyori.adventure.key.Key;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.Collection;
+import java.util.Map;
 import java.util.NoSuchElementException;
 
 /**
@@ -28,6 +30,13 @@ public interface Registry<TRegistrant> {
     void register(final @NotNull Key key, final @NotNull TRegistrant registrant);
 
     /**
+     * Bulk-registers entries into this registry. Duplicate keys will result in an {@link IllegalArgumentException}.
+     * Null keys or values will result in a {@link NullPointerException}.
+     * @param entries the entries to register
+     */
+    void registerBulk(final @NotNull Collection<? extends Map.Entry<? extends Key, ? extends TRegistrant>> entries);
+
+    /**
      * Obtains the registrant associated with the given key. If none exists, an exception is thrown.
      *
      * @param key the key associated with the registrant
@@ -46,8 +55,8 @@ public interface Registry<TRegistrant> {
 
     /**
      * Atomically checks for registration and registers the given key-registrant pair. If a registrant is already
-     * associated with the given key, returns the old registrant (the backing map is unchanged). Otherwise, returns
-     * null.
+     * associated with the given key, returns the old registrant (the backing map is unchanged). Otherwise, registers
+     * the given registrant and returns {@code null}.
      *
      * @param key        the key to associate with the registrant
      * @param registrant the registrant associated with the key
