@@ -8,15 +8,16 @@ import com.github.steanky.element.core.key.KeyExtractor;
 import com.github.steanky.element.core.path.ElementPath;
 import com.github.steanky.ethylene.core.collection.ConfigContainer;
 import com.github.steanky.ethylene.core.collection.ConfigNode;
+import com.github.steanky.ethylene.core.collection.LinkedConfigNode;
 import com.github.steanky.ethylene.core.processor.ConfigProcessException;
 import com.github.steanky.ethylene.core.processor.ConfigProcessor;
 import net.kyori.adventure.key.Key;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Unmodifiable;
 
-import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
+import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * Basic implementation of {@link ElementContext}.
@@ -26,7 +27,6 @@ public class BasicElementContext implements ElementContext {
     private final Registry<ElementFactory<?, ?>> factoryRegistry;
     private final Registry<Boolean> cacheRegistry;
     private final KeyExtractor typeKeyExtractor;
-    private final ConfigContainer root;
     private final ConfigContainer rootCopy;
     private final Map<ElementPath, DataInfo> dataObjects;
     private final Map<ElementPath, Object> elementObjects;
@@ -51,12 +51,11 @@ public class BasicElementContext implements ElementContext {
         this.factoryRegistry = Objects.requireNonNull(factoryRegistry);
         this.cacheRegistry = Objects.requireNonNull(cacheRegistry);
         this.typeKeyExtractor = Objects.requireNonNull(typeKeyExtractor);
-        this.root = rootContainer.copy();
         this.rootCopy = rootContainer.immutableCopy();
 
-        this.dataObjects = new HashMap<>(4);
-        this.elementObjects = new HashMap<>(4);
-        this.typeMap = new HashMap<>(4);
+        this.dataObjects = new ConcurrentHashMap<>(4);
+        this.elementObjects = new ConcurrentHashMap<>(4);
+        this.typeMap = new ConcurrentHashMap<>(4);
     }
 
     @SuppressWarnings("unchecked")
@@ -66,13 +65,13 @@ public class BasicElementContext implements ElementContext {
         final ElementPath absolutePath = path.toAbsolute();
 
         Key objectType = typeMap.get(absolutePath);
-
         final ConfigNode dataNode;
         if (objectType == null) {
-            dataNode = absolutePath.followNode(root);
+            ConfigNode tempMutable = new LinkedConfigNode(absolutePath.followNode(rootCopy));
+            objectType = typeKeyExtractor.extractKey(tempMutable);
+            typeKeyExtractor.removeKey(tempMutable);
+            dataNode = tempMutable.immutableCopy();
 
-            objectType = typeKeyExtractor.extractKey(dataNode);
-            typeKeyExtractor.removeKey(dataNode);
             typeMap.put(absolutePath, objectType);
         } else {
             dataNode = null;
@@ -89,30 +88,27 @@ public class BasicElementContext implements ElementContext {
             return (TElement) elementObjects.get(absolutePath);
         }
 
-        final DataInfo dataInfo;
-        if (dataObjects.containsKey(absolutePath)) {
-            dataInfo = dataObjects.get(absolutePath);
-        } else {
+        final Key objectTypeFinal = objectType;
+        final DataInfo dataInfo = dataObjects.computeIfAbsent(absolutePath, keyPath -> {
             try {
-                final ConfigNode configuration = dataNode != null ? dataNode : absolutePath.followNode(root);
-                final Object data = processorRegistry.contains(objectType) ?
-                        processorRegistry.lookup(objectType).dataFromElement(configuration) : null;
+                final ConfigNode configuration = dataNode != null ? dataNode : keyPath.followNode(rootCopy);
+                final Object data = processorRegistry.contains(objectTypeFinal) ?
+                        processorRegistry.lookup(objectTypeFinal).dataFromElement(configuration) : null;
 
-                dataInfo = new DataInfo(data, objectType);
-                dataObjects.put(absolutePath, dataInfo);
+                return new DataInfo(data, objectTypeFinal);
             } catch (ConfigProcessException e) {
-                throw new ElementException("configuration error deserializing data at path " + absolutePath, e);
+                throw new ElementException("configuration error deserializing data at path " + keyPath, e);
             }
-        }
-
-        final TElement element = (TElement) ((ElementFactory<Object, Object>) factoryRegistry.lookup(
-                dataInfo.type)).make(dataInfo.data, absolutePath, this, dependencyProvider);
+        });
 
         if (cacheElement) {
-            elementObjects.put(absolutePath, element);
+            return (TElement) elementObjects.computeIfAbsent(absolutePath, elementPath ->
+                    ((ElementFactory<Object, Object>) factoryRegistry.lookup(dataInfo.type))
+                            .make(dataInfo.data, elementPath, this, dependencyProvider));
         }
 
-        return element;
+        return (TElement) ((ElementFactory<Object, Object>) factoryRegistry.lookup(dataInfo.type))
+                .make(dataInfo.data, absolutePath, this, dependencyProvider);
     }
 
     @Override
