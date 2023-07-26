@@ -89,22 +89,34 @@ public class BasicElementContext implements ElementContext {
         }
 
         final Key objectTypeFinal = objectType;
-        final DataInfo dataInfo = dataObjects.computeIfAbsent(absolutePath, keyPath -> {
+        DataInfo dataInfo = dataObjects.get(absolutePath);
+        if (dataInfo == null) {
             try {
-                final ConfigNode configuration = dataNode != null ? dataNode : keyPath.followNode(rootCopy);
+                final ConfigNode configuration = dataNode != null ? dataNode : absolutePath.followNode(rootCopy);
                 final Object data = processorRegistry.contains(objectTypeFinal) ?
                         processorRegistry.lookup(objectTypeFinal).dataFromElement(configuration) : null;
 
-                return new DataInfo(data, objectTypeFinal);
+                dataInfo = new DataInfo(data, objectTypeFinal);
+                DataInfo newObject = dataObjects.putIfAbsent(absolutePath, dataInfo);
+                if (newObject != null) {
+                    dataInfo = newObject;
+                }
             } catch (ConfigProcessException e) {
-                throw new ElementException("configuration error deserializing data at path " + keyPath, e);
+                throw new ElementException("configuration error deserializing data at path " + absolutePath, e);
             }
-        });
+        }
 
+        final DataInfo finalDataInfo = dataInfo;
         if (cacheElement) {
-            return (TElement) elementObjects.computeIfAbsent(absolutePath, elementPath ->
-                    ((ElementFactory<Object, Object>) factoryRegistry.lookup(dataInfo.type))
-                            .make(dataInfo.data, elementPath, this, dependencyProvider));
+            final Object elementObject = elementObjects.get(absolutePath);
+            if (elementObject != null) {
+                return (TElement) elementObject;
+            }
+
+            TElement object = (TElement) ((ElementFactory<Object, Object>) factoryRegistry.lookup(finalDataInfo.type))
+                    .make(finalDataInfo.data, absolutePath, this, dependencyProvider);
+            TElement newObject = (TElement) elementObjects.putIfAbsent(absolutePath, object);
+            return newObject != null ? newObject : object;
         }
 
         return (TElement) ((ElementFactory<Object, Object>) factoryRegistry.lookup(dataInfo.type))
