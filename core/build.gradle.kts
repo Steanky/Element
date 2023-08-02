@@ -11,7 +11,9 @@ dependencies {
     implementation(libs.commons.lang3)
     compileOnly(libs.ethylene.mapper)
     compileOnly(libs.adventure.key)
+    compileOnly(libs.reflections)
 
     testImplementation(libs.ethylene.mapper)
     testImplementation(libs.adventure.key)
+    testImplementation(libs.reflections)
 }
