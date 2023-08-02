@@ -12,7 +12,9 @@ import java.lang.reflect.Type;
 import java.util.function.Supplier;
 
 /**
- * Contains utility methods designed to validate various conditions, usually in a reflection-related context.
+ * Contains utility methods designed to validate various conditions, usually in a reflection-related context. These
+ * methods are public for cross-package access within Element, but are not part of the public API and may be changed or
+ * removed at any time.
  */
 @ApiStatus.Internal
 public final class Validate {

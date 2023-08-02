@@ -30,9 +30,6 @@ import static com.github.steanky.element.core.util.Validate.*;
  * "named" dependencies by declaring a single {@link Key} object as a parameter.
  */
 public class ModuleDependencyProvider implements DependencyProvider {
-    @SuppressWarnings({"unchecked"})
-    private static final Map.Entry<Token<?>, Map<String, Supplier<?>>>[] EMPTY_ENTRY_ARRAY = new Map.Entry[0];
-
     private final DependencyModule module;
     private final Map<Token<?>, Map<String, Supplier<?>>> dependencyMap;
 
@@ -42,6 +39,7 @@ public class ModuleDependencyProvider implements DependencyProvider {
      * @param keyParser the {@link KeyParser} object used to convert strings to keys
      * @param module    the {@link DependencyModule} object to use
      */
+    @SuppressWarnings("unchecked")
     public ModuleDependencyProvider(final @NotNull KeyParser keyParser, final @NotNull DependencyModule module) {
         Objects.requireNonNull(keyParser);
         this.module = Objects.requireNonNull(module);
@@ -123,7 +121,7 @@ public class ModuleDependencyProvider implements DependencyProvider {
         }
 
         final Map.Entry<Token<?>, Map<String, Supplier<?>>>[] array = dependencyMap.entrySet()
-                .toArray(EMPTY_ENTRY_ARRAY);
+                .toArray(Map.Entry[]::new);
         for (int i = 0; i < array.length; i++) {
             final Map.Entry<Token<?>, Map<String, Supplier<?>>> entry = array[i];
 

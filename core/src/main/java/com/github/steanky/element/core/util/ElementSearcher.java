@@ -23,7 +23,7 @@ public final class ElementSearcher {
      * @return an unmodifiable set of classes contained in the given package
      */
     public static @NotNull @Unmodifiable Set<Class<?>> getElementClassesInPackage(@NotNull String packageName) {
-        Objects.requireNonNull(packageName, "packageName");
+        Objects.requireNonNull(packageName);
         return Set.copyOf(new Reflections(new ConfigurationBuilder().forPackage(packageName))
                 .getTypesAnnotatedWith(Model.class));
     }
