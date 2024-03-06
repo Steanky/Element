@@ -1,14 +1,17 @@
 metadata.format.version = "1.1"
 
 [versions]
+ethylene = "0.23.2"
 junit-jupiter = "5.9.0-M1"
+toolkit = "0.4.0"
 
 [libraries]
 adventure-key = { module = "net.kyori:adventure-key", version = "4.11.0" }
 
 commons-lang3 = { module = "org.apache.commons:commons-lang3", version = "3.12.0" }
 
-ethylene-mapper = { module = "com.github.steanky:ethylene-mapper", version = "0.21.0" }
+ethylene-core = { module = "com.github.steanky:ethylene-core", version.ref = "ethylene" }
+ethylene-mapper = { module = "com.github.steanky:ethylene-mapper", version.ref = "ethylene" }
 
 jetbrains-annotations = { module = "org.jetbrains:annotations", version = "23.0.0" }
 
@@ -18,3 +21,6 @@ junit-jupiter-engine = { module = "org.junit.jupiter:junit-jupiter-engine", vers
 mockito-junit-jupiter = { module = "org.mockito:mockito-junit-jupiter", version = "4.5.1" }
 
 reflections = { module = "org.reflections:reflections", version = "0.10.2" }
+
+toolkit-collection = { module = "com.github.steanky:toolkit-collection", version.ref = "toolkit" }
+toolkit-function = { module = "com.github.steanky:toolkit-function", version.ref = "toolkit" }
