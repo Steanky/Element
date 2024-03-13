@@ -1,8 +1,6 @@
 package com.github.steanky.element.core.context;
 
 import com.github.steanky.element.core.*;
-import com.github.steanky.element.core.data.BasicDataInspector;
-import com.github.steanky.element.core.data.DataInspector;
 import com.github.steanky.element.core.factory.BasicContainerCreator;
 import com.github.steanky.element.core.factory.BasicFactoryResolver;
 import com.github.steanky.element.core.factory.ContainerCreator;
@@ -82,11 +80,10 @@ public interface ContextManager {
         private Function<? super String, ? extends KeyParser> keyParserFunction = BasicKeyParser::new;
         private BiFunction<? super String, ? super KeyParser, ? extends KeyExtractor> keyExtractorFunction = BasicKeyExtractor::new;
         private Function<? super KeyParser, ? extends ElementTypeIdentifier> elementTypeIdentifierFunction = BasicElementTypeIdentifier::new;
-        private Function<? super KeyParser, ? extends DataInspector> dataInspectorFunction = BasicDataInspector::new;
         private Supplier<? extends ContainerCreator> containerCreatorSupplier = BasicContainerCreator::new;
         private Supplier<? extends MappingProcessorSource> mappingProcessorSourceSupplier = () -> MappingProcessorSource.builder()
                 .ignoringLengths().withStandardSignatures().withStandardTypeImplementations().build();
-        private QuadFunction<? super KeyParser, ? super DataInspector, ? super ContainerCreator, ? super MappingProcessorSource, ? extends FactoryResolver> factoryResolverFunction = BasicFactoryResolver::new;
+        private TriFunction<? super KeyParser, ? super ContainerCreator, ? super MappingProcessorSource, ? extends FactoryResolver> factoryResolverFunction = BasicFactoryResolver::new;
         private Supplier<? extends ProcessorResolver> processorResolverSupplier = () -> BasicProcessorResolver.INSTANCE;
         private BiFunction<? super FactoryResolver, ? super ProcessorResolver, ? extends ElementInspector> elementInspectorFunction = BasicElementInspector::new;
 
@@ -153,19 +150,6 @@ public interface ContextManager {
         }
 
         /**
-         * Specifies a function which produces a {@link DataInspector} implementation given the {@link KeyParser}. This
-         * is used to process data object {@link Class}s, searching for child data path keys.
-         *
-         * @param function the data inspector function
-         * @return this builder, for chaining
-         */
-        public @NotNull Builder withDataInspectorFunction(
-                final @NotNull Function<? super KeyParser, ? extends DataInspector> function) {
-            this.dataInspectorFunction = Objects.requireNonNull(function);
-            return this;
-        }
-
-        /**
          * Specifies the supplier which produces {@link ContainerCreator} instances. These are used to automatically
          * construct arrays, or implementations of {@link java.util.Collection}, when needed in order to instantiate an
          * element object that contains children.
@@ -181,14 +165,14 @@ public interface ContextManager {
 
         /**
          * Specifies the function used to construct {@link FactoryResolver} instances given the {@link KeyParser},
-         * {@link DataInspector}, {@link ContainerCreator}, and a {@link MappingProcessorSource}. These are used to
-         * automatically infer {@link ElementFactory} objects given an element {@link Class}.
+         * {@link ContainerCreator}, and a {@link MappingProcessorSource}. These are used to automatically infer
+         * {@link ElementFactory} objects given an element {@link Class}.
          *
          * @param function the factory resolver function
          * @return this builder, for chaining
          */
         public @NotNull Builder withFactoryResolverFunction(
-                final @NotNull QuadFunction<? super KeyParser, ? super DataInspector, ? super ContainerCreator, ? super MappingProcessorSource, ? extends FactoryResolver> function) {
+                final @NotNull TriFunction<? super KeyParser, ? super ContainerCreator, ? super MappingProcessorSource, ? extends FactoryResolver> function) {
             this.factoryResolverFunction = Objects.requireNonNull(function);
             return this;
         }
@@ -318,10 +302,6 @@ public interface ContextManager {
             return elementTypeIdentifierFunction.apply(keyParser);
         }
 
-        private DataInspector getDataInspector(final KeyParser keyParser) {
-            return dataInspectorFunction.apply(keyParser);
-        }
-
         private ContainerCreator getContainerCreator() {
             return containerCreatorSupplier.get();
         }
@@ -330,9 +310,9 @@ public interface ContextManager {
             return mappingProcessorSourceSupplier.get();
         }
 
-        private FactoryResolver getFactoryResolver(final KeyParser keyParser, final DataInspector dataInspector,
+        private FactoryResolver getFactoryResolver(final KeyParser keyParser,
                 final ContainerCreator containerCreator, final MappingProcessorSource mappingProcessorSource) {
-            return factoryResolverFunction.apply(keyParser, dataInspector, containerCreator, mappingProcessorSource);
+            return factoryResolverFunction.apply(keyParser, containerCreator, mappingProcessorSource);
         }
 
         private ProcessorResolver getProcessorResolver() {
@@ -381,10 +361,9 @@ public interface ContextManager {
             final String typeKeyName = getTypeKeyName();
             final KeyExtractor keyExtractor = getKeyExtractor(typeKeyName, keyParser);
             final ElementTypeIdentifier elementTypeIdentifier = getElementTypeIdentifier(keyParser);
-            final DataInspector dataInspector = getDataInspector(keyParser);
             final ContainerCreator containerCreator = getContainerCreator();
             final MappingProcessorSource mappingProcessorSource = getMappingProcessorSource();
-            final FactoryResolver factoryResolver = getFactoryResolver(keyParser, dataInspector, containerCreator,
+            final FactoryResolver factoryResolver = getFactoryResolver(keyParser, containerCreator,
                     mappingProcessorSource);
 
             final ProcessorResolver processorResolver = getProcessorResolver();

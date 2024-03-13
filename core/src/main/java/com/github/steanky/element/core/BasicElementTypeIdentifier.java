@@ -34,6 +34,6 @@ public class BasicElementTypeIdentifier implements ElementTypeIdentifier {
             return keyParser.parseKey(value);
         }
 
-        throw elementException(elementType, "no ElementModel annotation");
+        throw elementException(elementType, "No @Model annotation");
     }
 }

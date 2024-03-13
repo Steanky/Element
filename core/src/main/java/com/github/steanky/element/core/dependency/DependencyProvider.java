@@ -1,6 +1,5 @@
 package com.github.steanky.element.core.dependency;
 
-import com.github.steanky.element.core.ElementException;
 import com.github.steanky.ethylene.mapper.type.Token;
 import net.kyori.adventure.key.Key;
 import org.apache.commons.lang3.ClassUtils;
@@ -8,6 +7,8 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Objects;
+
+import static com.github.steanky.element.core.util.Validate.elementException;
 
 /**
  * A provider of dependencies. Provides methods to retrieve non-null objects of arbitrary types, as well as test for
@@ -21,7 +22,7 @@ public interface DependencyProvider {
     DependencyProvider EMPTY = new DependencyProvider() {
         @Override
         public <TDependency> TDependency provide(final @NotNull TypeKey<TDependency> key) {
-            throw new ElementException("unable to resolve dependency named '" + key + "'");
+            throw elementException("Unable to resolve dependenct: " + key);
         }
 
         @Override
@@ -106,7 +107,7 @@ public interface DependencyProvider {
                     }
                 }
 
-                throw new ElementException("unable to resolve dependency named '" + key + "'");
+                throw elementException("Unable to resolve dependency: " + key);
             }
 
             @Override

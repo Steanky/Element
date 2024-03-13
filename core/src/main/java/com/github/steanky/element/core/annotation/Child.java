@@ -2,8 +2,7 @@ package com.github.steanky.element.core.annotation;
 
 import com.github.steanky.element.core.context.ElementContext;
 import com.github.steanky.element.core.dependency.DependencyProvider;
-import com.github.steanky.element.core.key.Constants;
-import com.github.steanky.element.core.key.KeyString;
+import com.github.steanky.element.core.path.ElementPath;
 import org.jetbrains.annotations.NotNull;
 
 import java.lang.annotation.*;
@@ -17,10 +16,10 @@ import java.lang.annotation.*;
 @Target(ElementType.PARAMETER)
 public @interface Child {
     /**
-     * The identifier of this child dependency.
+     * The path of the child dependency, relative to the configuration object on which it is defined. Syntax is
+     * interpreted as if by calling {@link ElementPath#of(String)}.
      *
-     * @return the identifier of this child dependency, or {@link Constants#DEFAULT} to indicate that the value of its
-     * Model annotation should be used instead
+     * @return the value of this annotation
      */
-    @NotNull @KeyString String value() default Constants.DEFAULT;
+    @NotNull String value();
 }

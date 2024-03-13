@@ -1,15 +1,13 @@
 package com.github.steanky.element.core.util;
 
 import com.github.steanky.element.core.ElementException;
-import org.apache.commons.lang3.reflect.TypeUtils;
+import com.github.steanky.element.core.path.ElementPath;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.lang.reflect.Executable;
 import java.lang.reflect.Member;
 import java.lang.reflect.Method;
-import java.lang.reflect.Type;
-import java.util.function.Supplier;
 
 /**
  * Contains utility methods designed to validate various conditions, usually in a reflection-related context. These
@@ -30,9 +28,9 @@ public final class Validate {
      * @param exceptionMessage the message supplier which provides the error message
      */
     public static void validateParameterCount(final @NotNull Executable executable, final int count,
-            final @NotNull Supplier<String> exceptionMessage) {
+            final @NotNull String exceptionMessage) {
         if (executable.getParameterCount() != count) {
-            throw elementException(executable.getDeclaringClass(), exceptionMessage.get());
+            throw elementException(executable.getDeclaringClass(), exceptionMessage);
         }
     }
 
@@ -44,30 +42,12 @@ public final class Validate {
      * @param requiredModifiers the modifiers which must be present on the member
      */
     public static void validateModifiersPresent(final @NotNull Member member,
-            final @NotNull Supplier<String> exceptionMessage, int... requiredModifiers) {
+            final @NotNull String exceptionMessage, int... requiredModifiers) {
         final int actualModifiers = member.getModifiers();
 
         for (final int requiredModifier : requiredModifiers) {
             if ((actualModifiers & requiredModifier) == 0) {
-                throw elementException(member.getDeclaringClass(), exceptionMessage.get());
-            }
-        }
-    }
-
-    /**
-     * Validates that all the given modifiers are not present on the provided {@link Member}.
-     *
-     * @param member           the member to validate
-     * @param exceptionMessage the message supplier which provides the error message
-     * @param absentModifiers  the modifiers which must not be present on the member
-     */
-    public static void validateModifiersAbsent(final @NotNull Member member,
-            final @NotNull Supplier<String> exceptionMessage, final int... absentModifiers) {
-        final int actualModifiers = member.getModifiers();
-
-        for (final int absentModifier : absentModifiers) {
-            if ((actualModifiers & absentModifier) != 0) {
-                throw elementException(member.getDeclaringClass(), exceptionMessage.get());
+                throw elementException(member.getDeclaringClass(), exceptionMessage);
             }
         }
     }
@@ -80,51 +60,127 @@ public final class Validate {
      * @param exceptionMessage the message supplier which provides the error message
      */
     public static void validateReturnType(final @NotNull Method method, final @NotNull Class<?> requiredType,
-            final @NotNull Supplier<String> exceptionMessage) {
+            final @NotNull String exceptionMessage) {
         final Class<?> returnType = method.getReturnType();
         if (!requiredType.isAssignableFrom(returnType)) {
-            throw elementException(method.getDeclaringClass(), exceptionMessage.get());
+            throw elementException(method.getDeclaringClass(), exceptionMessage);
         }
     }
 
     /**
-     * Validates that the actual Type object is assignable to the required type.
+     * Constructs an {@link ElementException}.
      *
-     * @param owner            the owner class, displayed in the error message (if any)
-     * @param requiredType     the upper bound of the required type
-     * @param actualType       the actual type object
-     * @param exceptionMessage the message supplier which provides the error message
-     */
-    public static void validateType(final @NotNull Class<?> owner, final @NotNull Type requiredType,
-            final @NotNull Type actualType, final @NotNull Supplier<String> exceptionMessage) {
-        if (!TypeUtils.isAssignable(actualType, requiredType)) {
-            throw elementException(owner, exceptionMessage.get());
-        }
-    }
-
-    /**
-     * Creates a new {@link ElementException} instance in the context of the provided "owner" class and message.
-     *
-     * @param owner   the owner class
-     * @param message the message
+     * @param message the error message
      * @return a new ElementException
      */
-    public static @NotNull ElementException elementException(final @NotNull Class<?> owner,
+    public static @NotNull ElementException elementException(final @NotNull String message) {
+        return new ElementException(message);
+    }
+
+    /**
+     * Constructs an {@link ElementException}.
+     *
+     * @param path the error path
+     * @param message the error message
+     * @return a new ElementException
+     */
+    public static @NotNull ElementException elementException(final @NotNull ElementPath path, final @NotNull String message) {
+        final ElementException exception = new ElementException(message);
+        exception.setElementPath(path);
+        return exception;
+    }
+
+    /**
+     * Constructs an {@link ElementException}.
+     *
+     * @param elementClass the element class associated with the error
+     * @param message the error message
+     * @return a new ElementException
+     */
+    public static @NotNull ElementException elementException(final @NotNull Class<?> elementClass,
             final @NotNull String message) {
-        return new ElementException(owner + ": " + message);
+        final ElementException exception = new ElementException(message);
+        exception.setElementClass(elementClass);
+        return exception;
     }
 
     /**
-     * Creates a new {@link ElementException} instance in the context of the provided "owner" class, with the given
-     * message, and the provided cause.
+     * Constructs an {@link ElementException}.
      *
-     * @param owner   the owner class
-     * @param message the message
-     * @param cause   the exception cause
+     * @param cause the error cause
+     * @param message the error message
      * @return a new ElementException
      */
-    public static @NotNull ElementException elementException(final @NotNull Class<?> owner,
-            final @NotNull String message, final @NotNull Exception cause) {
-        return new ElementException(owner + ": " + message, cause);
+    public static @NotNull ElementException elementException(final @NotNull Throwable cause,
+            final @NotNull String message) {
+        return new ElementException(message, cause);
+    }
+
+    /**
+     * Constructs an {@link ElementException}.
+     *
+     * @param cause the error cause
+     * @param elementClass the element class associated with the error
+     * @param message the error message
+     * @return a new ElementException
+     */
+    public static @NotNull ElementException elementException(final @NotNull Throwable cause,
+            final @NotNull Class<?> elementClass,
+            final @NotNull String message) {
+        final ElementException exception = new ElementException(message, cause);
+        exception.setElementClass(elementClass);
+        return exception;
+    }
+
+    /**
+     * Constructs an {@link ElementException}.
+     *
+     * @param cause the error cause
+     * @param path the error path
+     * @param message the error message
+     * @return a new ElementException
+     */
+    public static @NotNull ElementException elementException(final @NotNull Throwable cause,
+            final @NotNull ElementPath path,
+            final @NotNull String message) {
+        final ElementException exception = new ElementException(message, cause);
+        exception.setElementPath(path);
+        return exception;
+    }
+
+    /**
+     * Constructs an {@link ElementException}.
+     *
+     * @param cause the error cause
+     * @param elementClass the element class associated with the error
+     * @param path the error path
+     * @param message the error message
+     * @return a new ElementException
+     */
+    public static @NotNull ElementException elementException(final @NotNull Throwable cause,
+            final @NotNull Class<?> elementClass,
+            final @NotNull ElementPath path,
+            final @NotNull String message) {
+        final ElementException exception = new ElementException(message, cause);
+        exception.setElementClass(elementClass);
+        exception.setElementPath(path);
+        return exception;
+    }
+
+    /**
+     * Constructs an {@link ElementException}.
+     *
+     * @param elementClass the element class associated with the error
+     * @param path the error path
+     * @param message the error message
+     * @return a new ElementException
+     */
+    public static @NotNull ElementException elementException(final @NotNull Class<?> elementClass,
+            final @NotNull ElementPath path,
+            final @NotNull String message) {
+        final ElementException exception = new ElementException(message);
+        exception.setElementClass(elementClass);
+        exception.setElementPath(path);
+        return exception;
     }
 }

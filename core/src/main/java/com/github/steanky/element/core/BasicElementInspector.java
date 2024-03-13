@@ -37,11 +37,11 @@ public class BasicElementInspector implements ElementInspector {
     public @NotNull Information inspect(final @NotNull Class<?> elementClass) {
         final int modifiers = elementClass.getModifiers();
         if (!Modifier.isStatic(elementClass.getModifiers()) && elementClass.getDeclaringClass() != null) {
-            throw elementException(elementClass, "non-static with declaring class");
+            throw elementException(elementClass, "Non-static nested class");
         }
 
         if (!Modifier.isPublic(modifiers)) {
-            throw elementException(elementClass, "not public");
+            throw elementException(elementClass, "Not public");
         }
 
         final Mutable<ConfigProcessor<?>> mutable = new MutableObject<>(

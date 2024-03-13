@@ -1,6 +1,5 @@
 package com.github.steanky.element.core.dependency;
 
-import com.github.steanky.element.core.ElementException;
 import com.github.steanky.element.core.annotation.Depend;
 import com.github.steanky.element.core.annotation.Ignore;
 import com.github.steanky.element.core.annotation.Memoize;
@@ -74,14 +73,14 @@ public class ModuleDependencyProvider implements DependencyProvider {
                 continue;
             }
 
-            validateModifiersPresent(method, () -> "supplier method must be public", Modifier.PUBLIC);
+            validateModifiersPresent(method, "Supplier method must be public", Modifier.PUBLIC);
 
             final Type genericReturnType = method.getGenericReturnType();
             if (genericReturnType.equals(void.class)) {
                 throw elementException(moduleClass, "supplier method must not return void");
             }
 
-            validateParameterCount(method, 0, () -> "supplier method must be parameterless");
+            validateParameterCount(method, 0, "Supplier method must be parameterless");
 
             final String annotationValue = annotation == null ? Constants.DEFAULT : annotation.value();
             final boolean isAnnotationDefault = annotationValue.equals(Constants.DEFAULT);
@@ -110,11 +109,11 @@ public class ModuleDependencyProvider implements DependencyProvider {
 
             if (isAnnotationDefault || supplierMap.containsKey(Constants.DEFAULT)) {
                 throw elementException(moduleClass,
-                        "supplier ambiguity, there may only be a single unnamed supplier per type");
+                        "Supplier ambiguity, there may only be a single unnamed supplier per type");
             }
 
             if (supplierMap.containsKey(annotationValue)) {
-                throw elementException(moduleClass, "supplier ambiguity, two suppliers may not have the same name");
+                throw elementException(moduleClass, "Supplier ambiguity, two suppliers may not have the same name");
             }
 
             putInvoker(supplierMap, annotationValue, method, module, defaultMemoize);
@@ -171,13 +170,12 @@ public class ModuleDependencyProvider implements DependencyProvider {
 
         final Key name = key.name();
         if (name == null) {
-            throw new ElementException("supplier of type " + keyType + " needs a name, but no name was provided");
+            throw elementException("Supplier of type " + keyType + " requires a name, but no name was provided");
         }
 
         final String nameString = name.asString();
         if (!supplierMap.containsKey(nameString)) {
-            throw new ElementException(
-                    "supplier named " + nameString + " with a return type of " + keyType + " not found");
+            throw elementException("Supplier named " + nameString + " with return type " + keyType + " not found");
         }
 
         return (TDependency) supplierMap.get(nameString).get();

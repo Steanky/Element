@@ -1,6 +1,5 @@
 package com.github.steanky.element.core.key;
 
-import com.github.steanky.element.core.ElementException;
 import com.github.steanky.ethylene.core.ConfigElement;
 import com.github.steanky.ethylene.core.collection.ConfigNode;
 import com.github.steanky.ethylene.core.processor.ConfigProcessException;
@@ -9,6 +8,8 @@ import org.intellij.lang.annotations.Subst;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Objects;
+
+import static com.github.steanky.element.core.util.Validate.elementException;
 
 /**
  * Basic implementation of {@link KeyExtractor} which uses a {@link KeyParser} to parse named keys.
@@ -34,7 +35,7 @@ public class BasicKeyExtractor implements KeyExtractor {
             @Subst(Constants.NAMESPACE_OR_KEY) final String keyString = node.getStringOrThrow(keyName);
             return keyParser.parseKey(keyString);
         } catch (ConfigProcessException e) {
-            throw new ElementException("failed to extract key '" + keyName + "' from node", e);
+            throw elementException("Missing type key " + keyName);
         }
     }
 

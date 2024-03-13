@@ -7,9 +7,203 @@ import org.junit.jupiter.api.Test;
 
 import java.util.List;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.*;
 
 class BasicElementPathTest {
+    @Test
+    void backCommand() {
+        ElementPath base = ElementPath.of("");
+        assertEquals(ElementPath.of(".."), base.resolve(".."));
+    }
+
+    @Test
+    void sibling4() {
+        ElementPath base = ElementPath.of("/a/b/c/d");
+        assertEquals(ElementPath.of("/a/b/g"), base.resolveSibling("../g"));
+    }
+
+    @Test
+    void sibling3() {
+        ElementPath base = ElementPath.of("/a/b/c/d");
+        assertEquals(ElementPath.of("/a/b/c/f/g/h"), base.resolveSibling("./f/g/h"));
+    }
+
+    @Test
+    void sibling1() {
+        ElementPath base = ElementPath.of("/a/b/c/d");
+        assertEquals(ElementPath.of("f"), base.resolveSibling("f"));
+    }
+
+    @Test
+    void sibling() {
+        ElementPath base = ElementPath.of("/a/b/c/d");
+        assertEquals(ElementPath.of("a/b/c/f"), base.resolveSibling("./f"));
+    }
+
+    @Test
+    void parent() {
+        ElementPath base = ElementPath.of("/a/b/c/d");
+        assertEquals(ElementPath.of("/a/b/c"), base.getParent());
+    }
+
+    @Test
+    void rootParentNull() {
+        assertNull(ElementPath.of("").getParent());
+    }
+
+    private static void assertNormalized(ElementPath elementPath) {
+        boolean foundName = false;
+        for (ElementPath.Node node : elementPath.nodes()) {
+            if (node.nodeType() == ElementPath.NodeType.NAME) {
+                foundName = true;
+            }
+            else if (foundName) {
+                fail(elementPath + " is not normalized");
+            }
+        }
+    }
+
+    @Test
+    void relativeRelativize4() {
+        ElementPath base = ElementPath.of("../../");
+        ElementPath other = ElementPath.of("../../../../../a/b/c/d/e/f/g");
+
+        ElementPath relative = base.relativize(other);
+
+        assertEquals(other, base.resolve(relative));
+        assertNormalized(relative);
+    }
+
+    @Test
+    void relativeRelativize3() {
+        ElementPath base = ElementPath.of("../../a/b/c");
+        ElementPath other = ElementPath.of("../..");
+
+        ElementPath relative = base.relativize(other);
+
+        assertEquals(other, base.resolve(relative));
+        assertNormalized(relative);
+    }
+
+    @Test
+    void relativeRelativize2() {
+        ElementPath base = ElementPath.of("../../");
+        ElementPath other = ElementPath.of("../../a/b/c");
+
+        ElementPath relative = base.relativize(other);
+
+        assertEquals(other, base.resolve(relative));
+        assertNormalized(relative);
+    }
+
+    @Test
+    void relativeRelativize1() {
+        ElementPath base = ElementPath.of("..");
+        ElementPath other = ElementPath.of("../a");
+
+        ElementPath relative = base.relativize(other);
+
+        assertEquals(other, base.resolve(relative));
+        assertNormalized(relative);
+    }
+
+    @Test
+    void relativeRelativize() {
+        ElementPath base = ElementPath.of("./a/b/c/d");
+        ElementPath other = ElementPath.of("./a/b/c");
+
+        ElementPath relative = base.relativize(other);
+
+        assertEquals(other, base.resolve(relative));
+        assertNormalized(relative);
+    }
+
+    @Test
+    void simpleRelativize8() {
+        ElementPath base = ElementPath.of("/a/b/c/d");
+        ElementPath other = ElementPath.of("/f/g/h");
+        ElementPath relative = base.relativize(other);
+
+        assertEquals(other, base.resolve(relative));
+        assertNormalized(relative);
+    }
+
+    @Test
+    void simpleRelativize7() {
+        ElementPath base = ElementPath.of("/a/b/c/d");
+        ElementPath other = ElementPath.of("/a/b/c/d");
+        ElementPath relative = base.relativize(other);
+
+        assertEquals(other, base.resolve(relative));
+        assertNormalized(relative);
+    }
+
+    @Test
+    void simpleRelativize6() {
+        ElementPath base = ElementPath.of("/a/b/c/d");
+        ElementPath other = ElementPath.of("/a/b/c/d/e/f/g");
+        ElementPath relative = base.relativize(other);
+
+        assertEquals(other, base.resolve(relative));
+        assertNormalized(relative);
+    }
+
+    @Test
+    void simpleRelativize5() {
+        ElementPath base = ElementPath.of("/a/b/c/d");
+        ElementPath other = ElementPath.of("/a/b/c/f");
+        ElementPath relative = base.relativize(other);
+
+        assertEquals(other, base.resolve(relative));
+        assertNormalized(relative);
+    }
+
+    @Test
+    void simpleRelativize4() {
+        ElementPath base = ElementPath.of("/a/b/c/d");
+        ElementPath other = ElementPath.of("f");
+        ElementPath relative = base.relativize(other);
+
+        assertEquals(other, base.resolve(relative));
+        assertNormalized(relative);
+    }
+
+    @Test
+    void simpleRelativize3() {
+        ElementPath base = ElementPath.of("/a/b/c/d");
+        ElementPath other = ElementPath.of("/a");
+        ElementPath relative = base.relativize(other);
+
+        assertEquals(other, base.resolve(relative));
+        assertNormalized(relative);
+    }
+
+    @Test
+    void simpleRelativize2() {
+        ElementPath base = ElementPath.of("/a/b/c/d");
+        ElementPath other = ElementPath.of("/a/b/c");
+        ElementPath relative = base.relativize(other);
+
+        assertEquals(other, base.resolve(relative));
+        assertNormalized(relative);
+    }
+
+    @Test
+    void simpleRelativize() {
+        ElementPath base = ElementPath.of("/a/b/c");
+        ElementPath other = ElementPath.of("/a/b/c/d");
+        ElementPath relative = base.relativize(other);
+
+        assertEquals(other, base.resolve(relative));
+        assertNormalized(relative);
+    }
+
+    @Test
+    void appendToCurrent() {
+        ElementPath current = ElementPath.of(".");
+        assertEquals(ElementPath.of("./0"), current.append(0));
+    }
+
     @Test
     void chainedPreviousMakingEmpty() {
         ElementPath path = BasicElementPath.parse("/test/test1/test2/test3/test4/../../../../..");
@@ -56,6 +250,22 @@ class BasicElementPathTest {
     void redundantPrevious() {
         BasicElementPath path = BasicElementPath.parse("./../..");
         assertEquals(List.of("..", ".."), path.nodes().stream().map(ElementPath.Node::name).toList());
+    }
+
+    @Test
+    void resolvePrevious1() {
+        ElementPath base = ElementPath.of("..");
+        ElementPath resolved = base.resolve("./a/b/c");
+
+        assertEquals(ElementPath.of("../a/b/c"), resolved);
+    }
+
+    @Test
+    void resolvePrevious() {
+        ElementPath base = ElementPath.of("..");
+        ElementPath resolved = base.resolve(".");
+
+        assertEquals(ElementPath.of(".."), resolved);
     }
 
     @Test
@@ -193,6 +403,6 @@ class BasicElementPathTest {
 
         ElementPath result = absolutePath.resolve(relativePath);
 
-        assertEquals(List.of(), result.nodes().stream().map(ElementPath.Node::name).toList());
+        assertEquals(List.of(".."), result.nodes().stream().map(ElementPath.Node::name).toList());
     }
 }

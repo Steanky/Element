@@ -8,16 +8,18 @@ import com.github.steanky.element.core.key.KeyExtractor;
 import com.github.steanky.element.core.path.ElementPath;
 import com.github.steanky.ethylene.core.collection.ConfigContainer;
 import com.github.steanky.ethylene.core.collection.ConfigNode;
-import com.github.steanky.ethylene.core.collection.LinkedConfigNode;
 import com.github.steanky.ethylene.core.processor.ConfigProcessException;
 import com.github.steanky.ethylene.core.processor.ConfigProcessor;
 import net.kyori.adventure.key.Key;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.Map;
 import java.util.Objects;
 import java.util.concurrent.ConcurrentHashMap;
+
+import static com.github.steanky.element.core.util.Validate.elementException;
 
 /**
  * Basic implementation of {@link ElementContext}.
@@ -60,67 +62,75 @@ public class BasicElementContext implements ElementContext {
 
     @SuppressWarnings("unchecked")
     @Override
-    public <TElement> @NotNull TElement provide(final @NotNull ElementPath path,
+    public <TElement> @NotNull TElement provide(final @NotNull ElementPath path, final @Nullable ConfigNode substitute,
             final @NotNull DependencyProvider dependencyProvider, final boolean cache) {
-        final ElementPath absolutePath = path.toAbsolute();
+        try {
+            final ElementPath absolutePath = path.toAbsolute();
 
-        Key objectType = typeMap.get(absolutePath);
-        final ConfigNode dataNode;
-        if (objectType == null) {
-            ConfigNode tempMutable = new LinkedConfigNode(absolutePath.followNode(rootCopy));
-            objectType = typeKeyExtractor.extractKey(tempMutable);
-            typeKeyExtractor.removeKey(tempMutable);
-            dataNode = tempMutable.immutableCopy();
+            Key objectType = typeMap.get(absolutePath);
+            final ConfigNode dataNode;
+            if (objectType == null) {
+                ConfigNode child = substitute != null ? substitute : absolutePath.followNode(rootCopy);
 
-            typeMap.put(absolutePath, objectType);
-        } else {
-            dataNode = null;
-        }
+                objectType = typeKeyExtractor.extractKey(child);
+                typeMap.put(absolutePath, objectType);
+                dataNode = child;
+            } else {
+                dataNode = null;
+            }
 
-        final boolean cacheElement;
-        if (cacheRegistry.contains(objectType)) {
-            cacheElement = cacheRegistry.lookup(objectType);
-        } else {
-            cacheElement = cache;
-        }
+            final boolean cacheElement;
+            if (cacheRegistry.contains(objectType)) {
+                cacheElement = cacheRegistry.lookup(objectType);
+            } else {
+                cacheElement = cache;
+            }
 
-        if (cacheElement && elementObjects.containsKey(absolutePath)) {
-            return (TElement) elementObjects.get(absolutePath);
-        }
+            if (cacheElement && elementObjects.containsKey(absolutePath)) {
+                return (TElement) elementObjects.get(absolutePath);
+            }
 
-        final Key objectTypeFinal = objectType;
-        DataInfo dataInfo = dataObjects.get(absolutePath);
-        if (dataInfo == null) {
-            try {
-                final ConfigNode configuration = dataNode != null ? dataNode : absolutePath.followNode(rootCopy);
-                final Object data = processorRegistry.contains(objectTypeFinal) ?
-                        processorRegistry.lookup(objectTypeFinal).dataFromElement(configuration) : null;
+            final Key objectTypeFinal = objectType;
+            DataInfo dataInfo = dataObjects.get(absolutePath);
+            if (dataInfo == null) {
+                try {
+                    final ConfigNode configuration = dataNode != null ? dataNode :
+                            (substitute != null ? substitute : absolutePath.followNode(rootCopy));
 
-                dataInfo = new DataInfo(data, objectTypeFinal);
-                DataInfo newObject = dataObjects.putIfAbsent(absolutePath, dataInfo);
-                if (newObject != null) {
-                    dataInfo = newObject;
+                    final Object data = processorRegistry.contains(objectTypeFinal) ?
+                            processorRegistry.lookup(objectTypeFinal).dataFromElement(configuration) : null;
+
+                    dataInfo = new DataInfo(data, objectTypeFinal);
+                    DataInfo newObject = dataObjects.putIfAbsent(absolutePath, dataInfo);
+                    if (newObject != null) {
+                        dataInfo = newObject;
+                    }
+                } catch (ConfigProcessException e) {
+                    throw elementException(e, absolutePath, "Configuration error");
                 }
-            } catch (ConfigProcessException e) {
-                throw new ElementException("configuration error deserializing data at path " + absolutePath, e);
-            }
-        }
-
-        final DataInfo finalDataInfo = dataInfo;
-        if (cacheElement) {
-            final Object elementObject = elementObjects.get(absolutePath);
-            if (elementObject != null) {
-                return (TElement) elementObject;
             }
 
-            TElement object = (TElement) ((ElementFactory<Object, Object>) factoryRegistry.lookup(finalDataInfo.type))
-                    .make(finalDataInfo.data, absolutePath, this, dependencyProvider);
-            TElement newObject = (TElement) elementObjects.putIfAbsent(absolutePath, object);
-            return newObject != null ? newObject : object;
-        }
+            final DataInfo finalDataInfo = dataInfo;
+            if (cacheElement) {
+                final Object elementObject = elementObjects.get(absolutePath);
+                if (elementObject != null) {
+                    return (TElement) elementObject;
+                }
 
-        return (TElement) ((ElementFactory<Object, Object>) factoryRegistry.lookup(dataInfo.type))
-                .make(dataInfo.data, absolutePath, this, dependencyProvider);
+                TElement object = (TElement) ((ElementFactory<Object, Object>) factoryRegistry.lookup(finalDataInfo.type))
+                        .make(finalDataInfo.data, absolutePath, this, dependencyProvider);
+                TElement newObject = (TElement) elementObjects.putIfAbsent(absolutePath, object);
+                return newObject != null ? newObject : object;
+            }
+
+            return (TElement) ((ElementFactory<Object, Object>) factoryRegistry.lookup(dataInfo.type))
+                    .make(dataInfo.data, absolutePath, this, dependencyProvider);
+        }
+        catch (ElementException exception) {
+            exception.setElementPath(path);
+            exception.fillInStackTrace();
+            throw exception;
+        }
     }
 
     @Override

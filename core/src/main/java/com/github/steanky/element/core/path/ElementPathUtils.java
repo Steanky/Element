@@ -1,11 +1,12 @@
 package com.github.steanky.element.core.path;
 
-import com.github.steanky.element.core.ElementException;
 import com.github.steanky.ethylene.core.ConfigElement;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.function.Function;
 import java.util.function.Predicate;
+
+import static com.github.steanky.element.core.util.Validate.elementException;
 
 final class ElementPathUtils {
     private ElementPathUtils() {}
@@ -18,6 +19,6 @@ final class ElementPathUtils {
             return function.apply(element);
         }
 
-        throw new ElementException("expected object at path " + elementPath + " to be a " + typeName);
+        throw elementException(elementPath, "Expected object to be a " + typeName);
     }
 }

@@ -1,6 +1,5 @@
 package com.github.steanky.element.core.path;
 
-import com.github.steanky.element.core.ElementException;
 import com.github.steanky.ethylene.core.ConfigElement;
 import com.github.steanky.ethylene.core.collection.ConfigList;
 import com.github.steanky.toolkit.collection.Containers;
@@ -9,6 +8,8 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.*;
+
+import static com.github.steanky.element.core.util.Validate.elementException;
 
 /**
  * Basic ElementPath implementation with UNIX-like semantics.
@@ -21,9 +22,10 @@ class BasicElementPath implements ElementPath {
     private static final Node PREVIOUS_NODE = new Node(PREVIOUS_COMMAND, NodeType.PREVIOUS);
 
     private static final Node[] EMPTY_NODE_ARRAY = new Node[0];
+
     static final BasicElementPath EMPTY_PATH = new BasicElementPath(EMPTY_NODE_ARRAY);
-    private static final BasicElementPath RELATIVE_BASE = new BasicElementPath(new Node[]{CURRENT_NODE});
-    private static final BasicElementPath PREVIOUS_BASE = new BasicElementPath(new Node[]{PREVIOUS_NODE});
+    static final BasicElementPath RELATIVE_BASE = new BasicElementPath(new Node[]{CURRENT_NODE});
+    static final BasicElementPath PREVIOUS_BASE = new BasicElementPath(new Node[]{PREVIOUS_NODE});
 
     private static final char DELIMITER = '/';
     private static final char ESCAPE = '\\';
@@ -55,10 +57,15 @@ class BasicElementPath implements ElementPath {
      * @return a normalized BasicElementPath
      */
     static @NotNull BasicElementPath parse(final @NotNull String path) {
+        if (path.isEmpty()) {
+            return EMPTY_PATH;
+        }
+
         if (path.equals(".")) {
             return RELATIVE_BASE;
         }
-        else if(path.equals("..")) {
+
+        if(path.equals("..")) {
             return PREVIOUS_BASE;
         }
 
@@ -183,7 +190,7 @@ class BasicElementPath implements ElementPath {
         final List<Node> ourNodes = nodes();
         final List<Node> relativeNodes = relativePath.nodes();
 
-        if (relativeNodes.size() == 0) {
+        if (relativeNodes.isEmpty()) {
             return this;
         }
 
@@ -199,8 +206,11 @@ class BasicElementPath implements ElementPath {
                 case CURRENT -> {
                 } //no-op
                 case PREVIOUS -> { //resolve previous command
-                    if (!newNodes.isEmpty()) {
+                    if (!newNodes.isEmpty() && newNodes.peekLast().nodeType() != NodeType.PREVIOUS) {
                         newNodes.removeLast();
+                    }
+                    else {
+                        newNodes.addLast(node);
                     }
                 }
             }
@@ -232,14 +242,113 @@ class BasicElementPath implements ElementPath {
             return this;
         }
 
-        final List<Node> newNodes = new ArrayList<>(nodes.length - 1);
-        for (final Node node : nodes) {
-            if (node.nodeType() == NodeType.NAME) {
-                newNodes.add(node);
+        int i;
+        for (i = 0; i < nodes.length; i++) {
+            if (nodes[i].nodeType() == NodeType.NAME) {
+                break;
             }
         }
 
-        return new BasicElementPath(newNodes.toArray(Node[]::new));
+        if (i == nodes.length) {
+            return EMPTY_PATH;
+        }
+
+        final Node[] newNodes = new Node[nodes.length - i];
+        System.arraycopy(this.nodes, i, newNodes, 0, newNodes.length);
+        return new BasicElementPath(newNodes);
+    }
+
+    @Override
+    public ElementPath getParent() {
+        if (nodes.length == 0) {
+            return null;
+        }
+
+        final Node[] newNodes = new Node[nodes.length - 1];
+        System.arraycopy(nodes, 0, newNodes, 0, newNodes.length);
+        return new BasicElementPath(newNodes);
+    }
+
+    @Override
+    public @NotNull ElementPath relativize(final @NotNull ElementPath other) {
+        if (this.equals(other)) {
+            return RELATIVE_BASE;
+        }
+
+        if (this.isAbsolute() != other.isAbsolute()) {
+            throw new IllegalArgumentException("Can only relativize paths of the same type");
+        }
+
+        final Node[] otherNodes = nodeArray(other);
+        final int min = Math.min(otherNodes.length, this.nodes.length);
+        final int max = Math.max(otherNodes.length, this.nodes.length);
+
+        int matched = matched(this, this.nodes, other, otherNodes, min);
+
+        if (otherNodes.length < this.nodes.length || matched < min) {
+            final int unmatched = min - matched;
+            final int previousCount = max - matched;
+            final Node[] newNodes = new Node[previousCount + unmatched];
+
+            Arrays.fill(newNodes, 0, previousCount, PREVIOUS_NODE);
+            System.arraycopy(otherNodes, matched, newNodes, previousCount, unmatched);
+            return new BasicElementPath(newNodes);
+        }
+
+        //matched == min && otherNodes.length >= this.nodes.length
+        final int unmatched = max - min;
+        final Node[] newNodes = new Node[unmatched + 1];
+        newNodes[0] = CURRENT_NODE;
+        System.arraycopy(otherNodes, matched, newNodes, 1, unmatched);
+        return new BasicElementPath(newNodes);
+
+    }
+
+    private static int matched(final ElementPath self, final Node[] selfNodes, final ElementPath other,
+            final Node[] otherNodes, final int min) {
+        int matched = 0;
+
+        //count number of shared elements
+        while (matched < min) {
+            if (!otherNodes[matched].equals(selfNodes[matched])) {
+                break;
+            }
+
+            matched++;
+        }
+
+        //remaining .. in this path means we have no sane way to resolve the relative path
+        for (int i = matched; i < selfNodes.length; i++) {
+            if (selfNodes[i].nodeType() == NodeType.PREVIOUS) {
+                throw new IllegalArgumentException("Cannot compute relative path from " + self + " to " + other);
+            }
+        }
+
+        return matched;
+    }
+
+    @Override
+    public @NotNull ElementPath relativize(final @NotNull String other) {
+        return relativize(parse(other));
+    }
+
+    @Override
+    public @NotNull ElementPath resolveSibling(final @NotNull ElementPath sibling) {
+        if (sibling.isAbsolute()) {
+            return sibling;
+        }
+
+        final ElementPath parentPath = getParent();
+        if (parentPath == null) {
+            return sibling;
+        }
+
+        return parentPath.resolve(sibling);
+    }
+
+    @Override
+    public @NotNull ElementPath resolveSibling(final @NotNull String sibling) {
+        return resolveSibling(parse(sibling));
     }
 
     @Override
@@ -266,27 +375,78 @@ class BasicElementPath implements ElementPath {
 
                     final int value = Integer.parseInt(name);
                     if (value < 0 || value > size) {
-                        formatPathException("index " + value + " out of bounds for ConfigList of length " + size, i);
+                        formatPathException("Index " + value + " out of bounds for ConfigList of length " + size, i);
                     }
 
                     current = list.get(value);
                 } catch (NumberFormatException e) {
-                    formatPathException("string " + name + " cannot be parsed", i);
+                    formatPathException("String " + name + " cannot be parsed", i);
                 }
             } else {
-                formatPathException("unexpected ConfigElement type " + current.type(), i);
+                formatPathException("Unexpected ConfigElement type " + current.type(), i);
             }
 
             if (current == null) {
-                formatPathException("target element does not exist", i);
+                formatPathException("Does not exist", i);
             }
         }
 
         return current;
     }
 
-    private void formatPathException(String message, int position) {
-        throw new ElementException(this + ", position " + position + ": " + message);
+    @Override
+    public @NotNull ElementPath subpath(final int beginIndex, final int endIndex) {
+        if (beginIndex < 0 || beginIndex >= nodes.length || endIndex < 0 || endIndex > nodes.length) {
+            throw new IndexOutOfBoundsException();
+        }
+
+        if (endIndex < beginIndex) {
+            throw new IllegalArgumentException("endIndex < beginIndex");
+        }
+
+        final int length = endIndex - beginIndex;
+        if (nodes[beginIndex].nodeType() != NodeType.NAME) {
+            final Node[] newNodes = new Node[length];
+            System.arraycopy(nodes, beginIndex, newNodes, 0, length);
+            return new BasicElementPath(newNodes);
+        }
+
+        final Node[] newNodes = new Node[length + 1];
+        newNodes[0] = CURRENT_NODE;
+        System.arraycopy(nodes, 0, newNodes, 1, length);
+        return new BasicElementPath(newNodes);
+    }
+
+    @Override
+    public boolean startsWith(final @NotNull ElementPath other) {
+        if (this.nodes.length == 0) {
+            return other.nodes().isEmpty();
+        }
+
+        final List<Node> otherNodes = other.nodes();
+        if (otherNodes.size() > this.nodes.length) {
+            return false;
+        }
+
+        for (int i = 0; i < otherNodes.size(); i++) {
+            if (!this.nodes[i].equals(otherNodes.get(i))) {
+                return false;
+            }
+        }
+
+        return true;
+    }
+
+    private static Node[] nodeArray(ElementPath elementPath) {
+        if (elementPath instanceof BasicElementPath basicElementPath) {
+            return basicElementPath.nodes;
+        }
+
+        return elementPath.nodes().toArray(Node[]::new);
+    }
+
+    private void formatPathException(final String message, final int position) {
+        throw elementException(this, "Path element " + nodes[position].name() + ": " + message);
     }
 
     @Override
@@ -295,7 +455,7 @@ class BasicElementPath implements ElementPath {
             return hash;
         }
 
-        int hash = this.hash = Arrays.hashCode(nodes);
+        final int hash = this.hash = Arrays.hashCode(nodes);
         hashed = true;
         return hash;
     }

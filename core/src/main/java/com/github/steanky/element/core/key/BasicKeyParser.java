@@ -1,9 +1,10 @@
 package com.github.steanky.element.core.key;
 
-import com.github.steanky.element.core.ElementException;
 import net.kyori.adventure.key.Key;
 import org.intellij.lang.annotations.Subst;
 import org.jetbrains.annotations.NotNull;
+
+import static com.github.steanky.element.core.util.Validate.elementException;
 
 /**
  * Basic implementation of {@link KeyParser}. Supports variable "default" namespaces for {@link Key} objects to have,
@@ -90,12 +91,12 @@ public class BasicKeyParser implements KeyParser {
         //resolve default namespaces differently than in adventure: leading : means empty namespace, no : means default
         @Subst(Constants.NAMESPACE_OR_KEY) final String namespace = extractNamespace(keyString, separatorIndex);
         if (!namespaceValid(namespace)) {
-            throw new ElementException("invalid namespace '" + namespace + "' from key '" + keyString + "'");
+            throw elementException("Invalid namespace " + namespace + " from key " + keyString);
         }
 
         @Subst(Constants.NAMESPACE_OR_KEY) final String value = extractValue(keyString, separatorIndex);
         if (!valueValid(value)) {
-            throw new ElementException("invalid value '" + value + "' from key '" + keyString + "'");
+            throw elementException("Invalid value " + value + " from key " + keyString);
         }
 
         return Key.key(namespace, value);

@@ -1,6 +1,5 @@
 package com.github.steanky.element.core.factory;
 
-import com.github.steanky.element.core.ElementException;
 import com.github.steanky.ethylene.mapper.type.Token;
 import org.jetbrains.annotations.NotNull;
 
@@ -55,7 +54,7 @@ public class BasicContainerCreator implements ContainerCreator {
         if (type.isInterface() || Modifier.isAbstract(type.getModifiers())) {
             desiredClass = resolverFunction.apply(type);
             if (desiredClass == null) {
-                throw new ElementException("unable to resolve type " + type + " to a valid container");
+                throw elementException("Could not resolve " + type + " to valid container");
             }
 
             if (desiredClass.isArray()) {
@@ -63,11 +62,11 @@ public class BasicContainerCreator implements ContainerCreator {
             }
 
             if (desiredClass.isInterface() || Modifier.isAbstract(desiredClass.getModifiers())) {
-                throw elementException(desiredClass, "resolver function returned an abstract class or interface");
+                throw elementException("Resolver function returned abstract class or interface " + desiredClass);
             }
 
             if (!type.isAssignableFrom(desiredClass)) {
-                throw elementException(type, "unexpected container type " + desiredClass);
+                throw elementException("Unexpected container type " + desiredClass);
             }
         }
 
@@ -75,7 +74,7 @@ public class BasicContainerCreator implements ContainerCreator {
             return desiredClass.getConstructor(int.class).newInstance(initialSize);
         } catch (InstantiationException | IllegalAccessException | InvocationTargetException |
                 NoSuchMethodException e) {
-            throw elementException(type, "failed to instantiate container", e);
+            throw elementException(e, "Failed to instantiate container");
         }
     }
 
@@ -86,7 +85,7 @@ public class BasicContainerCreator implements ContainerCreator {
         }
 
         if (!containerType.isSubclassOf(Collection.class)) {
-            throw new ElementException("type " + containerType + " not a subclass of Collection");
+            throw elementException(containerType + " is not a subclass of java.util.Collection");
         }
 
         if (containerType.isParameterized()) {

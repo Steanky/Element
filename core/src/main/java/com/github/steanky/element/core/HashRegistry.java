@@ -3,7 +3,11 @@ package com.github.steanky.element.core;
 import net.kyori.adventure.key.Key;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.*;
+import java.util.Collection;
+import java.util.Map;
+import java.util.Objects;
+
+import static com.github.steanky.element.core.util.Validate.elementException;
 
 /**
  * A {@link Map}-based Registry implementation. Uses a backing immutable map combined with copy-on-write semantics to
@@ -75,7 +79,7 @@ public class HashRegistry<TRegistrant> implements Registry<TRegistrant> {
         Objects.requireNonNull(key);
         final TRegistrant registrant = map.get(key);
         if (registrant == null) {
-            throw new NoSuchElementException("no registrant under key " + key);
+            throw elementException("No registrant under key " + key);
         }
 
         return registrant;

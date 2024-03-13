@@ -1,7 +1,7 @@
 metadata.format.version = "1.1"
 
 [versions]
-ethylene = "0.23.2"
+ethylene = "0.24.0"
 junit-jupiter = "5.9.0-M1"
 toolkit = "0.4.0"
 

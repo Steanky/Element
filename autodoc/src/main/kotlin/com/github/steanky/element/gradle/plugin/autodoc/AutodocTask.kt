@@ -2,7 +2,6 @@ package com.github.steanky.element.gradle.plugin.autodoc
 
 import com.github.steanky.element.core.ElementFactory
 import com.github.steanky.element.core.annotation.Child
-import com.github.steanky.element.core.annotation.ChildPath
 import com.github.steanky.element.core.annotation.DataObject
 import com.github.steanky.element.core.annotation.FactoryMethod
 import com.github.steanky.element.core.annotation.document.Description
@@ -13,20 +12,19 @@ import com.github.steanky.element.core.key.Constants
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.encodeToJsonElement
 import org.gradle.api.logging.Logger
-import org.gradle.api.tasks.*
+import org.gradle.api.tasks.Input
+import org.gradle.api.tasks.OutputFile
+import org.gradle.api.tasks.SourceTask
+import org.gradle.api.tasks.TaskAction
 import java.io.File
-
-import java.lang.RuntimeException
 import java.util.regex.Pattern
 import javax.annotation.processing.*
 import javax.lang.model.SourceVersion
-import javax.lang.model.element.*
-import javax.lang.model.type.ArrayType
-import javax.lang.model.type.DeclaredType
-import javax.lang.model.type.TypeKind
-import javax.lang.model.type.TypeMirror
-import javax.lang.model.type.TypeVariable
-import javax.lang.model.type.WildcardType
+import javax.lang.model.element.ElementKind
+import javax.lang.model.element.ExecutableElement
+import javax.lang.model.element.TypeElement
+import javax.lang.model.element.VariableElement
+import javax.lang.model.type.*
 import javax.lang.model.util.Types
 import javax.tools.JavaFileObject
 import javax.tools.ToolProvider
@@ -339,7 +337,7 @@ abstract class AutodocTask : SourceTask() {
         }
 
         private fun processParameters(typeElement: TypeElement): List<Parameter> {
-            typeElement.dataType()?.let { (dataType, mappings) ->
+            typeElement.dataType()?.let { (dataType, _) ->
                 val parameters = dataType
                         .getAnnotationsByType(com.github.steanky.element.core.annotation.document.Parameter::class.java)
                 if (!parameters.isNullOrEmpty()) {
@@ -352,7 +350,7 @@ abstract class AutodocTask : SourceTask() {
                     return dataType.recordComponents.map { component ->
                         val accessor = component.accessor
 
-                        val type = accessor.type() ?: tryLink(accessor, mappings) ?: simpleTypeName(component.asType())
+                        val type = accessor.type() ?: simpleTypeName(component.asType())
                         val name = accessor.name()
                         val behavior = accessor.description()
 
@@ -364,23 +362,6 @@ abstract class AutodocTask : SourceTask() {
             }
 
             return listOf()
-        }
-
-        private fun tryLink(component: ExecutableElement, map: Map<String, VariableElement>): String? {
-            component.getAnnotation(ChildPath::class.java)?.let { childPath ->
-                map[childPath.value]?.let { variableElement ->
-                    processingEnv.typeUtils.asElement(variableElement.asType()).asTypeElement()?.model()?.let { (model, _) ->
-                        return model.value
-                    }
-
-                    return null
-                }
-
-                logger.error("No child dependency named ${childPath.value}")
-                return null
-            }
-
-            return null
         }
 
         private fun simpleTypeName(componentType: TypeMirror): String {
@@ -477,8 +458,8 @@ abstract class AutodocTask : SourceTask() {
                 typeUtils.directSupertypes(component).forEach {superMirror ->
                     superMirror as DeclaredType
 
-                    val mirorErasure = typeUtils.erasure(superMirror)
-                    if (typeUtils.isSameType(mapType, mirorErasure)) {
+                    val mirrorErasure = typeUtils.erasure(superMirror)
+                    if (typeUtils.isSameType(mapType, mirrorErasure)) {
                         val typeArguments = superMirror.typeArguments
                         return "map of ${simpleTypeName(typeArguments[0])} -> ${simpleTypeName(typeArguments[1])}"
                     }

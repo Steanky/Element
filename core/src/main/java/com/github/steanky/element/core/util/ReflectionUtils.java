@@ -4,10 +4,11 @@ import com.github.steanky.element.core.ElementException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.Objects;
+
+import static com.github.steanky.element.core.util.Validate.elementException;
 
 /**
  * Contains reflection-related utility methods.
@@ -15,26 +16,6 @@ import java.util.Objects;
 public final class ReflectionUtils {
     private ReflectionUtils() {
         throw new UnsupportedOperationException();
-    }
-
-    /**
-     * Uses reflection to invoke the given {@link Constructor}. Any exceptions related to reflection are wrapped in an
-     * {@link ElementException}.
-     *
-     * @param constructor the constructor to invoke
-     * @param args        the arguments to pass to the constructor (can be empty if the method takes no arguments)
-     * @param <TReturn>   the type of object to cast the new object to
-     * @return the constructed object, after casting to the desired return value
-     */
-    @SuppressWarnings("unchecked")
-    public static <TReturn> TReturn invokeConstructor(final @NotNull Constructor<?> constructor, final Object... args) {
-        Objects.requireNonNull(constructor);
-
-        try {
-            return (TReturn) constructor.newInstance(args);
-        } catch (InstantiationException | IllegalAccessException | InvocationTargetException e) {
-            throw new ElementException(e);
-        }
     }
 
     /**
@@ -55,7 +36,7 @@ public final class ReflectionUtils {
         try {
             return (TReturn) method.invoke(owner, args);
         } catch (IllegalAccessException | InvocationTargetException e) {
-            throw new ElementException(e);
+            throw elementException(e, method.getDeclaringClass(), "Error calling method");
         }
     }
 }

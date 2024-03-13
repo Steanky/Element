@@ -26,8 +26,25 @@ public interface ElementPath {
     ElementPath EMPTY = BasicElementPath.EMPTY_PATH;
 
     /**
-     * Parses the given string, assuming UNIX-style formatting and semantics. The resulting path will be normalized such
+     * The current (relative) path {@code .}, pointing at this node.
+     */
+    ElementPath CURRENT = BasicElementPath.RELATIVE_BASE;
+
+    /**
+     * The previous (relative) path {@code ..}, pointing at the previous node.
+     */
+    ElementPath PREVIOUS = BasicElementPath.PREVIOUS_BASE;
+
+    /**
+     * Parses the given string, assuming UNIX-like formatting and semantics. The resulting path will be normalized such
      * that redundant nodes are removed.
+     * <p>
+     * Like UNIX paths, path entries are separated by slashes. Unlike UNIX, leading slashes have no significance. All
+     * paths that start with {@code .} or {@code ..} are considered "relative". All paths that do not are considered
+     * absolute.
+     * <p>
+     * Backslashes are considered escape characters. They can be used to include slashes, {@code .} and {@code ..} in
+     * path entries.
      *
      * @param path the path string to parse
      * @return a new ElementPath
@@ -90,6 +107,46 @@ public interface ElementPath {
     @NotNull ElementPath toAbsolute();
 
     /**
+     * Gets the parent path. If this path is empty, {@code null} is returned.
+     *
+     * @return the parent path, or {@code null} if empty
+     */
+    ElementPath getParent();
+
+    /**
+     * Relativizes this path with respect to another. This is the inverse of {@link ElementPath#resolve(ElementPath)},
+     * and is analogous to {@link Path#relativize(Path)}.
+     *
+     * @param other the other path
+     * @return the relativized path
+     */
+    @NotNull ElementPath relativize(final @NotNull ElementPath other);
+
+    /**
+     * Same behavior as {@link ElementPath#relativize(ElementPath)}, but interprets the given string as an ElementPath.
+     * @param other the other path
+     * @return the relativized path
+     */
+    @NotNull ElementPath relativize(final @NotNull String other);
+
+    /**
+     * Analogous operation to {@link Path#resolveSibling(Path)}.
+     *
+     * @param sibling the sibling path
+     * @return a new path
+     */
+    @NotNull ElementPath resolveSibling(final @NotNull ElementPath sibling);
+
+    /**
+     * Same behavior as {@link ElementPath#resolveSibling(ElementPath)}, but interprets the given string as an
+     * ElementPath.
+     *
+     * @param sibling the sibling path
+     * @return a new path
+     */
+    @NotNull ElementPath resolveSibling(final @NotNull String sibling);
+
+    /**
      * Follows this path through the given {@link ConfigElement} according to its nodes. Node values will be converted
      * to integers, as necessary, if lists are encountered. If this path is relative, it is considered as an absolute
      * path.
@@ -100,6 +157,23 @@ public interface ElementPath {
      * @return the element at the path
      */
     @NotNull ConfigElement follow(final @NotNull ConfigElement root);
+
+    /**
+     * Returns a path representing a sub-path of this one. Analogous to {@link Path#subpath(int, int)}.
+     *
+     * @param beginIndex the starting index (inclusive)
+     * @param endIndex the ending index (exclusive)
+     * @return a new path
+     */
+    @NotNull ElementPath subpath(final int beginIndex, final int endIndex);
+
+    /**
+     * Checks if this path starts with the same entries as the given path.
+     *
+     * @param startsWith the other path
+     * @return true if this path starts with the same entries as {@code startsWith}, false otherwise
+     */
+    boolean startsWith(final @NotNull ElementPath startsWith);
 
     /**
      * Convenience overload for {@link ElementPath#follow(ConfigElement)} that additionally converts the located element

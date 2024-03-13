@@ -30,14 +30,14 @@ public class BasicProcessorResolver implements ProcessorResolver {
         for (final Method declaredMethod : declaredMethods) {
             if (declaredMethod.isAnnotationPresent(ProcessorMethod.class)) {
                 if (processorMethod != null) {
-                    throw elementException(elementClass, "more than one ProcessorMethod");
+                    throw elementException(elementClass, "More than one ProcessorMethod");
                 }
 
-                validateModifiersPresent(declaredMethod, () -> "ProcessorMethod is not public static", Modifier.PUBLIC,
+                validateModifiersPresent(declaredMethod, "ProcessorMethod is not public static", Modifier.PUBLIC,
                         Modifier.STATIC);
-                validateParameterCount(declaredMethod, 0, () -> "ProcessorMethod has parameters");
+                validateParameterCount(declaredMethod, 0, "ProcessorMethod has parameters");
                 validateReturnType(declaredMethod, ConfigProcessor.class,
-                        () -> "ProcessorMethod does not return a ConfigProcessor");
+                        "ProcessorMethod does not return a ConfigProcessor");
 
                 processorMethod = declaredMethod;
             }

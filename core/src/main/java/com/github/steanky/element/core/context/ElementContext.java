@@ -12,6 +12,7 @@ import com.github.steanky.ethylene.core.collection.ConfigList;
 import com.github.steanky.ethylene.core.collection.ConfigNode;
 import com.github.steanky.ethylene.core.processor.ConfigProcessor;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.*;
@@ -37,13 +38,30 @@ public interface ElementContext {
      * false, no caching will be performed, unless overridden by the element itself (again using {@link Cache}).
      *
      * @param path               the {@link ElementPath} used to locate the target data
+     * @param substitute         if non-null, effectively "replaces" the element at {@code path} regardless of what is
+     *                           actually in the data
      * @param dependencyProvider the {@link DependencyProvider} used to provide dependencies
      * @param cache              true if this element should be cached, false otherwise
      * @param <TElement>         the type of the element object
      * @return the contextual element object
      */
-    <TElement> @NotNull TElement provide(final @NotNull ElementPath path,
+    <TElement> @NotNull TElement provide(final @NotNull ElementPath path, final @Nullable ConfigNode substitute,
             final @NotNull DependencyProvider dependencyProvider, final boolean cache);
+
+    /**
+     * Works identically to {@link ElementContext#provide(ElementPath, ConfigNode, DependencyProvider, boolean)}, but
+     * uses a {@code null} substitute
+     *
+     * @param path               the {@link ElementPath} used to locate the target data
+     * @param dependencyProvider the {@link DependencyProvider} used to provide dependencies
+     * @param cache              true if this element should be cached, false otherwise
+     * @param <TElement>         the type of the element object
+     * @return the contextual element object
+     */
+    default <TElement> @NotNull TElement provide(final @NotNull ElementPath path,
+            final @NotNull DependencyProvider dependencyProvider, final boolean cache) {
+        return provide(path, null, dependencyProvider, cache);
+    }
 
     /**
      * Convenience overload of {@link ElementContext#provide(ElementPath, DependencyProvider, boolean)} that handles
@@ -210,6 +228,7 @@ public interface ElementContext {
             listElement = listPath.followList(root());
         }
         catch (ElementException e) {
+            e.setElementPath(listPath);
             exceptionHandler.accept(e);
             return collectionSupplier.apply(0);
         }
