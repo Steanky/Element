@@ -1,7 +1,7 @@
 package com.github.steanky.element.core.util;
 
 import com.github.steanky.element.core.ElementException;
-import com.github.steanky.element.core.path.ElementPath;
+import com.github.steanky.ethylene.core.path.ConfigPath;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
@@ -84,9 +84,9 @@ public final class Validate {
      * @param message the error message
      * @return a new ElementException
      */
-    public static @NotNull ElementException elementException(final @NotNull ElementPath path, final @NotNull String message) {
+    public static @NotNull ElementException elementException(final @NotNull ConfigPath path, final @NotNull String message) {
         final ElementException exception = new ElementException(message);
-        exception.setElementPath(path);
+        exception.setConfigPath(path);
         return exception;
     }
 
@@ -141,10 +141,10 @@ public final class Validate {
      * @return a new ElementException
      */
     public static @NotNull ElementException elementException(final @NotNull Throwable cause,
-            final @NotNull ElementPath path,
+            final @NotNull ConfigPath path,
             final @NotNull String message) {
         final ElementException exception = new ElementException(message, cause);
-        exception.setElementPath(path);
+        exception.setConfigPath(path);
         return exception;
     }
 
@@ -159,11 +159,11 @@ public final class Validate {
      */
     public static @NotNull ElementException elementException(final @NotNull Throwable cause,
             final @NotNull Class<?> elementClass,
-            final @NotNull ElementPath path,
+            final @NotNull ConfigPath path,
             final @NotNull String message) {
         final ElementException exception = new ElementException(message, cause);
         exception.setElementClass(elementClass);
-        exception.setElementPath(path);
+        exception.setConfigPath(path);
         return exception;
     }
 
@@ -176,11 +176,11 @@ public final class Validate {
      * @return a new ElementException
      */
     public static @NotNull ElementException elementException(final @NotNull Class<?> elementClass,
-            final @NotNull ElementPath path,
+            final @NotNull ConfigPath path,
             final @NotNull String message) {
         final ElementException exception = new ElementException(message);
         exception.setElementClass(elementClass);
-        exception.setElementPath(path);
+        exception.setConfigPath(path);
         return exception;
     }
 }

@@ -21,7 +21,7 @@ public class BasicKeyExtractor implements KeyExtractor {
     /**
      * Create a new instance of this class.
      *
-     * @param keyName   the name of the key passed to {@link ConfigElement#getStringOrThrow(Object...)}
+     * @param keyName   the name of the key
      * @param keyParser the {@link KeyParser} instance used to parse strings into {@link Key} instances
      */
     public BasicKeyExtractor(final @NotNull String keyName, final @NotNull KeyParser keyParser) {
@@ -32,7 +32,7 @@ public class BasicKeyExtractor implements KeyExtractor {
     @Override
     public @NotNull Key extractKey(final @NotNull ConfigNode node) {
         try {
-            @Subst(Constants.NAMESPACE_OR_KEY) final String keyString = node.getStringOrThrow(keyName);
+            @Subst(Constants.NAMESPACE_OR_KEY) final String keyString = node.atOrThrow(keyName).asStringOrThrow();
             return keyParser.parseKey(keyString);
         } catch (ConfigProcessException e) {
             throw elementException("Missing type key " + keyName);
@@ -42,9 +42,9 @@ public class BasicKeyExtractor implements KeyExtractor {
     @Override
     public boolean hasKey(final @NotNull ConfigNode node) {
         if (node.containsKey(keyName)) {
-            final ConfigElement element = node.getElement(keyName);
+            final ConfigElement element = node.at(keyName);
 
-            if (element.isString()) {
+            if (element != null && element.isString()) {
                 return keyParser.isValidKey(element.asString());
             }
         }

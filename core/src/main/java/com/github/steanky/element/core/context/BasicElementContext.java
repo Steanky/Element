@@ -5,9 +5,9 @@ import com.github.steanky.element.core.ElementFactory;
 import com.github.steanky.element.core.Registry;
 import com.github.steanky.element.core.dependency.DependencyProvider;
 import com.github.steanky.element.core.key.KeyExtractor;
-import com.github.steanky.element.core.path.ElementPath;
 import com.github.steanky.ethylene.core.collection.ConfigContainer;
 import com.github.steanky.ethylene.core.collection.ConfigNode;
+import com.github.steanky.ethylene.core.path.ConfigPath;
 import com.github.steanky.ethylene.core.processor.ConfigProcessException;
 import com.github.steanky.ethylene.core.processor.ConfigProcessor;
 import net.kyori.adventure.key.Key;
@@ -30,9 +30,9 @@ public class BasicElementContext implements ElementContext {
     private final Registry<Boolean> cacheRegistry;
     private final KeyExtractor typeKeyExtractor;
     private final ConfigContainer rootCopy;
-    private final Map<ElementPath, DataInfo> dataObjects;
-    private final Map<ElementPath, Object> elementObjects;
-    private final Map<ElementPath, Key> typeMap;
+    private final Map<ConfigPath, DataInfo> dataObjects;
+    private final Map<ConfigPath, Object> elementObjects;
+    private final Map<ConfigPath, Key> typeMap;
 
     /**
      * Creates a new instance of this class.
@@ -62,15 +62,21 @@ public class BasicElementContext implements ElementContext {
 
     @SuppressWarnings("unchecked")
     @Override
-    public <TElement> @NotNull TElement provide(final @NotNull ElementPath path, final @Nullable ConfigNode substitute,
+    public <TElement> @NotNull TElement provide(final @NotNull ConfigPath path, final @Nullable ConfigNode substitute,
             final @NotNull DependencyProvider dependencyProvider, final boolean cache) {
         try {
-            final ElementPath absolutePath = path.toAbsolute();
+            final ConfigPath absolutePath = path.toAbsolute();
 
             Key objectType = typeMap.get(absolutePath);
             final ConfigNode dataNode;
             if (objectType == null) {
-                ConfigNode child = substitute != null ? substitute : absolutePath.followNode(rootCopy);
+                ConfigNode child;
+                try {
+                    child = substitute != null ? substitute : rootCopy.atOrThrow(absolutePath).asNodeOrThrow();
+                }
+                catch (ConfigProcessException e) {
+                    throw elementException(e, absolutePath, "Configuration error");
+                }
 
                 objectType = typeKeyExtractor.extractKey(child);
                 typeMap.put(absolutePath, objectType);
@@ -95,7 +101,7 @@ public class BasicElementContext implements ElementContext {
             if (dataInfo == null) {
                 try {
                     final ConfigNode configuration = dataNode != null ? dataNode :
-                            (substitute != null ? substitute : absolutePath.followNode(rootCopy));
+                            (substitute != null ? substitute : rootCopy.atOrThrow(absolutePath).asNodeOrThrow());
 
                     final Object data = processorRegistry.contains(objectTypeFinal) ?
                             processorRegistry.lookup(objectTypeFinal).dataFromElement(configuration) : null;
@@ -127,7 +133,7 @@ public class BasicElementContext implements ElementContext {
                     .make(dataInfo.data, absolutePath, this, dependencyProvider);
         }
         catch (ElementException exception) {
-            exception.setElementPath(path);
+            exception.setConfigPath(path);
             exception.fillInStackTrace();
             throw exception;
         }

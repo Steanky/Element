@@ -5,11 +5,12 @@ import com.github.steanky.element.core.ElementFactory;
 import com.github.steanky.element.core.Registry;
 import com.github.steanky.element.core.annotation.Cache;
 import com.github.steanky.element.core.dependency.DependencyProvider;
-import com.github.steanky.element.core.path.ElementPath;
 import com.github.steanky.ethylene.core.collection.ConfigContainer;
 import com.github.steanky.ethylene.core.collection.ConfigEntry;
 import com.github.steanky.ethylene.core.collection.ConfigList;
 import com.github.steanky.ethylene.core.collection.ConfigNode;
+import com.github.steanky.ethylene.core.path.ConfigPath;
+import com.github.steanky.ethylene.core.processor.ConfigProcessException;
 import com.github.steanky.ethylene.core.processor.ConfigProcessor;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -37,7 +38,7 @@ public interface ElementContext {
      * element will attempt to be cached (if it does not specify otherwise using the {@link Cache} annotation). If
      * false, no caching will be performed, unless overridden by the element itself (again using {@link Cache}).
      *
-     * @param path               the {@link ElementPath} used to locate the target data
+     * @param path               the {@link ConfigPath} used to locate the target data
      * @param substitute         if non-null, effectively "replaces" the element at {@code path} regardless of what is
      *                           actually in the data
      * @param dependencyProvider the {@link DependencyProvider} used to provide dependencies
@@ -45,29 +46,29 @@ public interface ElementContext {
      * @param <TElement>         the type of the element object
      * @return the contextual element object
      */
-    <TElement> @NotNull TElement provide(final @NotNull ElementPath path, final @Nullable ConfigNode substitute,
+    <TElement> @NotNull TElement provide(final @NotNull ConfigPath path, final @Nullable ConfigNode substitute,
             final @NotNull DependencyProvider dependencyProvider, final boolean cache);
 
     /**
-     * Works identically to {@link ElementContext#provide(ElementPath, ConfigNode, DependencyProvider, boolean)}, but
+     * Works identically to {@link ElementContext#provide(ConfigPath, ConfigNode, DependencyProvider, boolean)}, but
      * uses a {@code null} substitute
      *
-     * @param path               the {@link ElementPath} used to locate the target data
+     * @param path               the {@link ConfigPath} used to locate the target data
      * @param dependencyProvider the {@link DependencyProvider} used to provide dependencies
      * @param cache              true if this element should be cached, false otherwise
      * @param <TElement>         the type of the element object
      * @return the contextual element object
      */
-    default <TElement> @NotNull TElement provide(final @NotNull ElementPath path,
+    default <TElement> @NotNull TElement provide(final @NotNull ConfigPath path,
             final @NotNull DependencyProvider dependencyProvider, final boolean cache) {
         return provide(path, null, dependencyProvider, cache);
     }
 
     /**
-     * Convenience overload of {@link ElementContext#provide(ElementPath, DependencyProvider, boolean)} that handles
+     * Convenience overload of {@link ElementContext#provide(ConfigPath, DependencyProvider, boolean)} that handles
      * {@link ElementException}s thrown during construction.
      *
-     * @param path                 the {@link ElementPath} used to locate the target data
+     * @param path                 the {@link ConfigPath} used to locate the target data
      * @param dependencyProvider   the {@link DependencyProvider} used to supply dependencies
      * @param cache                true if this element should be cached, false otherwise
      * @param exceptionHandler     a {@link Consumer} which will be called with an {@link ElementException}, if one
@@ -76,7 +77,7 @@ public interface ElementContext {
      * @param <TElement>           the element type
      * @return the element object
      */
-    default <TElement> TElement provide(final @NotNull ElementPath path,
+    default <TElement> TElement provide(final @NotNull ConfigPath path,
             final @NotNull DependencyProvider dependencyProvider, final boolean cache,
             final @NotNull Consumer<? super ElementException> exceptionHandler,
             final @NotNull Supplier<? extends TElement> defaultValueSupplier) {
@@ -93,7 +94,7 @@ public interface ElementContext {
 
     /**
      * Convenience overload of
-     * {@link ElementContext#provide(ElementPath, DependencyProvider, boolean, Consumer, Supplier)} that provides the
+     * {@link ElementContext#provide(ConfigPath, DependencyProvider, boolean, Consumer, Supplier)} that provides the
      * root element, and no caching.
      *
      * @param dependencyProvider   the {@link DependencyProvider} used to supply dependencies
@@ -106,15 +107,15 @@ public interface ElementContext {
     default <TElement> TElement provide(final @NotNull DependencyProvider dependencyProvider,
             final @NotNull Consumer<? super ElementException> exceptionHandler,
             final @NotNull Supplier<? extends TElement> defaultValueSupplier) {
-        return provide(ElementPath.EMPTY, dependencyProvider, false, exceptionHandler, defaultValueSupplier);
+        return provide(ConfigPath.EMPTY, dependencyProvider, false, exceptionHandler, defaultValueSupplier);
     }
 
     /**
      * Convenience overload of
-     * {@link ElementContext#provide(ElementPath, DependencyProvider, boolean, Consumer, Supplier)} that does not
+     * {@link ElementContext#provide(ConfigPath, DependencyProvider, boolean, Consumer, Supplier)} that does not
      * specify any caching.
      *
-     * @param path                 the {@link ElementPath} used to locate the target data
+     * @param path                 the {@link ConfigPath} used to locate the target data
      * @param dependencyProvider   the {@link DependencyProvider} used to supply dependencies
      * @param exceptionHandler     a {@link Consumer} which will be called with an {@link ElementException}, if one
      *                             occurs
@@ -122,7 +123,7 @@ public interface ElementContext {
      * @param <TElement>           the element type
      * @return the element object
      */
-    default <TElement> TElement provide(final @NotNull ElementPath path,
+    default <TElement> TElement provide(final @NotNull ConfigPath path,
             final @NotNull DependencyProvider dependencyProvider,
             final @NotNull Consumer<? super ElementException> exceptionHandler,
             final @NotNull Supplier<? extends TElement> defaultValueSupplier) {
@@ -131,17 +132,17 @@ public interface ElementContext {
 
     /**
      * Convenience overload of
-     * {@link ElementContext#provide(ElementPath, DependencyProvider, boolean, Consumer, Supplier)} that specifies an
+     * {@link ElementContext#provide(ConfigPath, DependencyProvider, boolean, Consumer, Supplier)} that specifies an
      * empty {@link DependencyProvider} and no caching.
      *
-     * @param path                 the {@link ElementPath} used to locate the target data
+     * @param path                 the {@link ConfigPath} used to locate the target data
      * @param exceptionHandler     a {@link Consumer} which will be called with an {@link ElementException}, if one
      *                             occurs
      * @param defaultValueSupplier the {@link Supplier} used to supply a fallback value in case an exception occurs
      * @param <TElement>           the element type
      * @return the element object
      */
-    default <TElement> TElement provide(final @NotNull ElementPath path,
+    default <TElement> TElement provide(final @NotNull ConfigPath path,
             final @NotNull Consumer<? super ElementException> exceptionHandler,
             final @NotNull Supplier<? extends TElement> defaultValueSupplier) {
         return provide(path, DependencyProvider.EMPTY, false, exceptionHandler, defaultValueSupplier);
@@ -149,7 +150,7 @@ public interface ElementContext {
 
     /**
      * Convenience overload of
-     * {@link ElementContext#provide(ElementPath, DependencyProvider, boolean, Consumer, Supplier)} that provides the
+     * {@link ElementContext#provide(ConfigPath, DependencyProvider, boolean, Consumer, Supplier)} that provides the
      * root element and uses the empty {@link DependencyProvider}.
      *
      * @param exceptionHandler     a {@link Consumer} which will be called with an {@link ElementException}, if one
@@ -160,11 +161,11 @@ public interface ElementContext {
      */
     default <TElement> TElement provide(final @NotNull Consumer<? super ElementException> exceptionHandler,
             final @NotNull Supplier<? extends TElement> defaultValueSupplier) {
-        return provide(ElementPath.EMPTY, DependencyProvider.EMPTY, false, exceptionHandler, defaultValueSupplier);
+        return provide(ConfigPath.EMPTY, DependencyProvider.EMPTY, false, exceptionHandler, defaultValueSupplier);
     }
 
     /**
-     * Convenience overload for {@link ElementContext#provide(ElementPath, DependencyProvider, boolean)}. This will
+     * Convenience overload for {@link ElementContext#provide(ConfigPath, DependencyProvider, boolean)}. This will
      * provide the root element using the given {@link DependencyProvider}, and no caching.
      *
      * @param dependencyProvider the DependencyProvider used to provide dependencies
@@ -172,11 +173,11 @@ public interface ElementContext {
      * @return the root element object
      */
     default <TElement> @NotNull TElement provide(final @NotNull DependencyProvider dependencyProvider) {
-        return provide(ElementPath.EMPTY, dependencyProvider, false);
+        return provide(ConfigPath.EMPTY, dependencyProvider, false);
     }
 
     /**
-     * Convenience overload for {@link ElementContext#provide(ElementPath, DependencyProvider, boolean)}. This will
+     * Convenience overload for {@link ElementContext#provide(ConfigPath, DependencyProvider, boolean)}. This will
      * provide the element specified by the path, using an empty dependency provider ({@link DependencyProvider#EMPTY}),
      * and no caching.
      *
@@ -184,23 +185,23 @@ public interface ElementContext {
      * @param <TElement> the type of the contextual element object
      * @return the element object
      */
-    default <TElement> @NotNull TElement provide(final @NotNull ElementPath path) {
+    default <TElement> @NotNull TElement provide(final @NotNull ConfigPath path) {
         return provide(path, DependencyProvider.EMPTY, false);
     }
 
     /**
-     * Convenience overload for {@link ElementContext#provide(ElementPath, DependencyProvider, boolean)}. This will
+     * Convenience overload for {@link ElementContext#provide(ConfigPath, DependencyProvider, boolean)}. This will
      * provide the root element using an empty dependency provider ({@link DependencyProvider#EMPTY}), without caching.
      *
      * @param <TElement> the type of the contextual element object
      * @return the element object
      */
     default <TElement> @NotNull TElement provide() {
-        return provide(ElementPath.EMPTY, DependencyProvider.EMPTY, false);
+        return provide(ConfigPath.EMPTY, DependencyProvider.EMPTY, false);
     }
 
     /**
-     * Provides a collection of elements, given a valid {@link ElementPath} pointing at a {@link ConfigList}, relative
+     * Provides a collection of elements, given a valid {@link ConfigPath} pointing at a {@link ConfigList}, relative
      * to this context's <i>root node</i>. This method catches {@link ElementException}s that are thrown when elements
      * are provided, and relays them to the supplied consumer after the list has been iterated. This can allow certain
      * elements to fail to load without preventing others from doing so.
@@ -215,7 +216,7 @@ public interface ElementContext {
      * @return a collection of provided element objects
      */
     default @NotNull <TElement, TCollection extends Collection<TElement>> TCollection provideCollection(
-            final @NotNull ElementPath listPath, final @NotNull DependencyProvider dependencyProvider,
+            final @NotNull ConfigPath listPath, final @NotNull DependencyProvider dependencyProvider,
             final boolean cache, final @NotNull IntFunction<? extends TCollection> collectionSupplier,
             final @NotNull Consumer<? super ElementException> exceptionHandler) {
         Objects.requireNonNull(listPath);
@@ -225,11 +226,12 @@ public interface ElementContext {
 
         final ConfigList listElement;
         try {
-            listElement = listPath.followList(root());
+            listElement = root().atOrThrow(listPath).asListOrThrow();
         }
-        catch (ElementException e) {
-            e.setElementPath(listPath);
-            exceptionHandler.accept(e);
+        catch (ConfigProcessException e) {
+            final ElementException exception = new ElementException("Failed to find list", e);
+            exception.setConfigPath(listPath);
+            exceptionHandler.accept(exception);
             return collectionSupplier.apply(0);
         }
 
@@ -238,7 +240,7 @@ public interface ElementContext {
         ElementException exception = null;
         for (int i = 0; i < listElement.size(); i++) {
             try {
-                elementCollection.add(provide(listPath.append(i), dependencyProvider, cache));
+                elementCollection.add(provide(listPath.append(Integer.toString(i)), dependencyProvider, cache));
             } catch (ElementException e) {
                 if (exception == null) {
                     exception = e;
@@ -257,7 +259,7 @@ public interface ElementContext {
 
     /**
      * Convenience overload for
-     * {@link ElementContext#provideCollection(ElementPath, DependencyProvider, boolean, IntFunction, Consumer)}. Uses a
+     * {@link ElementContext#provideCollection(ConfigPath, DependencyProvider, boolean, IntFunction, Consumer)}. Uses a
      * default collection supplier {@code ArrayList::new}.
      *
      * @param listPath           the path string pointing to the ConfigList
@@ -267,7 +269,7 @@ public interface ElementContext {
      * @param <TElement>         the type of element object
      * @return a collection of provided element objects
      */
-    default @NotNull <TElement> List<TElement> provideCollection(final @NotNull ElementPath listPath,
+    default @NotNull <TElement> List<TElement> provideCollection(final @NotNull ConfigPath listPath,
             final @NotNull DependencyProvider dependencyProvider, final boolean cache,
             final @NotNull Consumer<? super ElementException> exceptionHandler) {
         return provideCollection(listPath, dependencyProvider, cache, ArrayList::new, exceptionHandler);
@@ -275,7 +277,7 @@ public interface ElementContext {
 
     /**
      * Convenience overload for
-     * {@link ElementContext#provideCollection(ElementPath, DependencyProvider, boolean, IntFunction, Consumer)}. Uses a
+     * {@link ElementContext#provideCollection(ConfigPath, DependencyProvider, boolean, IntFunction, Consumer)}. Uses a
      * default collection supplier {@code ArrayList::new} and the empty {@link DependencyProvider}.
      *
      * @param listPath         the path string pointing to the ConfigList
@@ -284,14 +286,14 @@ public interface ElementContext {
      * @param <TElement>       the type of element object
      * @return a collection of provided element objects
      */
-    default @NotNull <TElement> List<TElement> provideCollection(final @NotNull ElementPath listPath,
+    default @NotNull <TElement> List<TElement> provideCollection(final @NotNull ConfigPath listPath,
             final boolean cache, final @NotNull Consumer<? super ElementException> exceptionHandler) {
         return provideCollection(listPath, DependencyProvider.EMPTY, cache, ArrayList::new, exceptionHandler);
     }
 
     /**
      * Convenience overload for
-     * {@link ElementContext#provideCollection(ElementPath, DependencyProvider, boolean, IntFunction, Consumer)}. Uses a
+     * {@link ElementContext#provideCollection(ConfigPath, DependencyProvider, boolean, IntFunction, Consumer)}. Uses a
      * default collection supplier {@code ArrayList::new} and prefers no caching.
      *
      * @param listPath           the path string pointing to the ConfigList
@@ -300,7 +302,7 @@ public interface ElementContext {
      * @param <TElement>         the type of element object
      * @return a collection of provided element objects
      */
-    default @NotNull <TElement> List<TElement> provideCollection(final @NotNull ElementPath listPath,
+    default @NotNull <TElement> List<TElement> provideCollection(final @NotNull ConfigPath listPath,
             final @NotNull DependencyProvider dependencyProvider,
             final @NotNull Consumer<? super ElementException> exceptionHandler) {
         return provideCollection(listPath, dependencyProvider, false, ArrayList::new, exceptionHandler);
@@ -308,7 +310,7 @@ public interface ElementContext {
 
     /**
      * Convenience overload for
-     * {@link ElementContext#provideCollection(ElementPath, DependencyProvider, boolean, IntFunction, Consumer)}. Uses a
+     * {@link ElementContext#provideCollection(ConfigPath, DependencyProvider, boolean, IntFunction, Consumer)}. Uses a
      * default collection supplier {@code ArrayList::new}, the empty {@link DependencyProvider}, and prefers no
      * caching.
      *
@@ -317,14 +319,14 @@ public interface ElementContext {
      * @param <TElement>       the type of element object
      * @return a collection of provided element objects
      */
-    default @NotNull <TElement> List<TElement> provideCollection(final @NotNull ElementPath listPath,
+    default @NotNull <TElement> List<TElement> provideCollection(final @NotNull ConfigPath listPath,
             final @NotNull Consumer<? super ElementException> exceptionHandler) {
         return provideCollection(listPath, DependencyProvider.EMPTY, false, ArrayList::new, exceptionHandler);
     }
 
     /**
      * Convenience overload for
-     * {@link ElementContext#provideCollection(ElementPath, DependencyProvider, boolean, IntFunction, Consumer)}. Uses
+     * {@link ElementContext#provideCollection(ConfigPath, DependencyProvider, boolean, IntFunction, Consumer)}. Uses
      * the default exception handler {@link ElementContext#DEFAULT_EXCEPTION_HANDLER}.
      *
      * @param listPath           the path string pointing to the ConfigList
@@ -336,14 +338,14 @@ public interface ElementContext {
      * @return a collection of provided element objects
      */
     default @NotNull <TElement, TCollection extends Collection<TElement>> TCollection provideCollection(
-            final @NotNull ElementPath listPath, final @NotNull DependencyProvider dependencyProvider,
+            final @NotNull ConfigPath listPath, final @NotNull DependencyProvider dependencyProvider,
             final boolean cache, final @NotNull IntFunction<? extends TCollection> collectionSupplier) {
         return provideCollection(listPath, dependencyProvider, cache, collectionSupplier, DEFAULT_EXCEPTION_HANDLER);
     }
 
     /**
      * Convenience overload for
-     * {@link ElementContext#provideCollection(ElementPath, DependencyProvider, boolean, IntFunction, Consumer)}. Uses
+     * {@link ElementContext#provideCollection(ConfigPath, DependencyProvider, boolean, IntFunction, Consumer)}. Uses
      * the default exception handler {@link ElementContext#DEFAULT_EXCEPTION_HANDLER} and the empty
      * {@link DependencyProvider}.
      *
@@ -355,7 +357,7 @@ public interface ElementContext {
      * @return a collection of provided element objects
      */
     default @NotNull <TElement, TCollection extends Collection<TElement>> TCollection provideCollection(
-            final @NotNull ElementPath listPath, final boolean cache,
+            final @NotNull ConfigPath listPath, final boolean cache,
             final @NotNull IntFunction<? extends TCollection> collectionSupplier) {
         return provideCollection(listPath, DependencyProvider.EMPTY, cache, collectionSupplier,
                 DEFAULT_EXCEPTION_HANDLER);
@@ -363,7 +365,7 @@ public interface ElementContext {
 
     /**
      * Convenience overload for
-     * {@link ElementContext#provideCollection(ElementPath, DependencyProvider, boolean, IntFunction, Consumer)}. Uses
+     * {@link ElementContext#provideCollection(ConfigPath, DependencyProvider, boolean, IntFunction, Consumer)}. Uses
      * the default exception handler {@link ElementContext#DEFAULT_EXCEPTION_HANDLER}, and the default collection
      * supplier {@code ArrayList::new}.
      *
@@ -373,14 +375,14 @@ public interface ElementContext {
      * @param <TElement>         the type of element object
      * @return a collection of provided element objects
      */
-    default @NotNull <TElement> List<TElement> provideCollection(final @NotNull ElementPath listPath,
+    default @NotNull <TElement> List<TElement> provideCollection(final @NotNull ConfigPath listPath,
             final @NotNull DependencyProvider dependencyProvider, final boolean cache) {
         return provideCollection(listPath, dependencyProvider, cache, ArrayList::new, DEFAULT_EXCEPTION_HANDLER);
     }
 
     /**
      * Convenience overload for
-     * {@link ElementContext#provideCollection(ElementPath, DependencyProvider, boolean, IntFunction, Consumer)}. Uses
+     * {@link ElementContext#provideCollection(ConfigPath, DependencyProvider, boolean, IntFunction, Consumer)}. Uses
      * the default exception handler {@link ElementContext#DEFAULT_EXCEPTION_HANDLER}, the empty
      * {@link DependencyProvider}, and the default collection supplier {@code ArrayList::new}.
      *
@@ -389,14 +391,14 @@ public interface ElementContext {
      * @param <TElement> the type of element object
      * @return a collection of provided element objects
      */
-    default @NotNull <TElement> List<TElement> provideCollection(final @NotNull ElementPath listPath,
+    default @NotNull <TElement> List<TElement> provideCollection(final @NotNull ConfigPath listPath,
             final boolean cache) {
         return provideCollection(listPath, DependencyProvider.EMPTY, cache, ArrayList::new, DEFAULT_EXCEPTION_HANDLER);
     }
 
     /**
      * Convenience overload for
-     * {@link ElementContext#provideCollection(ElementPath, DependencyProvider, boolean, IntFunction, Consumer)}. Uses
+     * {@link ElementContext#provideCollection(ConfigPath, DependencyProvider, boolean, IntFunction, Consumer)}. Uses
      * the default exception handler {@link ElementContext#DEFAULT_EXCEPTION_HANDLER}, prefers no caching, and uses the
      * default collection supplier {@code ArrayList::new}.
      *
@@ -405,14 +407,14 @@ public interface ElementContext {
      * @param <TElement>         the type of element object
      * @return a collection of provided element objects
      */
-    default @NotNull <TElement> List<TElement> provideCollection(final @NotNull ElementPath listPath,
+    default @NotNull <TElement> List<TElement> provideCollection(final @NotNull ConfigPath listPath,
             final @NotNull DependencyProvider dependencyProvider) {
         return provideCollection(listPath, dependencyProvider, false, ArrayList::new, DEFAULT_EXCEPTION_HANDLER);
     }
 
     /**
      * Convenience overload for
-     * {@link ElementContext#provideCollection(ElementPath, DependencyProvider, boolean, IntFunction, Consumer)}. Uses
+     * {@link ElementContext#provideCollection(ConfigPath, DependencyProvider, boolean, IntFunction, Consumer)}. Uses
      * the default exception handler {@link ElementContext#DEFAULT_EXCEPTION_HANDLER}, prefers no caching, the default
      * collection supplier {@code ArrayList::new}, and the empty dependency provider.
      *
@@ -420,7 +422,7 @@ public interface ElementContext {
      * @param <TElement> the type of element object
      * @return a collection of provided element objects
      */
-    default @NotNull <TElement> List<TElement> provideCollection(final @NotNull ElementPath listPath) {
+    default @NotNull <TElement> List<TElement> provideCollection(final @NotNull ConfigPath listPath) {
         return provideCollection(listPath, DependencyProvider.EMPTY, false, ArrayList::new, DEFAULT_EXCEPTION_HANDLER);
     }
 
@@ -439,7 +441,7 @@ public interface ElementContext {
      * @param <TMap>>            the type of map
      * @return a collection of provided element objects
      */
-    default @NotNull <TElement, TMap extends Map<String, TElement>> TMap provideMap(final @NotNull ElementPath nodePath,
+    default @NotNull <TElement, TMap extends Map<String, TElement>> TMap provideMap(final @NotNull ConfigPath nodePath,
             final @NotNull DependencyProvider dependencyProvider, final boolean cache,
             final @NotNull IntFunction<? extends TMap> mapSupplier,
             final @NotNull Consumer<? super ElementException> exceptionHandler) {
@@ -450,10 +452,12 @@ public interface ElementContext {
 
         final ConfigNode nodeElement;
         try {
-            nodeElement = nodePath.followNode(root());
+            nodeElement = root().atOrThrow(nodePath).asNodeOrThrow();
         }
-        catch (ElementException e) {
-            exceptionHandler.accept(e);
+        catch (ConfigProcessException e) {
+            final ElementException exception = new ElementException("Failed to find node", e);
+            exception.setConfigPath(nodePath);
+            exceptionHandler.accept(exception);
             return mapSupplier.apply(0);
         }
 
@@ -481,7 +485,7 @@ public interface ElementContext {
 
     /**
      * Convenience overload for
-     * {@link ElementContext#provideMap(ElementPath, DependencyProvider, boolean, IntFunction, Consumer)}. Uses a
+     * {@link ElementContext#provideMap(ConfigPath, DependencyProvider, boolean, IntFunction, Consumer)}. Uses a
      * default map supplier {@code LinkedHashMap::new}.
      *
      * @param nodePath           the path string pointing to the ConfigNode
@@ -491,7 +495,7 @@ public interface ElementContext {
      * @param <TElement>         the type of element object
      * @return a map of provided element objects
      */
-    default @NotNull <TElement> Map<String, TElement> provideMap(final @NotNull ElementPath nodePath,
+    default @NotNull <TElement> Map<String, TElement> provideMap(final @NotNull ConfigPath nodePath,
             final @NotNull DependencyProvider dependencyProvider, final boolean cache,
             final @NotNull Consumer<? super ElementException> exceptionHandler) {
         return provideMap(nodePath, dependencyProvider, cache, LinkedHashMap::new, exceptionHandler);
@@ -499,7 +503,7 @@ public interface ElementContext {
 
     /**
      * Convenience overload for
-     * {@link ElementContext#provideMap(ElementPath, DependencyProvider, boolean, IntFunction, Consumer)}. Uses a
+     * {@link ElementContext#provideMap(ConfigPath, DependencyProvider, boolean, IntFunction, Consumer)}. Uses a
      * default map supplier {@code LinkedHashMap::new} and the empty {@link DependencyProvider}.
      *
      * @param nodePath         the path string pointing to the ConfigNode
@@ -508,14 +512,14 @@ public interface ElementContext {
      * @param <TElement>       the type of element object
      * @return a map of provided element objects
      */
-    default @NotNull <TElement> Map<String, TElement> provideMap(final @NotNull ElementPath nodePath,
+    default @NotNull <TElement> Map<String, TElement> provideMap(final @NotNull ConfigPath nodePath,
             final boolean cache, final @NotNull Consumer<? super ElementException> exceptionHandler) {
         return provideMap(nodePath, DependencyProvider.EMPTY, cache, LinkedHashMap::new, exceptionHandler);
     }
 
     /**
      * Convenience overload for
-     * {@link ElementContext#provideMap(ElementPath, DependencyProvider, boolean, IntFunction, Consumer)}. Uses a
+     * {@link ElementContext#provideMap(ConfigPath, DependencyProvider, boolean, IntFunction, Consumer)}. Uses a
      * default map supplier {@code LinkedHashMap::new} and prefers no caching.
      *
      * @param nodePath           the path string pointing to the ConfigNode
@@ -524,7 +528,7 @@ public interface ElementContext {
      * @param <TElement>         the type of element object
      * @return a map of provided element objects
      */
-    default @NotNull <TElement> Map<String, TElement> provideMap(final @NotNull ElementPath nodePath,
+    default @NotNull <TElement> Map<String, TElement> provideMap(final @NotNull ConfigPath nodePath,
             final @NotNull DependencyProvider dependencyProvider,
             final @NotNull Consumer<? super ElementException> exceptionHandler) {
         return provideMap(nodePath, dependencyProvider, false, LinkedHashMap::new, exceptionHandler);
@@ -532,7 +536,7 @@ public interface ElementContext {
 
     /**
      * Convenience overload for
-     * {@link ElementContext#provideMap(ElementPath, DependencyProvider, boolean, IntFunction, Consumer)}. Uses a
+     * {@link ElementContext#provideMap(ConfigPath, DependencyProvider, boolean, IntFunction, Consumer)}. Uses a
      * default map supplier {@code LinkedHashMap::new}, prefers no caching, and uses the empty
      * {@link DependencyProvider}.
      *
@@ -541,14 +545,14 @@ public interface ElementContext {
      * @param <TElement>       the type of element object
      * @return a map of provided element objects
      */
-    default @NotNull <TElement> Map<String, TElement> provideMap(final @NotNull ElementPath nodePath,
+    default @NotNull <TElement> Map<String, TElement> provideMap(final @NotNull ConfigPath nodePath,
             final @NotNull Consumer<? super ElementException> exceptionHandler) {
         return provideMap(nodePath, DependencyProvider.EMPTY, false, LinkedHashMap::new, exceptionHandler);
     }
 
     /**
      * Convenience overload for
-     * {@link ElementContext#provideMap(ElementPath, DependencyProvider, boolean, IntFunction, Consumer)}. Uses the
+     * {@link ElementContext#provideMap(ConfigPath, DependencyProvider, boolean, IntFunction, Consumer)}. Uses the
      * default exception handler {@link ElementContext#DEFAULT_EXCEPTION_HANDLER}.
      *
      * @param nodePath           the path string pointing to the ConfigNode
@@ -559,7 +563,7 @@ public interface ElementContext {
      * @param <TMap>             the type of map
      * @return a map of provided element objects
      */
-    default @NotNull <TElement, TMap extends Map<String, TElement>> TMap provideMap(final @NotNull ElementPath nodePath,
+    default @NotNull <TElement, TMap extends Map<String, TElement>> TMap provideMap(final @NotNull ConfigPath nodePath,
             final @NotNull DependencyProvider dependencyProvider, final boolean cache,
             final @NotNull IntFunction<? extends TMap> mapSupplier) {
         return provideMap(nodePath, dependencyProvider, cache, mapSupplier, DEFAULT_EXCEPTION_HANDLER);
@@ -567,7 +571,7 @@ public interface ElementContext {
 
     /**
      * Convenience overload for
-     * {@link ElementContext#provideMap(ElementPath, DependencyProvider, boolean, IntFunction, Consumer)}. Uses the
+     * {@link ElementContext#provideMap(ConfigPath, DependencyProvider, boolean, IntFunction, Consumer)}. Uses the
      * default exception handler {@link ElementContext#DEFAULT_EXCEPTION_HANDLER} and the empty
      * {@link DependencyProvider}.
      *
@@ -578,14 +582,14 @@ public interface ElementContext {
      * @param <TMap>      the type of map
      * @return a map of provided element objects
      */
-    default @NotNull <TElement, TMap extends Map<String, TElement>> TMap provideMap(final @NotNull ElementPath nodePath,
+    default @NotNull <TElement, TMap extends Map<String, TElement>> TMap provideMap(final @NotNull ConfigPath nodePath,
             final boolean cache, final @NotNull IntFunction<? extends TMap> mapSupplier) {
         return provideMap(nodePath, DependencyProvider.EMPTY, cache, mapSupplier, DEFAULT_EXCEPTION_HANDLER);
     }
 
     /**
      * Convenience overload for
-     * {@link ElementContext#provideMap(ElementPath, DependencyProvider, boolean, IntFunction, Consumer)}. Uses the
+     * {@link ElementContext#provideMap(ConfigPath, DependencyProvider, boolean, IntFunction, Consumer)}. Uses the
      * default exception handler {@link ElementContext#DEFAULT_EXCEPTION_HANDLER} and the default map supplier
      * {@code LinkedHashMap::new}.
      *
@@ -595,14 +599,14 @@ public interface ElementContext {
      * @param <TElement>         the type of element object
      * @return a map of provided element objects
      */
-    default @NotNull <TElement> Map<String, TElement> provideMap(final @NotNull ElementPath nodePath,
+    default @NotNull <TElement> Map<String, TElement> provideMap(final @NotNull ConfigPath nodePath,
             final @NotNull DependencyProvider dependencyProvider, final boolean cache) {
         return provideMap(nodePath, dependencyProvider, cache, LinkedHashMap::new, DEFAULT_EXCEPTION_HANDLER);
     }
 
     /**
      * Convenience overload for
-     * {@link ElementContext#provideMap(ElementPath, DependencyProvider, boolean, IntFunction, Consumer)}. Uses the
+     * {@link ElementContext#provideMap(ConfigPath, DependencyProvider, boolean, IntFunction, Consumer)}. Uses the
      * default exception handler {@link ElementContext#DEFAULT_EXCEPTION_HANDLER}, the default map supplier
      * {@code LinkedHashMap::new}, and the empty {@link DependencyProvider}.
      *
@@ -611,14 +615,14 @@ public interface ElementContext {
      * @param <TElement> the type of element object
      * @return a map of provided element objects
      */
-    default @NotNull <TElement> Map<String, TElement> provideMap(final @NotNull ElementPath nodePath,
+    default @NotNull <TElement> Map<String, TElement> provideMap(final @NotNull ConfigPath nodePath,
             final boolean cache) {
         return provideMap(nodePath, DependencyProvider.EMPTY, cache, LinkedHashMap::new, DEFAULT_EXCEPTION_HANDLER);
     }
 
     /**
      * Convenience overload for
-     * {@link ElementContext#provideMap(ElementPath, DependencyProvider, boolean, IntFunction, Consumer)}. Uses the
+     * {@link ElementContext#provideMap(ConfigPath, DependencyProvider, boolean, IntFunction, Consumer)}. Uses the
      * default exception handler {@link ElementContext#DEFAULT_EXCEPTION_HANDLER}, the default map supplier
      * {@code LinkedHashMap::new}, and prefers no caching.
      *
@@ -627,14 +631,14 @@ public interface ElementContext {
      * @param <TElement>         the type of element object
      * @return a map of provided element objects
      */
-    default @NotNull <TElement> Map<String, TElement> provideMap(final @NotNull ElementPath nodePath,
+    default @NotNull <TElement> Map<String, TElement> provideMap(final @NotNull ConfigPath nodePath,
             final @NotNull DependencyProvider dependencyProvider) {
         return provideMap(nodePath, dependencyProvider, false, LinkedHashMap::new, DEFAULT_EXCEPTION_HANDLER);
     }
 
     /**
      * Convenience overload for
-     * {@link ElementContext#provideMap(ElementPath, DependencyProvider, boolean, IntFunction, Consumer)}. Uses the
+     * {@link ElementContext#provideMap(ConfigPath, DependencyProvider, boolean, IntFunction, Consumer)}. Uses the
      * default exception handler {@link ElementContext#DEFAULT_EXCEPTION_HANDLER}, the default map supplier
      * {@code LinkedHashMap::new}, prefers no caching, and the empty {@link DependencyProvider}.
      *
@@ -642,7 +646,7 @@ public interface ElementContext {
      * @param <TElement> the type of element object
      * @return a map of provided element objects
      */
-    default @NotNull <TElement> Map<String, TElement> provideMap(final @NotNull ElementPath nodePath) {
+    default @NotNull <TElement> Map<String, TElement> provideMap(final @NotNull ConfigPath nodePath) {
         return provideMap(nodePath, DependencyProvider.EMPTY, false, LinkedHashMap::new, DEFAULT_EXCEPTION_HANDLER);
     }
 

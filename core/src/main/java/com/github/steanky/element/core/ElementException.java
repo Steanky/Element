@@ -1,9 +1,9 @@
 package com.github.steanky.element.core;
 
-import com.github.steanky.element.core.path.ElementPath;
+import com.github.steanky.ethylene.core.path.ConfigPath;
 
 /**
- * Represents a generic exception thrown by various parts of the Element API. Can have an associated {@link ElementPath}
+ * Represents a generic exception thrown by various parts of the Element API. Can have an associated {@link ConfigPath}
  * and {@link Class} which, respectively, define a path and/or class related to this error.
  */
 public class ElementException extends RuntimeException {
@@ -15,7 +15,7 @@ public class ElementException extends RuntimeException {
     /**
      * The element path associated with this error.
      */
-    private ElementPath elementPath;
+    private ConfigPath configPath;
 
     /**
      * Creates a new ElementException with no detail message or cause.
@@ -64,13 +64,13 @@ public class ElementException extends RuntimeException {
     }
 
     /**
-     * Sets the {@link ElementPath} associated with this error. This method does nothing if an error path is already set.
+     * Sets the {@link ConfigPath} associated with this error. This method does nothing if an error path is already set.
      *
-     * @param elementPath the path
+     * @param configPath the path
      */
-    public void setElementPath(ElementPath elementPath) {
-        if (this.elementPath == null) {
-            this.elementPath = elementPath;
+    public void setConfigPath(ConfigPath configPath) {
+        if (this.configPath == null) {
+            this.configPath = configPath;
         }
     }
 
@@ -88,24 +88,24 @@ public class ElementException extends RuntimeException {
      *
      * @return the error path
      */
-    public ElementPath errorPath() {
-        return elementPath;
+    public ConfigPath errorPath() {
+        return configPath;
     }
 
     @Override
     public String getMessage() {
         final String baseMessage = super.getMessage();
-        final StringBuilder builder = new StringBuilder(baseMessage.length() + 100);
+        final StringBuilder builder = new StringBuilder(baseMessage.length());
         final Class<?> elementClass = this.elementClass;
-        final ElementPath elementPath = this.elementPath;
+        final ConfigPath elementPath = this.configPath;
 
-        builder.append("\"").append(baseMessage).append("\"");
+        builder.append('\"').append(baseMessage).append('\"');
         if (elementClass != null) {
             builder.append(System.lineSeparator()).append("Relevant class: ").append(elementClass);
         }
 
         if (elementPath != null) {
-            builder.append(System.lineSeparator()).append("Data path: '").append(elementPath).append("'");
+            builder.append(System.lineSeparator()).append("Data path: '").append(elementPath).append('\'');
         }
 
 

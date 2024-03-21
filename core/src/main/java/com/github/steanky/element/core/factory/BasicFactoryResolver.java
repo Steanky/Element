@@ -10,12 +10,13 @@ import com.github.steanky.element.core.context.ElementContext;
 import com.github.steanky.element.core.dependency.DependencyProvider;
 import com.github.steanky.element.core.key.Constants;
 import com.github.steanky.element.core.key.KeyParser;
-import com.github.steanky.element.core.path.ElementPath;
 import com.github.steanky.ethylene.core.ConfigElement;
 import com.github.steanky.ethylene.core.collection.ConfigEntry;
 import com.github.steanky.ethylene.core.collection.ConfigList;
 import com.github.steanky.ethylene.core.collection.ConfigNode;
 import com.github.steanky.ethylene.core.collection.LinkedConfigNode;
+import com.github.steanky.ethylene.core.path.ConfigPath;
+import com.github.steanky.ethylene.core.processor.ConfigProcessException;
 import com.github.steanky.ethylene.core.processor.ConfigProcessor;
 import com.github.steanky.ethylene.mapper.MappingProcessorSource;
 import com.github.steanky.ethylene.mapper.annotation.Default;
@@ -61,20 +62,20 @@ public class BasicFactoryResolver implements FactoryResolver {
 
         @NotNull
         @Override
-        public Object make(final Object objectData, final @NotNull ElementPath dataPath, final @NotNull ElementContext context,
+        public Object make(final Object objectData, final @NotNull ConfigPath configPath, final @NotNull ElementContext context,
                 final @NotNull DependencyProvider dependencyProvider) {
             if (requiresData && objectData == null) {
-                throw elementException(factoryConstructor.getDeclaringClass(), dataPath,
+                throw elementException(factoryConstructor.getDeclaringClass(), configPath,
                         "Element requires data, but none was provided");
             }
 
             if (!requiresData && objectData != null) {
-                throw elementException(factoryConstructor.getDeclaringClass(), dataPath,
+                throw elementException(factoryConstructor.getDeclaringClass(), configPath,
                         "Element does not accept data, and data was provided");
             }
 
             if (!context.root().isNode()) {
-                throw elementException(factoryConstructor.getDeclaringClass(), dataPath,
+                throw elementException(factoryConstructor.getDeclaringClass(), configPath,
                         "Root must be a ConfigNode");
             }
 
@@ -93,22 +94,23 @@ public class BasicFactoryResolver implements FactoryResolver {
                                 yield dependencyProvider.provide(parameter.typeKey);
                             }
                             catch (ElementException exception) {
-                                exception.setElementPath(dataPath);
+                                exception.setConfigPath(configPath);
                                 exception.setElementClass(factoryConstructor.getDeclaringClass());
                                 throw exception;
                             }
                         }
                         case CHILD -> {
                             if (ourData == null) {
-                                ourData = ConfigNode.defaulting(dataPath.followNode(context.root()), defaultValues);
+                                ourData = ConfigNode.defaulting(context.root().atOrThrow(configPath).asNodeOrThrow(),
+                                        defaultValues);
                             }
 
-                            final ElementPath absoluteChildDataPath = dataPath.resolve(parameter.childPath);
+                            final ConfigPath absoluteChildDataPath = configPath.resolve(parameter.childPath);
                             final boolean isContainer = containerCreator
                                     .isContainerType(Token.ofType(parameter.parameter.getParameterizedType()));
 
                             //recursively resolve child elements
-                            yield child(parameter, dataPath, dataPath, ourData, context, absoluteChildDataPath,
+                            yield child(parameter, configPath, configPath, ourData, context, absoluteChildDataPath,
                                     dependencyProvider, isContainer);
                         }
                     };
@@ -116,32 +118,43 @@ public class BasicFactoryResolver implements FactoryResolver {
             }
             catch (ElementException exception) {
                 exception.setElementClass(factoryConstructor.getDeclaringClass());
-                exception.setElementPath(dataPath);
+                exception.setConfigPath(configPath);
                 throw exception;
+            }
+            catch (ConfigProcessException exception) {
+                throw elementException(exception, factoryConstructor.getDeclaringClass(), configPath,
+                        "Failure to follow path");
             }
 
             try {
                 return factoryConstructor.newInstance(args);
             } catch (InstantiationException | IllegalAccessException | InvocationTargetException e) {
-                throw elementException(e, factoryConstructor.getDeclaringClass(), dataPath, "Error instantiating element");
+                throw elementException(e, factoryConstructor.getDeclaringClass(), configPath, "Error instantiating element");
             }
         }
 
         @SuppressWarnings("unchecked")
-        private Object child(ElementParameter parameter, ElementPath dataPath, ElementPath defaultingPath,
-                ConfigNode defaultingData, ElementContext context, ElementPath absoluteChildDataPath,
+        private Object child(ElementParameter parameter, ConfigPath dataPath, ConfigPath defaultingPath,
+                ConfigNode defaultingData, ElementContext context, ConfigPath absoluteChildDataPath,
                 DependencyProvider dependencyProvider, boolean isContainer) {
             final ConfigElement childData;
-            if (absoluteChildDataPath.startsWith(defaultingPath)) {
-                childData = dataPath.relativize(absoluteChildDataPath).toAbsolute().follow(defaultingData);
-            }
-            else {
-                childData = absoluteChildDataPath.follow(context.root());
-            }
 
-            if (childData.isNode()) {
-                //simple case: child is a node
-                return context.provide(absoluteChildDataPath, childData.asNode(), dependencyProvider, false);
+            try {
+                if (absoluteChildDataPath.startsWith(defaultingPath)) {
+                    childData = defaultingData.atOrThrow(dataPath.relativize(absoluteChildDataPath).toAbsolute());
+                }
+                else {
+                    childData = context.root().atOrThrow(absoluteChildDataPath);
+                }
+
+                if (childData.isNode()) {
+                    //simple case: child is a node
+                    return context.provide(absoluteChildDataPath, childData.asNode(), dependencyProvider, false);
+                }
+            }
+            catch (ConfigProcessException exception) {
+                throw elementException(exception, factoryConstructor.getDeclaringClass(), absoluteChildDataPath,
+                        "Failure to follow path");
             }
 
             if (childData.isList()) {
@@ -154,14 +167,14 @@ public class BasicFactoryResolver implements FactoryResolver {
                     }
                     catch (ElementException exception) {
                         exception.setElementClass(factoryConstructor.getDeclaringClass());
-                        exception.setElementPath(absoluteChildDataPath);
+                        exception.setConfigPath(absoluteChildDataPath);
                         throw exception;
                     }
 
                     for (int i = 0; i < childList.size(); i++) {
-                        final ElementPath absoluteElementPath = absoluteChildDataPath.append(i);
+                        final ConfigPath absoluteConfigPath = absoluteChildDataPath.append(Integer.toString(i));
                         listOutput.add(child(parameter, dataPath, defaultingPath, defaultingData, context,
-                                absoluteElementPath, dependencyProvider, false));
+                                absoluteConfigPath, dependencyProvider, false));
                     }
 
                     return listOutput;
@@ -173,11 +186,11 @@ public class BasicFactoryResolver implements FactoryResolver {
                 }
 
                 return child(parameter, dataPath, defaultingPath, defaultingData, context,
-                        absoluteChildDataPath.append(0), dependencyProvider, false);
+                        absoluteChildDataPath.append("0"), dependencyProvider, false);
             }
 
             if (childData.isString()) {
-                final ElementPath childRedirect = absoluteChildDataPath.resolveSibling(childData.asString());
+                final ConfigPath childRedirect = absoluteChildDataPath.resolveSibling(childData.asString());
                 if (!childRedirect.isAbsolute()) {
                     throw elementException(factoryConstructor.getDeclaringClass(), absoluteChildDataPath,
                             "Child redirect points outside of root");
@@ -360,7 +373,7 @@ public class BasicFactoryResolver implements FactoryResolver {
     }
 
     private record ElementParameter(Parameter parameter, ParameterType type, DependencyProvider.TypeKey<?> typeKey,
-            ElementPath childPath) {}
+            ConfigPath childPath) {}
 
     private record SearchResult<T, V>(T first, V second) {}
 
@@ -383,7 +396,7 @@ public class BasicFactoryResolver implements FactoryResolver {
 
             final ParameterType type;
             final DependencyProvider.TypeKey<?> typeKey;
-            final ElementPath childPath;
+            final ConfigPath childPath;
             if ((!isData && childAnnotation == null) || classDepend != null || parameterDepend != null) {
                 type = ParameterType.DEPENDENCY;
                 typeKey = DependencyProvider.key(Token.ofType(parameter.getParameterizedType()),
@@ -400,11 +413,11 @@ public class BasicFactoryResolver implements FactoryResolver {
             else {
                 type = ParameterType.CHILD;
                 typeKey = null;
-                childPath = ElementPath.of(childAnnotation.value());
+                childPath = ConfigPath.of(childAnnotation.value());
             }
 
             elementParameters[i] = new ElementParameter(parameter, type, typeKey, childPath == null ? null :
-                    (childPath.isAbsolute() ? ElementPath.EMPTY.relativize(childPath) : childPath));
+                    (childPath.isAbsolute() ? ConfigPath.EMPTY.relativize(childPath) : childPath));
         }
 
         return elementParameters;
