@@ -74,11 +74,6 @@ public class BasicFactoryResolver implements FactoryResolver {
                         "Element does not accept data, and data was provided");
             }
 
-            if (!context.root().isNode()) {
-                throw elementException(factoryConstructor.getDeclaringClass(), configPath,
-                        "Root must be a ConfigNode");
-            }
-
             ConfigNode ourData = null;
 
             final Object[] args = new Object[parameters.length];
