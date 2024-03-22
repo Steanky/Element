@@ -11,7 +11,6 @@ import com.github.steanky.element.core.dependency.DependencyProvider;
 import com.github.steanky.element.core.key.Constants;
 import com.github.steanky.element.core.key.KeyParser;
 import com.github.steanky.ethylene.core.ConfigElement;
-import com.github.steanky.ethylene.core.collection.ConfigEntry;
 import com.github.steanky.ethylene.core.collection.ConfigList;
 import com.github.steanky.ethylene.core.collection.ConfigNode;
 import com.github.steanky.ethylene.core.collection.LinkedConfigNode;
@@ -40,8 +39,6 @@ import static com.github.steanky.element.core.util.Validate.*;
  * {@code public static} method annotated with {@link FactoryMethod}) or factory constructors.
  */
 public class BasicFactoryResolver implements FactoryResolver {
-    private static final ConfigNode EMPTY_NODE = ConfigNode.of().immutableCopy();
-
     private final KeyParser keyParser;
     private final ContainerCreator containerCreator;
     private final MappingProcessorSource processorSource;
@@ -96,8 +93,8 @@ public class BasicFactoryResolver implements FactoryResolver {
                         }
                         case CHILD -> {
                             if (ourData == null) {
-                                ourData = ConfigNode.defaulting(context.root().atOrThrow(configPath).asNodeOrThrow(),
-                                        defaultValues);
+                                ConfigNode node = context.root().atOrThrow(configPath).asNodeOrThrow();
+                                ourData = defaultValues.isEmpty() ? node : ConfigNode.defaulting(node, defaultValues);
                             }
 
                             final ConfigPath absoluteChildDataPath = configPath.resolve(parameter.childPath);
@@ -155,7 +152,7 @@ public class BasicFactoryResolver implements FactoryResolver {
             if (childData.isList()) {
                 final ConfigList childList = childData.asList();
                 if (isContainer) {
-                    Collection<Object> listOutput;
+                    final Collection<Object> listOutput;
                     try {
                         listOutput = (Collection<Object>) containerCreator
                                 .createContainer(parameter.parameter.getType(), childList.size());
@@ -275,7 +272,7 @@ public class BasicFactoryResolver implements FactoryResolver {
         }
 
         final ConfigNode elementClassDefaults = extractDefaults(elementClass);
-        final ConfigNode dataClassDefaults = dataClass != null ? extractDefaults(dataClass) : EMPTY_NODE;
+        final ConfigNode dataClassDefaults = dataClass != null ? extractDefaults(dataClass) : ConfigNode.EMPTY;
 
         final ConfigNode combinedDefaults = mergeDefaults(elementClassDefaults, dataClassDefaults);
 
@@ -284,25 +281,23 @@ public class BasicFactoryResolver implements FactoryResolver {
 
     private static ConfigNode mergeDefaults(ConfigNode highPriority, ConfigNode lowPriority) {
         if (highPriority.isEmpty()) {
-            return lowPriority;
+            return lowPriority.isEmpty() ? ConfigNode.EMPTY : lowPriority;
         }
 
         if (lowPriority.isEmpty()) {
             return highPriority;
         }
 
-        final ConfigNode finalNode = new LinkedConfigNode(lowPriority);
-        for (ConfigEntry entry : highPriority.entryCollection()) {
-            finalNode.put(entry.getKey(), entry.getValue());
-        }
-
+        final ConfigNode finalNode = new LinkedConfigNode(highPriority.size() + lowPriority.size());
+        finalNode.putAll(highPriority);
+        finalNode.putAll(lowPriority);
         return finalNode;
     }
 
     private static ConfigNode extractDefaults(Class<?> cls) {
         final Default classDefaultAnnotation = cls.getAnnotation(Default.class);
         if (classDefaultAnnotation == null) {
-            return EMPTY_NODE;
+            return ConfigNode.EMPTY;
         }
 
         final ConfigElement element = ConfigElement.of(classDefaultAnnotation.value());
@@ -311,7 +306,7 @@ public class BasicFactoryResolver implements FactoryResolver {
         }
 
         final ConfigNode node = element.asNode();
-        return node.isEmpty() ? EMPTY_NODE : node;
+        return node.isEmpty() ? ConfigNode.EMPTY : node;
     }
 
     private static ElementParameter extractDataParameter(ElementParameter[] parameters, Class<?> cls) {
