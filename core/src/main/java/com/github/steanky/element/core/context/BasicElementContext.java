@@ -67,7 +67,7 @@ public class BasicElementContext implements ElementContext {
         this.typeMap = new ConcurrentHashMap<>(4);
 
         this.defaultMapLock = new ReentrantLock();
-        this.defaultMap = new HashMap<>(0);
+        this.defaultMap = Map.of();
     }
 
     @SuppressWarnings("unchecked")

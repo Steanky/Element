@@ -114,6 +114,14 @@ public class ContextManagerIntegrationTest {
         assertEquals(1, element.children.size());
     }
 
+    @Test
+    void nestedDefaultingChild() {
+        NestedDefaultingChild child = context("{type='nested_defaulting_child'}").provide();
+        assertNotNull(child);
+        assertNotNull(child.simple);
+        assertNotNull(child.simple.simple);
+    }
+
     @Model("simple")
     public static class Simple {
         @FactoryMethod
@@ -131,6 +139,21 @@ public class ContextManagerIntegrationTest {
 
         @DataObject
         public record Data(int value) {}
+    }
+
+    @Model("nested_defaulting_child")
+    @Default("""
+            {
+              child={type='simple_defaulting_child'}
+            }
+            """)
+    public static class NestedDefaultingChild {
+        private final SimpleDefaultingChild simple;
+
+        @FactoryMethod
+        public NestedDefaultingChild(@Child("child") SimpleDefaultingChild simple) {
+            this.simple = simple;
+        }
     }
 
     @Model("simple_child")
