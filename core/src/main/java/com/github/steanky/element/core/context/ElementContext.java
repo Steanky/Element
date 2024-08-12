@@ -658,6 +658,26 @@ public interface ElementContext {
     @NotNull @Unmodifiable ConfigContainer root();
 
     /**
+     * Registers default values at a specific path. These values will be used by child element(s) if necessary.
+     * <p>
+     * This method will store an immutable copy of {@code values}. If defaults have already been registered, this method
+     * will replace them.
+     *
+     * @param path the path the default values are at (relative to the root node)
+     * @param values the default values
+     */
+    void registerDefaults(final @NotNull ConfigPath path, final @NotNull ConfigNode values);
+
+    /**
+     * Follows the root node {@link ElementContext#root()}. The returned node may also supply default values, if
+     * present.
+     *
+     * @param path the path to follow
+     * @return the possibly defaulting node, or null if it cannot be followed and no default exists
+     */
+    ConfigNode follow(final @NotNull ConfigPath path);
+
+    /**
      * A source of {@link ElementContext} objects.
      */
     interface Source {

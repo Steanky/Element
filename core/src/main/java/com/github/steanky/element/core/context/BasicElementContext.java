@@ -5,6 +5,7 @@ import com.github.steanky.element.core.ElementFactory;
 import com.github.steanky.element.core.Registry;
 import com.github.steanky.element.core.dependency.DependencyProvider;
 import com.github.steanky.element.core.key.KeyExtractor;
+import com.github.steanky.ethylene.core.ConfigElement;
 import com.github.steanky.ethylene.core.collection.ConfigContainer;
 import com.github.steanky.ethylene.core.collection.ConfigNode;
 import com.github.steanky.ethylene.core.path.ConfigPath;
@@ -15,9 +16,12 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.Unmodifiable;
 
+import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReentrantLock;
 
 import static com.github.steanky.element.core.util.Validate.elementException;
 
@@ -33,6 +37,9 @@ public class BasicElementContext implements ElementContext {
     private final Map<ConfigPath, DataInfo> dataObjects;
     private final Map<ConfigPath, Object> elementObjects;
     private final Map<ConfigPath, Key> typeMap;
+
+    private final Lock defaultMapLock;
+    private volatile Map<ConfigPath, ConfigNode> defaultMap;
 
     /**
      * Creates a new instance of this class.
@@ -58,6 +65,9 @@ public class BasicElementContext implements ElementContext {
         this.dataObjects = new ConcurrentHashMap<>(4);
         this.elementObjects = new ConcurrentHashMap<>(4);
         this.typeMap = new ConcurrentHashMap<>(4);
+
+        this.defaultMapLock = new ReentrantLock();
+        this.defaultMap = new HashMap<>(0);
     }
 
     @SuppressWarnings("unchecked")
@@ -142,6 +152,65 @@ public class BasicElementContext implements ElementContext {
     @Override
     public @NotNull @Unmodifiable ConfigContainer root() {
         return rootCopy;
+    }
+
+    @Override
+    public void registerDefaults(final @NotNull ConfigPath path, final @NotNull ConfigNode newDefaults) {
+        ConfigNode currentDefaults = defaultMap.get(path);
+        if (currentDefaults != null && currentDefaults.equals(newDefaults)) {
+            return;
+        }
+
+        try {
+            defaultMapLock.lock();
+            currentDefaults = defaultMap.get(path);
+            if (currentDefaults != null && currentDefaults.equals(newDefaults)) {
+                return;
+            }
+
+            Map<ConfigPath, ConfigNode> newDefaultMap = new HashMap<>(defaultMap);
+            newDefaultMap.put(path, newDefaults.immutableCopy());
+
+            this.defaultMap = newDefaultMap;
+        }
+        finally {
+            defaultMapLock.unlock();
+        }
+    }
+
+    @Override
+    public ConfigNode follow(final @NotNull ConfigPath path) {
+        Map<ConfigPath, ConfigNode> defaultMap = this.defaultMap;
+
+        ConfigPath current = Objects.requireNonNull(path);
+
+        ConfigElement nonDefaultElement = rootCopy.at(path);
+        if (nonDefaultElement != null && !nonDefaultElement.isNode()) {
+            return null;
+        }
+
+        ConfigNode nonDefaultNode = nonDefaultElement == null ? null : nonDefaultElement.asNode();
+
+        int defaultEntriesFound = 0;
+        while (true) {
+            if (defaultEntriesFound >= defaultMap.size() || current == null) {
+                return nonDefaultNode;
+            }
+
+            ConfigNode defaultNodeBase = defaultMap.get(current);
+            if (defaultNodeBase != null) {
+                defaultEntriesFound++;
+
+                ConfigElement defaultElement = defaultNodeBase.at(current.relativize(path));
+                if (defaultElement != null && defaultElement.isNode()) {
+                    ConfigNode defaultNode = defaultElement.asNode();
+
+                    return nonDefaultNode == null ? defaultNode : ConfigNode.defaulting(nonDefaultNode, defaultNode);
+                }
+            }
+
+            current = current.getParent();
+        }
     }
 
     private record DataInfo(Object data, Key type) {}

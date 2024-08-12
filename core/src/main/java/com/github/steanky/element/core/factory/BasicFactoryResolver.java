@@ -71,6 +71,10 @@ public class BasicFactoryResolver implements FactoryResolver {
                         "Element does not accept data, and data was provided");
             }
 
+            if (!defaultValues.isEmpty()) {
+                context.registerDefaults(configPath, defaultValues);
+            }
+
             ConfigNode ourData = null;
 
             final Object[] args = new Object[parameters.length];
@@ -93,8 +97,11 @@ public class BasicFactoryResolver implements FactoryResolver {
                         }
                         case CHILD -> {
                             if (ourData == null) {
-                                ConfigNode node = context.root().atOrThrow(configPath).asNodeOrThrow();
-                                ourData = defaultValues.isEmpty() ? node : ConfigNode.defaulting(node, defaultValues);
+                                ourData = context.follow(configPath);
+                                if (ourData == null) {
+                                    throw elementException(factoryConstructor.getDeclaringClass(), configPath,
+                                            "Failure to follow path");
+                                }
                             }
 
                             final ConfigPath absoluteChildDataPath = configPath.resolve(parameter.childPath);
@@ -112,10 +119,6 @@ public class BasicFactoryResolver implements FactoryResolver {
                 exception.setElementClass(factoryConstructor.getDeclaringClass());
                 exception.setConfigPath(configPath);
                 throw exception;
-            }
-            catch (ConfigProcessException exception) {
-                throw elementException(exception, factoryConstructor.getDeclaringClass(), configPath,
-                        "Failure to follow path");
             }
 
             try {
@@ -291,7 +294,7 @@ public class BasicFactoryResolver implements FactoryResolver {
         final ConfigNode finalNode = new LinkedConfigNode(highPriority.size() + lowPriority.size());
         finalNode.putAll(highPriority);
         finalNode.putAll(lowPriority);
-        return finalNode;
+        return finalNode.immutableCopy();
     }
 
     private static ConfigNode extractDefaults(Class<?> cls) {
